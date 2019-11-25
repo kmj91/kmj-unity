@@ -222,33 +222,44 @@ public class PlayerMovement : MonoBehaviour
                 {
                     moveKeyValue = Vector2.zero;
 
-                    // 정면 보고 있음
-                    if ((int)transform.eulerAngles.y == 0)
+                    // 밀기
+                    ray = centerTrans.position;
+                    rayDir = transform.forward;
+
+                    // 캐릭터가 바라보는 방향으로 큐브가 있나?
+                    if (Physics.Raycast(ray, rayDir, out rayHit, 1f, 1 << layerMaskCube))
                     {
-                        playerMoveState = MoveState.F_IDLE_INTERACTION;
-                        interactionAnime = true;
-                        break;
-                    }
-                    // 오른쪽 보고 있음
-                    else if((int)transform.eulerAngles.y == 90)
-                    {
-                        playerMoveState = MoveState.R_IDLE_INTERACTION;
-                        interactionAnime = true;
-                        break;
-                    }
-                    // 뒤쪽 보고 있음
-                    else if ((int)transform.eulerAngles.y == 180)
-                    {
-                        playerMoveState = MoveState.B_IDLE_INTERACTION;
-                        interactionAnime = true;
-                        break;
-                    }
-                    // 왼쪽 보고 있음
-                    else if ((int)transform.eulerAngles.y == 270)
-                    {
-                        playerMoveState = MoveState.L_IDLE_INTERACTION;
-                        interactionAnime = true;
-                        break;
+                        //------------------------------------------------
+                        // 해당 방향으로 큐브가 있으면 상호작용 상태로
+                        //------------------------------------------------
+                        // 정면 보고 있음
+                        if ((int)transform.eulerAngles.y == 0)
+                        {
+                            playerMoveState = MoveState.F_IDLE_INTERACTION;
+                            interactionAnime = true;
+                            break;
+                        }
+                        // 오른쪽 보고 있음
+                        else if ((int)transform.eulerAngles.y == 90)
+                        {
+                            playerMoveState = MoveState.R_IDLE_INTERACTION;
+                            interactionAnime = true;
+                            break;
+                        }
+                        // 뒤쪽 보고 있음
+                        else if ((int)transform.eulerAngles.y == 180)
+                        {
+                            playerMoveState = MoveState.B_IDLE_INTERACTION;
+                            interactionAnime = true;
+                            break;
+                        }
+                        // 왼쪽 보고 있음
+                        else if ((int)transform.eulerAngles.y == 270)
+                        {
+                            playerMoveState = MoveState.L_IDLE_INTERACTION;
+                            interactionAnime = true;
+                            break;
+                        }
                     }
                 }
 
@@ -1520,7 +1531,7 @@ public class PlayerMovement : MonoBehaviour
                         {
                             // Move 함수에서 처리할 키 값
                             moveKeyValue = Vector2.right;
-                            // 오른쪽 상호작용 땅김
+                            // 오른쪽 상호작용 밀기
                             playerMoveState = MoveState.R_INTERACTION_PUSH;
                         }
                     }
@@ -1586,7 +1597,7 @@ public class PlayerMovement : MonoBehaviour
                         {
                             // Move 함수에서 처리할 키 값
                             moveKeyValue = Vector2.left;
-                            // 오른쪽 상호작용 땅김
+                            // 오른쪽 상호작용 밀기
                             playerMoveState = MoveState.L_INTERACTION_PUSH;
                         }
                     }
@@ -1797,6 +1808,8 @@ public class PlayerMovement : MonoBehaviour
                 break;
             case MoveState.L_INTERACTION_PULL:
                 // 왼쪽 당김
+
+
                 break;
             case MoveState.F_INTERACTION_PUSH:
                 // 앞쪽 밀기
