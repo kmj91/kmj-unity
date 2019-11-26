@@ -1714,7 +1714,7 @@ public class PlayerMovement : MonoBehaviour
                     // ■
                     // ★
                     //--------------------------------
-                    // 왼쪽 검사
+                    // 앞쪽 검사
                     check.x = targetPos.x;
                     check.y = targetPos.y;
                     check.z = targetPos.z + 1f;
@@ -1742,7 +1742,7 @@ public class PlayerMovement : MonoBehaviour
                     }
                 }
                 // 입력 키 값 ↓
-                else if (moveInput.y >= -0.3)
+                else if (moveInput.y <= -0.3)
                 {
                     // 당김
                     ray = centerTrans.position;
@@ -1811,6 +1811,121 @@ public class PlayerMovement : MonoBehaviour
                     moveKeyValue = Vector2.zero;
                     playerMoveState = MoveState.IDLE;
                     interactionAnimeEnd = true;
+                }
+
+                //------------------------------------------------
+                // 상호작용 대기 상태 키처리
+                //------------------------------------------------
+                // 입력 키 값 ↑
+                if (moveInput.y >= 0.3)
+                {
+                    // 당김
+                    ray = centerTrans.position;
+                    rayDir = transform.forward;
+
+                    // 정면 큐브 정보
+                    if (!Physics.Raycast(ray, rayDir, out rayHit, 1f, 1 << layerMaskCube))
+                    {
+                        // 에러
+                        break;
+                    }
+
+                    //--------------------------------
+                    // 앞쪽 검사
+                    // ？
+                    // ★
+                    // ■
+                    //--------------------------------
+                    // 목표 이동 위치
+                    targetPos.x = rayHit.transform.position.x;
+                    targetPos.y = rayHit.transform.position.y;
+                    targetPos.z = rayHit.transform.position.z + 2f;
+
+                    // 없다
+                    if (!Physics.CheckBox(targetPos, box, Quaternion.identity, 1 << layerMaskCube))
+                    {
+                        //--------------------------------
+                        // 아래쪽 검사
+                        // ■★
+                        //     ？
+                        //--------------------------------
+                        // 아래쪽 검사
+                        check.x = targetPos.x;
+                        check.y = targetPos.y - 1;
+                        check.z = targetPos.z;
+
+                        // 있다
+                        // 당김
+                        if (Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
+                        {
+                            // 뒤쪽 상호작용 당김
+                            playerMoveState = MoveState.B_INTERACTION_PULL;
+                        }
+                        // 없다
+                        // 당기고 매달림
+                        else
+                        {
+                            // 앞쪽 상호작용 당기고 매달림
+                            playerMoveState = MoveState.B_INTERACTION_PULL_CLIMBING;
+                            // 아래쪽에 매달림
+                            targetPos.y = targetPos.y - 1;
+                        }
+
+                        // Move 함수에서 처리할 키 값
+                        moveKeyValue = Vector2.up;
+                    }
+                }
+                // 입력 키 값 ↓
+                else if (moveInput.y <= -0.3)
+                {
+                    // 밀기
+                    ray = centerTrans.position;
+                    rayDir = transform.forward;
+
+                    // 정면 큐브 정보
+                    if (!Physics.Raycast(ray, rayDir, out rayHit, 1f, 1 << layerMaskCube))
+                    {
+                        // 에러
+                        break;
+                    }
+
+                    // 목표 이동 위치
+                    targetPos.x = rayHit.transform.position.x;
+                    targetPos.y = rayHit.transform.position.y;
+                    targetPos.z = rayHit.transform.position.z;
+
+                    //--------------------------------
+                    // 뒤쪽 검사
+                    // ★
+                    // ■
+                    // ？
+                    //--------------------------------
+                    // 앞쪽 검사
+                    check.x = targetPos.x;
+                    check.y = targetPos.y;
+                    check.z = targetPos.z - 1f;
+
+                    // 없다
+                    if (!Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
+                    {
+                        //--------------------------------
+                        // 아래쪽 검사
+                        // ■★
+                        // ？
+                        //--------------------------------
+                        // 아래쪽 검사
+                        check.z = targetPos.z;
+                        check.y = targetPos.y - 1f;
+
+                        // 있다
+                        if (Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
+                        {
+                            // Move 함수에서 처리할 키 값
+                            moveKeyValue = Vector2.down;
+                            // 앞쪽 상호작용 밀기
+                            playerMoveState = MoveState.B_INTERACTION_PUSH;
+                        }
+                    }
                 }
                 break;
             case MoveState.R_MOVE:
@@ -1941,6 +2056,16 @@ public class PlayerMovement : MonoBehaviour
                 break;
             case MoveState.R_INTERACTION_PULL_CLIMBING:
                 // 오른쪽 당기고 매달림
+                // 바닥에 닿아있지 않음
+                if (!characterController.isGrounded)
+                {
+                    // x,z 이동 멈춤
+                    moveKeyValue = Vector2.zero;
+                    // 애니메이션
+                    climbingDownAnime = true;
+                    // 상태 변경
+                    playerMoveState = MoveState.L_CLIMBING;
+                }
                 break;
             case MoveState.L_INTERACTION_PUSH:
                 // 왼쪽 밀기
@@ -1951,27 +2076,15 @@ public class PlayerMovement : MonoBehaviour
                 break;
             case MoveState.L_INTERACTION_PULL_CLIMBING:
                 // 왼쪽 당기고 매달림
-
                 // 바닥에 닿아있지 않음
                 if (!characterController.isGrounded)
                 {
                     // x,z 이동 멈춤
                     moveKeyValue = Vector2.zero;
+                    // 애니메이션
                     climbingDownAnime = true;
-                }
-                else
-                {
-                    moveKeyValue = Vector2.right;
-                }
-
-                // 이동 거리만큼 이동 했는가
-                if (targetPos.y >= centerTrans.position.y)
-                {
-                    // 매달림
-                    climbingFlag = true;
-                    // 이동을 끝마쳤으니 상태를 대기로 변경
-                    playerMoveState = MoveState.R_IDLE_CLIMBING;
-                    moveKeyValue = Vector2.zero;
+                    // 상태 변경
+                    playerMoveState = MoveState.R_CLIMBING;
                 }
                 break;
             case MoveState.F_INTERACTION_PUSH:
@@ -1982,6 +2095,16 @@ public class PlayerMovement : MonoBehaviour
                 break;
             case MoveState.F_INTERACTION_PULL_CLIMBING:
                 // 앞쪽 당기고 매달림
+                // 바닥에 닿아있지 않음
+                if (!characterController.isGrounded)
+                {
+                    // x,z 이동 멈춤
+                    moveKeyValue = Vector2.zero;
+                    // 애니메이션
+                    climbingDownAnime = true;
+                    // 상태 변경
+                    playerMoveState = MoveState.B_CLIMBING;
+                }
                 break;
             case MoveState.B_INTERACTION_PUSH:
                 // 뒤쪽 밀기
@@ -1991,6 +2114,16 @@ public class PlayerMovement : MonoBehaviour
                 break;
             case MoveState.B_INTERACTION_PULL_CLIMBING:
                 // 뒤쪽 당기고 매달림
+                // 바닥에 닿아있지 않음
+                if (!characterController.isGrounded)
+                {
+                    // x,z 이동 멈춤
+                    moveKeyValue = Vector2.zero;
+                    // 애니메이션
+                    climbingDownAnime = true;
+                    // 상태 변경
+                    playerMoveState = MoveState.F_CLIMBING;
+                }
                 break;
             case MoveState.R_CLIMBING:
                 // 바닥에 닿아있지 않음
