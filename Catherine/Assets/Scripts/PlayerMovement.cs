@@ -166,6 +166,14 @@ public class PlayerMovement : MonoBehaviour
                 move.x = 0;
                 move.y = 1;
                 break;
+            case MoveState.R_INTERACTION_PULL:
+            case MoveState.R_INTERACTION_PULL_CLIMBING:
+            case MoveState.L_INTERACTION_PULL:
+            case MoveState.L_INTERACTION_PULL_CLIMBING:
+            case MoveState.F_INTERACTION_PULL:
+            case MoveState.F_INTERACTION_PULL_CLIMBING:
+            case MoveState.B_INTERACTION_PULL:
+            case MoveState.B_INTERACTION_PULL_CLIMBING:
             case MoveState.RL_CLIMBING_MOVE:
             case MoveState.LL_CLIMBING_MOVE:
             case MoveState.FR_CLIMBING_MOVE:
@@ -177,6 +185,10 @@ public class PlayerMovement : MonoBehaviour
                 move.x = -1;
                 move.y = 0;
                 break;
+            case MoveState.R_INTERACTION_PUSH:
+            case MoveState.L_INTERACTION_PUSH:
+            case MoveState.F_INTERACTION_PUSH:
+            case MoveState.B_INTERACTION_PUSH:
             case MoveState.RR_CLIMBING_MOVE:
             case MoveState.LR_CLIMBING_MOVE:
             case MoveState.FL_CLIMBING_MOVE:
@@ -2050,6 +2062,14 @@ public class PlayerMovement : MonoBehaviour
                 break;
             case MoveState.R_INTERACTION_PUSH:
                 // 오른쪽 밀기
+                // 이동 거리만큼 이동 했는가
+                if (targetPos.x <= centerTrans.position.x)
+                {
+                    // 멈춤
+                    moveKeyValue = Vector2.zero;
+                    // 이동을 끝마쳤으니 상태를 대기로 변경
+                    playerMoveState = MoveState.IDLE;
+                }
                 break;
             case MoveState.R_INTERACTION_PULL:
                 // 오른쪽 당김
@@ -2069,6 +2089,14 @@ public class PlayerMovement : MonoBehaviour
                 break;
             case MoveState.L_INTERACTION_PUSH:
                 // 왼쪽 밀기
+                // 이동 거리만큼 이동 했는가
+                if (targetPos.x >= centerTrans.position.x)
+                {
+                    // 멈춤
+                    moveKeyValue = Vector2.zero;
+                    // 이동을 끝마쳤으니 상태를 대기로 변경
+                    playerMoveState = MoveState.IDLE;
+                }
                 break;
             case MoveState.L_INTERACTION_PULL:
                 // 왼쪽 당김
@@ -2089,6 +2117,14 @@ public class PlayerMovement : MonoBehaviour
                 break;
             case MoveState.F_INTERACTION_PUSH:
                 // 앞쪽 밀기
+                // 이동 거리만큼 이동 했는가
+                if (targetPos.z <= centerTrans.position.z)
+                {
+                    // 멈춤
+                    moveKeyValue = Vector2.zero;
+                    // 이동을 끝마쳤으니 상태를 대기로 변경
+                    playerMoveState = MoveState.IDLE;
+                }
                 break;
             case MoveState.F_INTERACTION_PULL:
                 // 앞쪽 당김
@@ -2108,6 +2144,14 @@ public class PlayerMovement : MonoBehaviour
                 break;
             case MoveState.B_INTERACTION_PUSH:
                 // 뒤쪽 밀기
+                // 이동 거리만큼 이동 했는가
+                if (targetPos.z >= centerTrans.position.z)
+                {
+                    // 멈춤
+                    moveKeyValue = Vector2.zero;
+                    // 이동을 끝마쳤으니 상태를 대기로 변경
+                    playerMoveState = MoveState.IDLE;
+                }
                 break;
             case MoveState.B_INTERACTION_PULL:
                 // 뒤쪽 당김
