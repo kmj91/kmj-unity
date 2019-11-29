@@ -13,6 +13,7 @@ public class PlayerMovement : MonoBehaviour
     private GameManager gameManager;
     private Transform centerTrans;
     private LayerMask layerMaskCube;
+    private GameObject moveCube;
 
     // 캐릭터 스피드
     public float speed = 4f;
@@ -51,6 +52,8 @@ public class PlayerMovement : MonoBehaviour
     private bool interactionAnimeEnd;
     // 캐릭터 이동 목표 좌표
     private Vector3 targetPos;
+    // 큐브 이동 목표 좌표
+    private Vector3 cubeDestPos;
     // 상하좌우 이동 값
     private Vector2 moveKeyValue;
 
@@ -214,15 +217,19 @@ public class PlayerMovement : MonoBehaviour
     // moveInput : 입력받은 이동 키값 -1 ~ 1
     //--------------------------------------------
     public void MoveProcess(Vector2 moveInput) {
-        Vector3 ray;        // 레이 시작점
-        Vector3 rayDir;     // 레이 방향
-        Vector3 check;      // 체크할 위치
-        Vector3 box;        // 박스 크기
-        RaycastHit rayHit;  // 레이 충돌한 물체
+        Vector3 ray;            // 레이 시작점
+        Vector3 rayDir;         // 레이 방향
+        Vector3 check;          // 체크할 위치
+        Vector3 box;            // 박스 크기
+        Vector3 moveValue;      // 위치
+        RaycastHit rayHit;      // 레이 충돌한 물체
 
         box.x = 0.1f;
         box.y = 0.1f;
         box.z = 0.1f;
+        moveValue.x = 0f;
+        moveValue.y = 0f;
+        moveValue.z = 0f;
 
         //------------------------------------------------
         // 이동 처리
@@ -255,6 +262,9 @@ public class PlayerMovement : MonoBehaviour
                         {
                             playerMoveState = MoveState.F_IDLE_INTERACTION;
                             interactionAnimeStart = true;
+                            // 큐브에 바싹 붙음
+                            moveValue.z = 0.25f;
+                            characterController.Move(moveValue);
                             break;
                         }
                         // 오른쪽 보고 있음
@@ -262,6 +272,9 @@ public class PlayerMovement : MonoBehaviour
                         {
                             playerMoveState = MoveState.R_IDLE_INTERACTION;
                             interactionAnimeStart = true;
+                            // 큐브에 바싹 붙음
+                            moveValue.x = 0.25f;
+                            characterController.Move(moveValue);
                             break;
                         }
                         // 뒤쪽 보고 있음
@@ -269,6 +282,9 @@ public class PlayerMovement : MonoBehaviour
                         {
                             playerMoveState = MoveState.B_IDLE_INTERACTION;
                             interactionAnimeStart = true;
+                            // 큐브에 바싹 붙음
+                            moveValue.z = -0.25f;
+                            characterController.Move(moveValue);
                             break;
                         }
                         // 왼쪽 보고 있음
@@ -276,6 +292,9 @@ public class PlayerMovement : MonoBehaviour
                         {
                             playerMoveState = MoveState.L_IDLE_INTERACTION;
                             interactionAnimeStart = true;
+                            // 큐브에 바싹 붙음
+                            moveValue.x = -0.25f;
+                            characterController.Move(moveValue);
                             break;
                         }
                     }
@@ -1452,6 +1471,9 @@ public class PlayerMovement : MonoBehaviour
                     moveKeyValue = Vector2.zero;
                     playerMoveState = MoveState.IDLE;
                     interactionAnimeEnd = true;
+                    // 원 위치로 돌아감
+                    moveValue.x = -0.25f;
+                    characterController.Move(moveValue);
                 }
 
                 //------------------------------------------------
@@ -1573,6 +1595,9 @@ public class PlayerMovement : MonoBehaviour
                     moveKeyValue = Vector2.zero;
                     playerMoveState = MoveState.IDLE;
                     interactionAnimeEnd = true;
+                    // 원 위치로 돌아감
+                    moveValue.x = 0.25f;
+                    characterController.Move(moveValue);
                 }
 
                 //------------------------------------------------
@@ -1696,6 +1721,9 @@ public class PlayerMovement : MonoBehaviour
                     moveKeyValue = Vector2.zero;
                     playerMoveState = MoveState.IDLE;
                     interactionAnimeEnd = true;
+                    // 원 위치로 돌아감
+                    moveValue.z = -0.25f;
+                    characterController.Move(moveValue);
                 }
 
                 //------------------------------------------------
@@ -1731,6 +1759,11 @@ public class PlayerMovement : MonoBehaviour
                     check.y = targetPos.y;
                     check.z = targetPos.z + 1f;
 
+                    // 큐브 이동 목표 좌표
+                    cubeDestPos = check;
+                    // 이동할 큐브 오브젝트
+                    moveCube = rayHit.transform.gameObject;
+
                     // 없다
                     if (!Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
                     {
@@ -1750,6 +1783,7 @@ public class PlayerMovement : MonoBehaviour
                             moveKeyValue = Vector2.up;
                             // 앞쪽 상호작용 밀기
                             playerMoveState = MoveState.F_INTERACTION_PUSH;
+
                         }
                     }
                 }
@@ -1823,6 +1857,9 @@ public class PlayerMovement : MonoBehaviour
                     moveKeyValue = Vector2.zero;
                     playerMoveState = MoveState.IDLE;
                     interactionAnimeEnd = true;
+                    // 원 위치로 돌아감
+                    moveValue.z = 0.25f;
+                    characterController.Move(moveValue);
                 }
 
                 //------------------------------------------------
@@ -2117,13 +2154,34 @@ public class PlayerMovement : MonoBehaviour
                 break;
             case MoveState.F_INTERACTION_PUSH:
                 // 앞쪽 밀기
-                // 이동 거리만큼 이동 했는가
-                if (targetPos.z <= centerTrans.position.z)
+                // 큐브가 이동 거리만큼 이동 했는가
+                if (cubeDestPos.z <= moveCube.transform.position.z)
                 {
-                    // 멈춤
+                    // 이동 완료
                     moveKeyValue = Vector2.zero;
-                    // 이동을 끝마쳤으니 상태를 대기로 변경
-                    playerMoveState = MoveState.IDLE;
+                    moveCube.transform.position = cubeDestPos;
+
+                    // 마우스를 계속 클릭 중이라면
+                    if (mouseClick)
+                    {
+                        // 마우스 클릭 중
+                        // 상호작용 대기 상태
+                        playerMoveState = MoveState.F_IDLE_INTERACTION;
+                    }
+                    else {
+                        // 마우스 클릭 중이 아님
+                        // 대기 상태
+                        playerMoveState = MoveState.IDLE;
+                        // 애니메이션 종료
+                        interactionAnimeEnd = true;
+                        // 원 위치로 돌아감
+                        moveValue.z = 0.25f;
+                        characterController.Move(moveValue);
+                    }
+                }
+                else {
+                    // 아직 이동해야 됨
+                    moveCube.transform.position = moveCube.transform.position + (Vector3.forward * speed) * Time.deltaTime;
                 }
                 break;
             case MoveState.F_INTERACTION_PULL:
@@ -2838,14 +2896,15 @@ public class PlayerMovement : MonoBehaviour
                 break;
         }// switch(playerMoveState)
 
-        Debug.Log("playerMoveState : " + playerMoveState);
-        Debug.Log("moveKeyValue : " + moveKeyValue);
+        //Debug.Log("playerMoveState : " + playerMoveState);
+        //Debug.Log("moveKeyValue : " + moveKeyValue);
         //Debug.Log(mouseClick);
         //Debug.Log(interactionAnimeStart);
         //Debug.Log("--------------------------------");
         Move(moveKeyValue);
     }
 
+    // 캐릭터 이동
     private void Move(Vector2 moveInput) {
         float targetSpeed = speed * moveInput.magnitude;
         
@@ -2918,5 +2977,10 @@ public class PlayerMovement : MonoBehaviour
             animator.SetTrigger("Idle_Interaction_End");
             interactionAnimeEnd = false;
         }
+    }
+
+    private void OnControllerColliderHit(ControllerColliderHit hit)
+    {
+        Debug.Log(hit.gameObject.layer);
     }
 }
