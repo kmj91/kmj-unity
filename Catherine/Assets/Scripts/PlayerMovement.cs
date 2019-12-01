@@ -1561,7 +1561,12 @@ public class PlayerMovement : MonoBehaviour
                     check.x = targetPos.x + 1f;
                     check.y = targetPos.y;
                     check.z = targetPos.z;
-                    
+
+                    // 큐브 이동 목표 좌표
+                    cubeDestPos = check;
+                    // 이동할 큐브 오브젝트
+                    moveCube = rayHit.transform.gameObject;
+
                     // 없다
                     if (!Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
                     {
@@ -1630,6 +1635,11 @@ public class PlayerMovement : MonoBehaviour
                     check.x = targetPos.x - 1f;
                     check.y = targetPos.y;
                     check.z = targetPos.z;
+
+                    // 큐브 이동 목표 좌표
+                    cubeDestPos = check;
+                    // 이동할 큐브 오브젝트
+                    moveCube = rayHit.transform.gameObject;
 
                     // 없다
                     if (!Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
@@ -1954,6 +1964,11 @@ public class PlayerMovement : MonoBehaviour
                     check.y = targetPos.y;
                     check.z = targetPos.z - 1f;
 
+                    // 큐브 이동 목표 좌표
+                    cubeDestPos = check;
+                    // 이동할 큐브 오브젝트
+                    moveCube = rayHit.transform.gameObject;
+
                     // 없다
                     if (!Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
                     {
@@ -2099,13 +2114,33 @@ public class PlayerMovement : MonoBehaviour
                 break;
             case MoveState.R_INTERACTION_PUSH:
                 // 오른쪽 밀기
-                // 이동 거리만큼 이동 했는가
-                if (targetPos.x <= centerTrans.position.x)
+                // 큐브 이동
+                moveCube.transform.position = moveCube.transform.position + (Vector3.right * speed) * Time.deltaTime;
+                // 큐브가 이동 거리만큼 이동 했는가
+                if (cubeDestPos.x <= moveCube.transform.position.x)
                 {
-                    // 멈춤
+                    // 이동 완료
                     moveKeyValue = Vector2.zero;
-                    // 이동을 끝마쳤으니 상태를 대기로 변경
-                    playerMoveState = MoveState.IDLE;
+                    moveCube.transform.position = cubeDestPos;
+
+                    // 마우스를 계속 클릭 중이라면
+                    if (mouseClick)
+                    {
+                        // 마우스 클릭 중
+                        // 상호작용 대기 상태
+                        playerMoveState = MoveState.R_IDLE_INTERACTION;
+                    }
+                    else
+                    {
+                        // 마우스 클릭 중이 아님
+                        // 대기 상태
+                        playerMoveState = MoveState.IDLE;
+                        // 애니메이션 종료
+                        interactionAnimeEnd = true;
+                        // 원 위치로 돌아감
+                        moveValue.x = -0.25f;
+                        characterController.Move(moveValue);
+                    }
                 }
                 break;
             case MoveState.R_INTERACTION_PULL:
@@ -2126,13 +2161,33 @@ public class PlayerMovement : MonoBehaviour
                 break;
             case MoveState.L_INTERACTION_PUSH:
                 // 왼쪽 밀기
-                // 이동 거리만큼 이동 했는가
-                if (targetPos.x >= centerTrans.position.x)
+                // 큐브 이동
+                moveCube.transform.position = moveCube.transform.position + (Vector3.left * speed) * Time.deltaTime;
+                // 큐브가 이동 거리만큼 이동 했는가
+                if (cubeDestPos.x >= moveCube.transform.position.x)
                 {
-                    // 멈춤
+                    // 이동 완료
                     moveKeyValue = Vector2.zero;
-                    // 이동을 끝마쳤으니 상태를 대기로 변경
-                    playerMoveState = MoveState.IDLE;
+                    moveCube.transform.position = cubeDestPos;
+
+                    // 마우스를 계속 클릭 중이라면
+                    if (mouseClick)
+                    {
+                        // 마우스 클릭 중
+                        // 상호작용 대기 상태
+                        playerMoveState = MoveState.L_IDLE_INTERACTION;
+                    }
+                    else
+                    {
+                        // 마우스 클릭 중이 아님
+                        // 대기 상태
+                        playerMoveState = MoveState.IDLE;
+                        // 애니메이션 종료
+                        interactionAnimeEnd = true;
+                        // 원 위치로 돌아감
+                        moveValue.x = 0.25f;
+                        characterController.Move(moveValue);
+                    }
                 }
                 break;
             case MoveState.L_INTERACTION_PULL:
@@ -2154,6 +2209,8 @@ public class PlayerMovement : MonoBehaviour
                 break;
             case MoveState.F_INTERACTION_PUSH:
                 // 앞쪽 밀기
+                // 큐브 이동
+                moveCube.transform.position = moveCube.transform.position + (Vector3.forward * speed) * Time.deltaTime;
                 // 큐브가 이동 거리만큼 이동 했는가
                 if (cubeDestPos.z <= moveCube.transform.position.z)
                 {
@@ -2175,13 +2232,9 @@ public class PlayerMovement : MonoBehaviour
                         // 애니메이션 종료
                         interactionAnimeEnd = true;
                         // 원 위치로 돌아감
-                        moveValue.z = 0.25f;
+                        moveValue.z = -0.25f;
                         characterController.Move(moveValue);
                     }
-                }
-                else {
-                    // 아직 이동해야 됨
-                    moveCube.transform.position = moveCube.transform.position + (Vector3.forward * speed) * Time.deltaTime;
                 }
                 break;
             case MoveState.F_INTERACTION_PULL:
@@ -2202,13 +2255,33 @@ public class PlayerMovement : MonoBehaviour
                 break;
             case MoveState.B_INTERACTION_PUSH:
                 // 뒤쪽 밀기
-                // 이동 거리만큼 이동 했는가
-                if (targetPos.z >= centerTrans.position.z)
+                // 큐브 이동
+                moveCube.transform.position = moveCube.transform.position + (Vector3.back * speed) * Time.deltaTime;
+                // 큐브가 이동 거리만큼 이동 했는가
+                if (cubeDestPos.z >= moveCube.transform.position.z)
                 {
-                    // 멈춤
+                    // 이동 완료
                     moveKeyValue = Vector2.zero;
-                    // 이동을 끝마쳤으니 상태를 대기로 변경
-                    playerMoveState = MoveState.IDLE;
+                    moveCube.transform.position = cubeDestPos;
+
+                    // 마우스를 계속 클릭 중이라면
+                    if (mouseClick)
+                    {
+                        // 마우스 클릭 중
+                        // 상호작용 대기 상태
+                        playerMoveState = MoveState.B_IDLE_INTERACTION;
+                    }
+                    else
+                    {
+                        // 마우스 클릭 중이 아님
+                        // 대기 상태
+                        playerMoveState = MoveState.IDLE;
+                        // 애니메이션 종료
+                        interactionAnimeEnd = true;
+                        // 원 위치로 돌아감
+                        moveValue.z = 0.25f;
+                        characterController.Move(moveValue);
+                    }
                 }
                 break;
             case MoveState.B_INTERACTION_PULL:
