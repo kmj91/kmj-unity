@@ -16,11 +16,11 @@ public class PlayerMovement : MonoBehaviour
     private GameObject moveCube;
 
     // 캐릭터 스피드
-    public float speed = 4f;
+    public float speed = 2f;
     // 수직 이동
-    public float jumpVelocity = 2f;
+    public float jumpVelocity = 2.5f;
     // 속도 지연시간 값
-    public float speedSmoothTime = 0.1f;
+    public float speedSmoothTime = 0.01f;
     // 방향을 바꾸는 스무스 지연시간 값
     public float turnSmoothTime = 0.1f;
     // magnitude 벡터의 길이를 반환
@@ -34,10 +34,16 @@ public class PlayerMovement : MonoBehaviour
     // 값의 연속적인 변화량을 기록하기 위한 변수
     private float speedSmoothVelocity;
     private float turnSmoothVelocity;
+    private float jumpSmoothHorizontal;
+    private float jumpSmoothVertical;
     // 캐릭터의 Y방향에 대한 속도
     private float currentVelocityY;
     // 캐릭터 컬라이더의 이동 속도
     private float animationSpeedPercent;
+    // 딜레이
+    private float actionDelay = 0;
+    // 캐릭터 스피드 저장
+    private float saveSpeed;
     // 등반 플래그
     private bool climbingFlag;
     // 위로 점프 애니메이션
@@ -143,73 +149,75 @@ public class PlayerMovement : MonoBehaviour
             mouseClick = false;
         }
 
+        // 플레이어 애니메이션
+        UpdateAnimation();
         // 플레이어 이동 처리
         MoveProcess(playerInput.moveInput);
     }
 
     private void Update()
     {
-        Vector2 move;
+        //Vector2 move;
 
-        switch (playerMoveState)
-        {
-            case MoveState.L_MOVE:
-                move.x = -1;
-                move.y = 0;
-                break;
-            case MoveState.R_MOVE:
-                move.x = 1;
-                move.y = 0;
-                break;
-            case MoveState.B_MOVE:
-                move.x = 0;
-                move.y = -1;
-                break;
-            case MoveState.F_MOVE:
-                move.x = 0;
-                move.y = 1;
-                break;
-            case MoveState.R_INTERACTION_PULL:
-            case MoveState.R_INTERACTION_PULL_CLIMBING:
-            case MoveState.L_INTERACTION_PULL:
-            case MoveState.L_INTERACTION_PULL_CLIMBING:
-            case MoveState.F_INTERACTION_PULL:
-            case MoveState.F_INTERACTION_PULL_CLIMBING:
-            case MoveState.B_INTERACTION_PULL:
-            case MoveState.B_INTERACTION_PULL_CLIMBING:
-            case MoveState.RL_CLIMBING_MOVE:
-            case MoveState.LL_CLIMBING_MOVE:
-            case MoveState.FR_CLIMBING_MOVE:
-            case MoveState.BL_CLIMBING_MOVE:
-            case MoveState.RL_BL_CHANGE_CLIMBING:
-            case MoveState.LL_FR_CHANGE_CLIMBING:
-            case MoveState.FR_RL_CHANGE_CLIMBING:
-            case MoveState.BL_LL_CHANGE_CLIMBING:
-                move.x = -1;
-                move.y = 0;
-                break;
-            case MoveState.R_INTERACTION_PUSH:
-            case MoveState.L_INTERACTION_PUSH:
-            case MoveState.F_INTERACTION_PUSH:
-            case MoveState.B_INTERACTION_PUSH:
-            case MoveState.RR_CLIMBING_MOVE:
-            case MoveState.LR_CLIMBING_MOVE:
-            case MoveState.FL_CLIMBING_MOVE:
-            case MoveState.BR_CLIMBING_MOVE:
-            case MoveState.RR_FL_CHANGE_CLIMBING:
-            case MoveState.LR_BR_CHANGE_CLIMBING:
-            case MoveState.FL_LR_CHANGE_CLIMBING:
-            case MoveState.BR_RR_CHANGE_CLIMBING:
-                move.x = 1;
-                move.y = 0;
-                break;
-            default:
-                move.x = 0;
-                move.y = 0;
-                break;
-        }
+        //switch (playerMoveState)
+        //{
+        //    case MoveState.L_MOVE:
+        //        move.x = -1;
+        //        move.y = 0;
+        //        break;
+        //    case MoveState.R_MOVE:
+        //        move.x = 1;
+        //        move.y = 0;
+        //        break;
+        //    case MoveState.B_MOVE:
+        //        move.x = 0;
+        //        move.y = -1;
+        //        break;
+        //    case MoveState.F_MOVE:
+        //        move.x = 0;
+        //        move.y = 1;
+        //        break;
+        //    case MoveState.R_INTERACTION_PULL:
+        //    case MoveState.R_INTERACTION_PULL_CLIMBING:
+        //    case MoveState.L_INTERACTION_PULL:
+        //    case MoveState.L_INTERACTION_PULL_CLIMBING:
+        //    case MoveState.F_INTERACTION_PULL:
+        //    case MoveState.F_INTERACTION_PULL_CLIMBING:
+        //    case MoveState.B_INTERACTION_PULL:
+        //    case MoveState.B_INTERACTION_PULL_CLIMBING:
+        //    case MoveState.RL_CLIMBING_MOVE:
+        //    case MoveState.LL_CLIMBING_MOVE:
+        //    case MoveState.FR_CLIMBING_MOVE:
+        //    case MoveState.BL_CLIMBING_MOVE:
+        //    case MoveState.RL_BL_CHANGE_CLIMBING:
+        //    case MoveState.LL_FR_CHANGE_CLIMBING:
+        //    case MoveState.FR_RL_CHANGE_CLIMBING:
+        //    case MoveState.BL_LL_CHANGE_CLIMBING:
+        //        move.x = -1;
+        //        move.y = 0;
+        //        break;
+        //    case MoveState.R_INTERACTION_PUSH:
+        //    case MoveState.L_INTERACTION_PUSH:
+        //    case MoveState.F_INTERACTION_PUSH:
+        //    case MoveState.B_INTERACTION_PUSH:
+        //    case MoveState.RR_CLIMBING_MOVE:
+        //    case MoveState.LR_CLIMBING_MOVE:
+        //    case MoveState.FL_CLIMBING_MOVE:
+        //    case MoveState.BR_CLIMBING_MOVE:
+        //    case MoveState.RR_FL_CHANGE_CLIMBING:
+        //    case MoveState.LR_BR_CHANGE_CLIMBING:
+        //    case MoveState.FL_LR_CHANGE_CLIMBING:
+        //    case MoveState.BR_RR_CHANGE_CLIMBING:
+        //        move.x = 1;
+        //        move.y = 0;
+        //        break;
+        //    default:
+        //        move.x = 0;
+        //        move.y = 0;
+        //        break;
+        //}
 
-        UpdateAnimation(move);
+        //UpdateAnimation(move);
     }
 
     //--------------------------------------------
@@ -336,24 +344,40 @@ public class PlayerMovement : MonoBehaviour
                         {
                             //--------------------------------
                             // 위쪽 검사
-                            //   ？
-                            // ★■
+                            // ？
+                            // ■★
                             //--------------------------------
                             // 왼쪽 위쪽 검사
                             check.x = targetPos.x;
-                            check.y = targetPos.y + 1;
+                            check.y = targetPos.y + 1f;
                             check.z = targetPos.z;
                             // 없다
                             if (!Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
                             {
-                                // 위쪽 이동
-                                targetPos.y = targetPos.y + 1;
-                                // Move 함수에서 처리할 키 값
-                                moveKeyValue = Vector2.left;
-                                // 왼쪽 이동 등반 상태
-                                playerMoveState = MoveState.L_UP;
-                                // 애니메이션
-                                climbingUpAnime = true;
+                                //--------------------------------
+                                // 캐릭터 위쪽 검사
+                                //   ？
+                                // ■★
+                                //--------------------------------
+                                // 위쪽 검사
+                                check.x = check.x + 1f;
+                                // 없다
+                                if (!Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
+                                {
+                                    // 위쪽 이동
+                                    targetPos.y = targetPos.y + 0.5f;
+                                    // Move 함수에서 처리할 키 값
+                                    moveKeyValue = Vector2.left;
+                                    // 왼쪽 이동 등반 상태
+                                    playerMoveState = MoveState.L_UP;
+                                    // 애니메이션
+                                    climbingUpAnime = true;
+                                    // 점프 애니메이션은 약간의 딜레이가 필요합니다
+                                    actionDelay = 0;
+                                    // 캐릭터 속도 관련 셋팅
+                                    saveSpeed = speed;
+                                    speed = 0.5f;
+                                }
                             }
                         }
                         // ← 방향 없음
@@ -366,7 +390,7 @@ public class PlayerMovement : MonoBehaviour
                             //--------------------------------
                             // 왼쪽 아래 검사
                             check.x = targetPos.x;
-                            check.y = targetPos.y - 1;
+                            check.y = targetPos.y - 1f;
                             check.z = targetPos.z;
                             // 있다
                             if (Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
@@ -386,9 +410,9 @@ public class PlayerMovement : MonoBehaviour
                                 // ？
                                 //--------------------------------
                                 // 2칸 아래쪽 검사
-                                check.y = check.y - 1;
+                                check.y = check.y - 1f;
                                 // 아래쪽 이동
-                                targetPos.y = targetPos.y - 1;
+                                targetPos.y = targetPos.y - 1f;
                                 // 있다
                                 if (Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
                                 {
@@ -449,17 +473,35 @@ public class PlayerMovement : MonoBehaviour
                             //--------------------------------
                             // 오른쪽 위 검사
                             check.x = targetPos.x;
-                            check.y = targetPos.y + 1;
+                            check.y = targetPos.y + 1f;
                             check.z = targetPos.z;
                             // 없다
                             if (!Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
                             {
-                                // Move 함수에서 처리할 키 값
-                                moveKeyValue = Vector2.right;
-                                // 오른쪽 이동 등반 상태
-                                playerMoveState = MoveState.R_UP;
-                                // 애니메이션
-                                climbingUpAnime = true;
+                                //--------------------------------
+                                // 캐릭터 위쪽 검사
+                                // ？
+                                // ★■
+                                //--------------------------------
+                                // 위쪽 검사
+                                check.x = check.x - 1f;
+                                // 없다
+                                if (!Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
+                                {
+                                    // 위쪽 이동
+                                    targetPos.y = targetPos.y + 0.5f;
+                                    // Move 함수에서 처리할 키 값
+                                    //moveKeyValue = Vector2.right;
+                                    // 오른쪽 이동 등반 상태
+                                    playerMoveState = MoveState.R_UP;
+                                    // 애니메이션
+                                    climbingUpAnime = true;
+                                    // 점프 애니메이션은 약간의 딜레이가 필요합니다
+                                    actionDelay = 0;
+                                    // 캐릭터 속도 관련 셋팅
+                                    saveSpeed = speed;
+                                    speed = 0.5f;
+                                }
                             }
                         }
                         // → 방향 없음
@@ -472,7 +514,7 @@ public class PlayerMovement : MonoBehaviour
                             //--------------------------------
                             // 오른쪽 아래 검사
                             check.x = targetPos.x;
-                            check.y = targetPos.y - 1;
+                            check.y = targetPos.y - 1f;
                             check.z = targetPos.z;
                             // 있다
                             if (Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
@@ -492,9 +534,9 @@ public class PlayerMovement : MonoBehaviour
                                 // ？
                                 //--------------------------------
                                 // 2칸 아래쪽 검사
-                                check.y = check.y - 1;
+                                check.y = check.y - 1f;
                                 // 아래쪽 이동
-                                targetPos.y = targetPos.y - 1;
+                                targetPos.y = targetPos.y - 1f;
                                 // 있다
                                 if (Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
                                 {
@@ -552,22 +594,40 @@ public class PlayerMovement : MonoBehaviour
                         {
                             //--------------------------------
                             // 위쪽 검사
-                            //   ？
-                            // ★■
+                            // ？
+                            // ■★
                             //--------------------------------
                             // 뒤쪽 위 검사
                             check.x = targetPos.x;
-                            check.y = targetPos.y + 1;
+                            check.y = targetPos.y + 1f;
                             check.z = targetPos.z;
                             // 없다
                             if (!Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
                             {
-                                // Move 함수에서 처리할 키 값
-                                moveKeyValue = Vector2.down;
-                                // 뒤쪽 이동 등반 상태
-                                playerMoveState = MoveState.B_UP;
-                                // 애니메이션
-                                climbingUpAnime = true;
+                                //--------------------------------
+                                // 캐릭터 위쪽 검사
+                                //   ？
+                                // ■★
+                                //--------------------------------
+                                // 위쪽 검사
+                                check.z = check.z + 1f;
+                                // 없다
+                                if (!Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
+                                {
+                                    // 위쪽 이동
+                                    targetPos.y = targetPos.y + 0.5f;
+                                    // Move 함수에서 처리할 키 값
+                                    moveKeyValue = Vector2.down;
+                                    // 뒤쪽 이동 등반 상태
+                                    playerMoveState = MoveState.B_UP;
+                                    // 애니메이션
+                                    climbingUpAnime = true;
+                                    // 점프 애니메이션은 약간의 딜레이가 필요합니다
+                                    actionDelay = 0;
+                                    // 캐릭터 속도 관련 셋팅
+                                    saveSpeed = speed;
+                                    speed = 0.5f;
+                                }
                             }
                         }
                         // ↓ 방향 없음
@@ -580,7 +640,7 @@ public class PlayerMovement : MonoBehaviour
                             //--------------------------------
                             // 뒤쪽 아래 검사
                             check.x = targetPos.x;
-                            check.y = targetPos.y - 1;
+                            check.y = targetPos.y - 1f;
                             check.z = targetPos.z;
                             // 있다
                             if (Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
@@ -600,9 +660,9 @@ public class PlayerMovement : MonoBehaviour
                                 // ？
                                 //--------------------------------
                                 // 2칸 아래쪽 검사
-                                check.y = check.y - 1;
+                                check.y = check.y - 1f;
                                 // 아래쪽 이동
-                                targetPos.y = targetPos.y - 1;
+                                targetPos.y = targetPos.y - 1f;
                                 // 있다
                                 if (Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
                                 {
@@ -671,12 +731,30 @@ public class PlayerMovement : MonoBehaviour
                             // 없다
                             if (!Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
                             {
-                                // Move 함수에서 처리할 키 값
-                                moveKeyValue = Vector2.up;
-                                // 앞쪽 이동 등반 상태
-                                playerMoveState = MoveState.F_UP;
-                                // 애니메이션
-                                climbingUpAnime = true;
+                                //--------------------------------
+                                // 캐릭터 위쪽 검사
+                                // ？
+                                // ★■
+                                //--------------------------------
+                                // 위쪽 검사
+                                check.z = check.z - 1f;
+                                // 없다
+                                if (!Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
+                                {
+                                    // 위쪽 이동
+                                    targetPos.y = targetPos.y + 0.5f;
+                                    // Move 함수에서 처리할 키 값
+                                    moveKeyValue = Vector2.up;
+                                    // 앞쪽 이동 등반 상태
+                                    playerMoveState = MoveState.F_UP;
+                                    // 애니메이션
+                                    climbingUpAnime = true;
+                                    // 점프 애니메이션은 약간의 딜레이가 필요합니다
+                                    actionDelay = 0;
+                                    // 캐릭터 속도 관련 셋팅
+                                    saveSpeed = speed;
+                                    speed = 0.5f;
+                                }
                             }
                         }
                         // ↑ 방향 없음
@@ -689,7 +767,7 @@ public class PlayerMovement : MonoBehaviour
                             //--------------------------------
                             // 앞쪽 아래 검사
                             check.x = targetPos.x;
-                            check.y = targetPos.y - 1;
+                            check.y = targetPos.y - 1f;
                             check.z = targetPos.z;
                             // 있다
                             if (Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
@@ -709,9 +787,9 @@ public class PlayerMovement : MonoBehaviour
                                 // ？
                                 //--------------------------------
                                 // 2칸 아래쪽 검사
-                                check.y = check.y - 1;
+                                check.y = check.y - 1f;
                                 // 아래쪽 이동
-                                targetPos.y = targetPos.y - 1;
+                                targetPos.y = targetPos.y - 1f;
                                 // 있다
                                 if (Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
                                 {
@@ -907,6 +985,8 @@ public class PlayerMovement : MonoBehaviour
                     // ↑ 방향 없음
                     if (!Physics.CheckBox(targetPos, box, Quaternion.identity, 1 << layerMaskCube))
                     {
+                        // 실제 이동 높이
+                        targetPos.y = targetPos.y - 0.5f;
                         // 매달림 상태 해제
                         climbingFlag = false;
                         // Move 함수에서 처리할 키 값
@@ -915,6 +995,11 @@ public class PlayerMovement : MonoBehaviour
                         playerMoveState = MoveState.L_UP;
                         // 애니메이션
                         climbingUpAnime = true;
+                        // 점프 애니메이션은 약간의 딜레이가 필요합니다
+                        actionDelay = 0;
+                        // 캐릭터 속도 관련 셋팅
+                        saveSpeed = speed;
+                        speed = 0.5f;
                     }
                 }
                 break;
@@ -1090,6 +1175,8 @@ public class PlayerMovement : MonoBehaviour
                     // ↑ 방향 없음
                     if (!Physics.CheckBox(targetPos, box, Quaternion.identity, 1 << layerMaskCube))
                     {
+                        // 실제 이동 높이
+                        targetPos.y = targetPos.y - 0.5f;
                         // 매달림 상태 해제
                         climbingFlag = false;
                         // Move 함수에서 처리할 키 값
@@ -1098,6 +1185,11 @@ public class PlayerMovement : MonoBehaviour
                         playerMoveState = MoveState.R_UP;
                         // 애니메이션
                         climbingUpAnime = true;
+                        // 점프 애니메이션은 약간의 딜레이가 필요합니다
+                        actionDelay = 0;
+                        // 캐릭터 속도 관련 셋팅
+                        saveSpeed = speed;
+                        speed = 0.5f;
                     }
                 }
                 break;
@@ -1107,6 +1199,74 @@ public class PlayerMovement : MonoBehaviour
                 //------------------------------------------------
                 // 입력 키 값 ←
                 if (moveInput.x <= -0.3)
+                {
+                    ray = centerTrans.position;
+                    rayDir = transform.forward;
+                    // 정면 큐브 정보
+                    if (!Physics.Raycast(ray, rayDir, out rayHit, 1f, 1 << layerMaskCube))
+                    {
+                        // 에러
+                        break;
+                    }
+
+                    //---------------------------------------------
+                    // 매달린 상태에서는 캐릭터가 중앙에 있지 않음
+                    //---------------------------------------------
+                    // 목표 이동 위치
+                    targetPos.x = rayHit.transform.position.x + 1f;
+                    targetPos.y = rayHit.transform.position.y;
+                    targetPos.z = rayHit.transform.position.z + 1f;
+                    // → 방향 있음
+                    if (Physics.CheckBox(targetPos, box, Quaternion.identity, 1 << layerMaskCube))
+                    {
+                        //--------------------------------
+                        // 오른쪽 이동 방향에 벽 있음 
+                        // →★■
+                        //   ■
+                        //--------------------------------
+                        // Move 함수에서 처리할 키 값
+                        moveKeyValue = Vector2.right;
+                        // 왼쪽 이동 매달림
+                        playerMoveState = MoveState.FR_CLIMBING_MOVE;
+                    }
+                    // → 방향 없음
+                    else
+                    {
+                        //--------------------------------
+                        // ↓ 방향 검사
+                        // ★↓
+                        // ■？
+                        //--------------------------------
+                        // 앞쪽 검사
+                        check.x = targetPos.x;
+                        check.y = targetPos.y;
+                        check.z = targetPos.z - 1f;
+
+                        // ↓ 방향 있음
+                        if (Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
+                        {
+                            // Move 함수에서 처리할 키 값
+                            moveKeyValue = Vector2.right;
+                            // 왼쪽 이동 매달림
+                            playerMoveState = MoveState.FR_CLIMBING_MOVE;
+                        }
+                        // ↓방향 없음
+                        else
+                        {
+                            // ↓ 방향 이동
+                            targetPos.z = targetPos.z - 1f;
+                            // Move 함수에서 처리할 키 값
+                            moveKeyValue = Vector2.right;
+                            // 왼쪽 이동 매달림
+                            playerMoveState = MoveState.FR_CLIMBING_MOVE;
+                        }
+                    }
+                }
+                //------------------------------------------------
+                // 앞쪽 매달림 대기 상태 키처리
+                //------------------------------------------------
+                // 입력 키 값 →
+                if (moveInput.x >= 0.3)
                 {
                     ray = centerTrans.position;
                     rayDir = transform.forward;
@@ -1173,74 +1333,6 @@ public class PlayerMovement : MonoBehaviour
                 //------------------------------------------------
                 // 앞쪽 매달림 대기 상태 키처리
                 //------------------------------------------------
-                // 입력 키 값 →
-                if (moveInput.x >= 0.3)
-                {
-                    ray = centerTrans.position;
-                    rayDir = transform.forward;
-                    // 정면 큐브 정보
-                    if (!Physics.Raycast(ray, rayDir, out rayHit, 1f, 1 << layerMaskCube))
-                    {
-                        // 에러
-                        break;
-                    }
-
-                    //---------------------------------------------
-                    // 매달린 상태에서는 캐릭터가 중앙에 있지 않음
-                    //---------------------------------------------
-                    // 목표 이동 위치
-                    targetPos.x = rayHit.transform.position.x + 1f;
-                    targetPos.y = rayHit.transform.position.y;
-                    targetPos.z = rayHit.transform.position.z + 1f;
-                    // → 방향 있음
-                    if (Physics.CheckBox(targetPos, box, Quaternion.identity, 1 << layerMaskCube))
-                    {
-                        //--------------------------------
-                        // 오른쪽 이동 방향에 벽 있음 
-                        // →★■
-                        //   ■
-                        //--------------------------------
-                        // Move 함수에서 처리할 키 값
-                        moveKeyValue = Vector2.right;
-                        // 왼쪽 이동 매달림
-                        playerMoveState = MoveState.FL_CLIMBING_MOVE;
-                    }
-                    // → 방향 없음
-                    else
-                    {
-                        //--------------------------------
-                        // ↓ 방향 검사
-                        // ★↓
-                        // ■？
-                        //--------------------------------
-                        // 앞쪽 검사
-                        check.x = targetPos.x;
-                        check.y = targetPos.y;
-                        check.z = targetPos.z - 1f;
-
-                        // ↓ 방향 있음
-                        if (Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
-                        {
-                            // Move 함수에서 처리할 키 값
-                            moveKeyValue = Vector2.right;
-                            // 왼쪽 이동 매달림
-                            playerMoveState = MoveState.FR_CLIMBING_MOVE;
-                        }
-                        // ↓방향 없음
-                        else
-                        {
-                            // ↓ 방향 이동
-                            targetPos.z = targetPos.z - 1f;
-                            // Move 함수에서 처리할 키 값
-                            moveKeyValue = Vector2.right;
-                            // 왼쪽 이동 매달림
-                            playerMoveState = MoveState.FR_CLIMBING_MOVE;
-                        }
-                    }
-                }
-                //------------------------------------------------
-                // 앞쪽 매달림 대기 상태 키처리
-                //------------------------------------------------
                 // 입력 키 값 ↓
                 else if (moveInput.y < 0)
                 {
@@ -1271,6 +1363,8 @@ public class PlayerMovement : MonoBehaviour
                     // ↑ 방향 없음
                     if (!Physics.CheckBox(targetPos, box, Quaternion.identity, 1 << layerMaskCube))
                     {
+                        // 실제 이동 높이
+                        targetPos.y = targetPos.y - 0.5f;
                         // 매달림 상태 해제
                         climbingFlag = false;
                         // Move 함수에서 처리할 키 값
@@ -1279,6 +1373,11 @@ public class PlayerMovement : MonoBehaviour
                         playerMoveState = MoveState.B_UP;
                         // 애니메이션
                         climbingUpAnime = true;
+                        // 점프 애니메이션은 약간의 딜레이가 필요합니다
+                        actionDelay = 0;
+                        // 캐릭터 속도 관련 셋팅
+                        saveSpeed = speed;
+                        speed = 0.5f;
                     }
                 }
                 break;
@@ -1384,7 +1483,7 @@ public class PlayerMovement : MonoBehaviour
                         // Move 함수에서 처리할 키 값
                         moveKeyValue = Vector2.right;
                         // 왼쪽 이동 매달림
-                        playerMoveState = MoveState.FL_CLIMBING_MOVE;
+                        playerMoveState = MoveState.BR_CLIMBING_MOVE;
                     }
                     // → 방향 없음
                     else
@@ -1451,6 +1550,8 @@ public class PlayerMovement : MonoBehaviour
                     targetPos.z = rayHit.transform.position.z;
                     // ↑ 방향 없음
                     if (!Physics.CheckBox(targetPos, box, Quaternion.identity, 1 << layerMaskCube)) {
+                        // 실제 이동 높이
+                        targetPos.y = targetPos.y - 0.5f;
                         // 매달림 상태 해제
                         climbingFlag = false;
                         // Move 함수에서 처리할 키 값
@@ -1459,6 +1560,11 @@ public class PlayerMovement : MonoBehaviour
                         playerMoveState = MoveState.F_UP;
                         // 애니메이션
                         climbingUpAnime = true;
+                        // 점프 애니메이션은 약간의 딜레이가 필요합니다
+                        actionDelay = 0;
+                        // 캐릭터 속도 관련 셋팅
+                        saveSpeed = speed;
+                        speed = 0.5f;
                     }
                 }
                 break;
@@ -2075,69 +2181,149 @@ public class PlayerMovement : MonoBehaviour
                 }
                 break;
             case MoveState.R_UP:
-                // 이동하는 중인데 벽에 부딪힘
-                if ((currentSpeed / speed) == 0)
+                actionDelay = actionDelay + Time.deltaTime;
+
+                // 점프 준비 동작때문에 약 0.15 대기합니다
+                if (actionDelay < 0.15f)
                 {
-                    // 위로 이동함
-                    currentVelocityY = jumpVelocity;
-                    // 애니메이션 플래그
-                    //climbingUpAnime = true;
+                    break;
+                }
+                else {
+                    // Move 함수에서 처리할 키 값
+                    moveKeyValue = Vector2.right;
                 }
 
-                // 이동 거리만큼 이동 했는가
+                // 수직 이동 거리만큼 이동 하지 못했나
+                if (targetPos.y > centerTrans.position.y)
+                {
+                    // 위로 이동함
+                    currentVelocityY = Mathf.SmoothDamp(currentSpeed, jumpVelocity, ref jumpSmoothVertical, speedSmoothTime);
+                }
+                // 수직 이동 거리만큼 이동 함
+                else {
+                    // 캐릭터 이동 속도를 빠르게
+                    speed = Mathf.SmoothDamp(currentSpeed, saveSpeed * 1.5f, ref jumpSmoothHorizontal, speedSmoothTime);
+                }
+
+                // 수평 이동 거리만큼 이동 했는가
                 if (targetPos.x <= centerTrans.position.x)
                 {
-                    // 이동을 끝마쳤으니 상태를 대기로 변경
-                    playerMoveState = MoveState.IDLE;
+                    // 캐릭터의 상태 변화는 애니메이션 클립에서 이벤트를 통해 함수를 호출해서 변경함
+                    // 이동 정지
                     moveKeyValue = Vector2.zero;
+                    // 이동 속도 원상 복구
+                    speed = saveSpeed;
                 }
                 break;
             case MoveState.L_UP:
-                // 이동하는 중인데 벽에 부딪힘
-                if ((currentSpeed / speed) == 0)
+                actionDelay = actionDelay + Time.deltaTime;
+
+                // 점프 준비 동작때문에 약 0.15 대기합니다
+                if (actionDelay < 0.15f)
                 {
-                    // 위로 이동함
-                    currentVelocityY = jumpVelocity;
+                    break;
+                }
+                else
+                {
+                    // Move 함수에서 처리할 키 값
+                    moveKeyValue = Vector2.left;
                 }
 
-                // 이동 거리만큼 이동 했는가
+                // 수직 이동 거리만큼 이동 하지 못했나
+                if (targetPos.y > centerTrans.position.y)
+                {
+                    // 위로 이동함
+                    currentVelocityY = Mathf.SmoothDamp(currentSpeed, jumpVelocity, ref jumpSmoothVertical, speedSmoothTime);
+                }
+                // 수직 이동 거리만큼 이동 함
+                else
+                {
+                    // 캐릭터 이동 속도를 빠르게
+                    speed = Mathf.SmoothDamp(currentSpeed, saveSpeed * 1.5f, ref jumpSmoothHorizontal, speedSmoothTime);
+                }
+
+                // 수평 이동 거리만큼 이동 했는가
                 if (targetPos.x >= centerTrans.position.x)
                 {
-                    // 이동을 끝마쳤으니 상태를 대기로 변경
-                    playerMoveState = MoveState.IDLE;
+                    // 캐릭터의 상태 변화는 애니메이션 클립에서 이벤트를 통해 함수를 호출해서 변경함
+                    // 이동 정지
                     moveKeyValue = Vector2.zero;
+                    // 이동 속도 원상 복구
+                    speed = saveSpeed;
                 }
                 break;
             case MoveState.F_UP:
-                // 이동하는 중인데 벽에 부딪힘
-                if ((currentSpeed / speed) == 0)
+                actionDelay = actionDelay + Time.deltaTime;
+
+                // 점프 준비 동작때문에 약 0.15 대기합니다
+                if (actionDelay < 0.15f)
                 {
-                    // 위로 이동함
-                    currentVelocityY = jumpVelocity;
+                    break;
+                }
+                else
+                {
+                    // Move 함수에서 처리할 키 값
+                    moveKeyValue = Vector2.up;
                 }
 
-                // 이동 거리만큼 이동 했는가
+                // 수직 이동 거리만큼 이동 하지 못했나
+                if (targetPos.y > centerTrans.position.y)
+                {
+                    // 위로 이동함
+                    currentVelocityY = Mathf.SmoothDamp(currentSpeed, jumpVelocity, ref jumpSmoothVertical, speedSmoothTime);
+                }
+                // 수직 이동 거리만큼 이동 함
+                else
+                {
+                    // 캐릭터 이동 속도를 빠르게
+                    speed = Mathf.SmoothDamp(currentSpeed, saveSpeed * 1.5f, ref jumpSmoothHorizontal, speedSmoothTime);
+                }
+
+                // 수평 이동 거리만큼 이동 했는가
                 if (targetPos.z <= centerTrans.position.z)
                 {
-                    // 이동을 끝마쳤으니 상태를 대기로 변경
-                    playerMoveState = MoveState.IDLE;
+                    // 캐릭터의 상태 변화는 애니메이션 클립에서 이벤트를 통해 함수를 호출해서 변경함
+                    // 이동 정지
                     moveKeyValue = Vector2.zero;
+                    // 이동 속도 원상 복구
+                    speed = saveSpeed;
                 }
                 break;
             case MoveState.B_UP:
-                // 이동하는 중인데 벽에 부딪힘
-                if ((currentSpeed / speed) == 0)
+                actionDelay = actionDelay + Time.deltaTime;
+
+                // 점프 준비 동작때문에 약 0.15 대기합니다
+                if (actionDelay < 0.15f)
                 {
-                    // 위로 이동함
-                    currentVelocityY = jumpVelocity;
+                    break;
+                }
+                else
+                {
+                    // Move 함수에서 처리할 키 값
+                    moveKeyValue = Vector2.down;
                 }
 
-                // 이동 거리만큼 이동 했는가
+                // 수직 이동 거리만큼 이동 하지 못했나
+                if (targetPos.y > centerTrans.position.y)
+                {
+                    // 위로 이동함
+                    currentVelocityY = Mathf.SmoothDamp(currentSpeed, jumpVelocity, ref jumpSmoothVertical, speedSmoothTime);
+                }
+                // 수직 이동 거리만큼 이동 함
+                else
+                {
+                    // 캐릭터 이동 속도를 빠르게
+                    speed = Mathf.SmoothDamp(currentSpeed, saveSpeed * 1.5f, ref jumpSmoothHorizontal, speedSmoothTime);
+                }
+
+                // 수평 이동 거리만큼 이동 했는가
                 if (targetPos.z >= centerTrans.position.z)
                 {
-                    // 이동을 끝마쳤으니 상태를 대기로 변경
-                    playerMoveState = MoveState.IDLE;
+                    // 캐릭터의 상태 변화는 애니메이션 클립에서 이벤트를 통해 함수를 호출해서 변경함
+                    // 이동 정지
                     moveKeyValue = Vector2.zero;
+                    // 이동 속도 원상 복구
+                    speed = saveSpeed;
                 }
                 break;
             case MoveState.R_INTERACTION_PUSH:
@@ -2592,6 +2778,12 @@ public class PlayerMovement : MonoBehaviour
                     // ■★
                     //   ↑
                     //--------------------------------
+                    // 오른쪽으로 이동
+                    moveKeyValue = Vector2.right;
+                    // 이동 상태 변경
+                    playerMoveState = MoveState.BR_CLIMBING_MOVE;
+                    // 방향 바꿈
+                    transform.eulerAngles = new Vector3(0, 0, 0);
                 }
 
                 ray = centerTrans.position;
@@ -2634,6 +2826,12 @@ public class PlayerMovement : MonoBehaviour
                     // ■★
                     //   ■
                     //--------------------------------
+                    // 오른쪽으로 이동
+                    moveKeyValue = Vector2.right;
+                    // 이동 상태 변경
+                    playerMoveState = MoveState.FR_CLIMBING_MOVE;
+                    // 방향 바꿈
+                    transform.eulerAngles = new Vector3(0, 180, 0);
                 }
 
                 ray = centerTrans.position;
@@ -2676,6 +2874,12 @@ public class PlayerMovement : MonoBehaviour
                     // ★■
                     // ■
                     //--------------------------------
+                    // 왼쪽으로 이동
+                    moveKeyValue = Vector2.left;
+                    // 이동 상태 변경
+                    playerMoveState = MoveState.FL_CLIMBING_MOVE;
+                    // 방향 바꿈
+                    transform.eulerAngles = new Vector3(0, 180, 0);
                 }
 
                 ray = centerTrans.position;
@@ -2714,10 +2918,16 @@ public class PlayerMovement : MonoBehaviour
                 {
                     //--------------------------------
                     // 왼쪽 이동중에 Z축에 막힘
-                    //   ■
-                    // ■★
-                    //   ↑
+                    // ■
+                    // ★■
+                    // ↑
                     //--------------------------------
+                    // 왼쪽으로 이동
+                    moveKeyValue = Vector2.left;
+                    // 이동 상태 변경
+                    playerMoveState = MoveState.BL_CLIMBING_MOVE;
+                    // 방향 바꿈
+                    transform.eulerAngles = new Vector3(0, 0, 0);
                 }
 
                 ray = centerTrans.position;
@@ -2759,6 +2969,12 @@ public class PlayerMovement : MonoBehaviour
                     // →★■
                     //   ■
                     //--------------------------------
+                    // 앞쪽으로 이동
+                    moveKeyValue = Vector2.up;
+                    // 이동 상태 변경
+                    playerMoveState = MoveState.LL_CLIMBING_MOVE;
+                    // 방향 바꿈
+                    transform.eulerAngles = new Vector3(0, 90, 0);
                 }
 
                 ray = centerTrans.position;
@@ -2800,6 +3016,12 @@ public class PlayerMovement : MonoBehaviour
                     // ■★←
                     //   ■
                     //--------------------------------
+                    // 앞쪽으로 이동
+                    moveKeyValue = Vector2.up;
+                    // 이동 상태 변경
+                    playerMoveState = MoveState.RR_CLIMBING_MOVE;
+                    // 방향 바꿈
+                    transform.eulerAngles = new Vector3(0, 270, 0);
                 }
 
                 ray = centerTrans.position;
@@ -2841,6 +3063,12 @@ public class PlayerMovement : MonoBehaviour
                     //   ■
                     // →★■
                     //--------------------------------
+                    // 뒤쪽으로 이동
+                    moveKeyValue = Vector2.down;
+                    // 이동 상태 변경
+                    playerMoveState = MoveState.LR_CLIMBING_MOVE;
+                    // 방향 바꿈
+                    transform.eulerAngles = new Vector3(0, 90, 0);
                 }
 
                 ray = centerTrans.position;
@@ -2882,6 +3110,12 @@ public class PlayerMovement : MonoBehaviour
                     //   ■
                     // ■★←
                     //--------------------------------
+                    // 뒤쪽으로 이동
+                    moveKeyValue = Vector2.down;
+                    // 이동 상태 변경
+                    playerMoveState = MoveState.RL_CLIMBING_MOVE;
+                    // 방향 바꿈
+                    transform.eulerAngles = new Vector3(0, 270, 0);
                 }
 
                 ray = centerTrans.position;
@@ -3140,7 +3374,7 @@ public class PlayerMovement : MonoBehaviour
                 break;
         }// switch(playerMoveState)
 
-        //Debug.Log("playerMoveState : " + playerMoveState);
+        Debug.Log("playerMoveState : " + playerMoveState);
         //Debug.Log("moveKeyValue : " + moveKeyValue);
         //Debug.Log(mouseClick);
         //Debug.Log(interactionAnimeStart);
@@ -3151,13 +3385,13 @@ public class PlayerMovement : MonoBehaviour
     // 캐릭터 이동
     private void Move(Vector2 moveInput) {
         float targetSpeed = speed * moveInput.magnitude;
-        
         // Normalize 벡터의 크기를 1로 정규화 하는 함수
         // x, z 평면
         //var moveDiection = Vector3.Normalize(transform.forward * moveInput.y + transform.forward * moveInput.x);
         var moveDiection = new Vector3(moveInput.x, 0, moveInput.y);
         // 목표 까지 스무스하게
-        targetSpeed = Mathf.SmoothDamp(currentSpeed, targetSpeed, ref speedSmoothVelocity, speedSmoothTime);
+        //targetSpeed = Mathf.SmoothDamp(currentSpeed, targetSpeed, ref speedSmoothVelocity, speedSmoothTime, 2.0f);
+        //Debug.Log("targetSpeed : " + targetSpeed);
         // 매달리는 중이 아닐때만 중력 처리
         if (!climbingFlag)
         {
@@ -3170,6 +3404,8 @@ public class PlayerMovement : MonoBehaviour
         }
         // y 축
         var velocity = moveDiection * targetSpeed + Vector3.up * currentVelocityY;
+        //Debug.Log("velocity : " + moveDiection );
+        //Debug.Log("--------------------------------");
         //var velocity = (moveDiection + Vector3.up * currentVelocityY);
         // 월드 스페이스 이동
         characterController.Move(velocity * Time.deltaTime);
@@ -3194,11 +3430,71 @@ public class PlayerMovement : MonoBehaviour
        // Debug.Log("eulerAngles" + GameObject.Find("Follow Cam").transform.eulerAngles);
     }
 
-    private void UpdateAnimation(Vector2 moveInput)
+    private void UpdateAnimation()
     {
+        Vector2 move;
+
+        switch (playerMoveState)
+        {
+            case MoveState.L_MOVE:
+                move.x = -1;
+                move.y = 0;
+                break;
+            case MoveState.R_MOVE:
+                move.x = 1;
+                move.y = 0;
+                break;
+            case MoveState.B_MOVE:
+                move.x = 0;
+                move.y = -1;
+                break;
+            case MoveState.F_MOVE:
+                move.x = 0;
+                move.y = 1;
+                break;
+            case MoveState.R_INTERACTION_PULL:
+            case MoveState.R_INTERACTION_PULL_CLIMBING:
+            case MoveState.L_INTERACTION_PULL:
+            case MoveState.L_INTERACTION_PULL_CLIMBING:
+            case MoveState.F_INTERACTION_PULL:
+            case MoveState.F_INTERACTION_PULL_CLIMBING:
+            case MoveState.B_INTERACTION_PULL:
+            case MoveState.B_INTERACTION_PULL_CLIMBING:
+            case MoveState.RL_CLIMBING_MOVE:
+            case MoveState.LL_CLIMBING_MOVE:
+            case MoveState.FR_CLIMBING_MOVE:
+            case MoveState.BL_CLIMBING_MOVE:
+            case MoveState.RL_BL_CHANGE_CLIMBING:
+            case MoveState.LL_FR_CHANGE_CLIMBING:
+            case MoveState.FR_RL_CHANGE_CLIMBING:
+            case MoveState.BL_LL_CHANGE_CLIMBING:
+                move.x = -1;
+                move.y = 0;
+                break;
+            case MoveState.R_INTERACTION_PUSH:
+            case MoveState.L_INTERACTION_PUSH:
+            case MoveState.F_INTERACTION_PUSH:
+            case MoveState.B_INTERACTION_PUSH:
+            case MoveState.RR_CLIMBING_MOVE:
+            case MoveState.LR_CLIMBING_MOVE:
+            case MoveState.FL_CLIMBING_MOVE:
+            case MoveState.BR_CLIMBING_MOVE:
+            case MoveState.RR_FL_CHANGE_CLIMBING:
+            case MoveState.LR_BR_CHANGE_CLIMBING:
+            case MoveState.FL_LR_CHANGE_CLIMBING:
+            case MoveState.BR_RR_CHANGE_CLIMBING:
+                move.x = 1;
+                move.y = 0;
+                break;
+            default:
+                move.x = 0;
+                move.y = 0;
+                break;
+        }
+
         animationSpeedPercent = currentSpeed / speed;
-        animator.SetFloat("Vertical Move", moveInput.y * animationSpeedPercent, 0.05f, Time.deltaTime);
-        animator.SetFloat("Horizontal Move", moveInput.x * animationSpeedPercent, 0.05f, Time.deltaTime);
+        animator.SetFloat("Vertical Move", move.y * animationSpeedPercent, 0.05f, Time.deltaTime);
+        animator.SetFloat("Horizontal Move", move.x * animationSpeedPercent, 0.05f, Time.deltaTime);
         if (climbingUpAnime)
         {
             animator.SetTrigger("Climbing Up");
@@ -3223,8 +3519,13 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
+    // 캐릭터 상태를 대기 상태로 변경
+    public void UpdateStateToIdle() {
+        playerMoveState = MoveState.IDLE;
+    }
+
     private void OnControllerColliderHit(ControllerColliderHit hit)
     {
-        Debug.Log(hit.gameObject.layer);
+        //Debug.Log(hit.gameObject.layer);
     }
 }
