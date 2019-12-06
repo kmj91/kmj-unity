@@ -152,7 +152,7 @@ public class PlayerMovement : MonoBehaviour
         // 플레이어 애니메이션
         UpdateAnimation();
         // 플레이어 이동 처리
-        MoveProcess(playerInput.moveInput);
+        MoveProcess();
     }
 
     private void Update()
@@ -224,13 +224,15 @@ public class PlayerMovement : MonoBehaviour
     // 플레이어 이동 처리
     // moveInput : 입력받은 이동 키값 -1 ~ 1
     //--------------------------------------------
-    public void MoveProcess(Vector2 moveInput) {
+    public void MoveProcess() {
+        Vector2 moveInput;      // 카메라 뱡향에 다라 변화된 키 값
         Vector3 ray;            // 레이 시작점
         Vector3 rayDir;         // 레이 방향
         Vector3 check;          // 체크할 위치
         Vector3 box;            // 박스 크기
         Vector3 moveValue;      // 위치
         RaycastHit rayHit;      // 레이 충돌한 물체
+        float followCamAngleY;  // 카메라 방향
 
         box.x = 0.1f;
         box.y = 0.1f;
@@ -238,6 +240,40 @@ public class PlayerMovement : MonoBehaviour
         moveValue.x = 0f;
         moveValue.y = 0f;
         moveValue.z = 0f;
+        followCamAngleY = followCam.transform.eulerAngles.y;
+
+        //------------------------------------------------
+        // 카메라 방향에 따른 키 입력 값 변화
+        //------------------------------------------------
+        // 오른쪽 →
+        if (45 <= followCamAngleY && followCamAngleY < 135)
+        {
+            // 오른쪽 방향에서의 y 값은 x 값
+            moveInput.x = playerInput.moveInput.y;
+            // 키입력 x 값이 음수는 +y, 양수는 -y 변환
+            moveInput.y = -playerInput.moveInput.x;
+        }
+        // 뒤쪽 ↓
+        else if (135 <= followCamAngleY && followCamAngleY < 225)
+        {
+            // 뒤쪽 방향에서의 키입력은 전부 뒤집어진다
+            moveInput.x = -playerInput.moveInput.x;
+            moveInput.y = -playerInput.moveInput.y;
+        }
+        // 왼쪽 ←
+        else if (225 <= followCamAngleY && followCamAngleY < 315)
+        { 
+            // 키입력 y 값이 음수는 +x, 양수는 -x 변환
+            moveInput.x = -playerInput.moveInput.y;
+            // 왼쪽 방향에서의 x 값은 y 값
+            moveInput.y = playerInput.moveInput.x;
+        }
+        // 앞쪽 ↑
+        //else if (315 <= followCamAngleY && 360|| followCamAngleY< 45)
+        else {
+            // 정방향에서는 같다
+            moveInput = playerInput.moveInput;
+        }
 
         //------------------------------------------------
         // 이동 처리
@@ -3374,10 +3410,11 @@ public class PlayerMovement : MonoBehaviour
                 break;
         }// switch(playerMoveState)
 
-        Debug.Log("playerMoveState : " + playerMoveState);
+        //Debug.Log("playerMoveState : " + playerMoveState);
         //Debug.Log("moveKeyValue : " + moveKeyValue);
         //Debug.Log(mouseClick);
         //Debug.Log(interactionAnimeStart);
+        //Debug.Log(followCam.transform.eulerAngles);
         //Debug.Log("--------------------------------");
         Move(moveKeyValue);
     }
