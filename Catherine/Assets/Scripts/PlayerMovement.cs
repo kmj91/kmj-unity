@@ -57,11 +57,13 @@ public class PlayerMovement : MonoBehaviour
     // 상호작용 애니메이션 끝
     private bool interactionAnimeEnd;
     // 캐릭터 이동 목표 좌표
-    private Vector3 targetPos;
+    private Vector3 destPos;
     // 큐브 이동 목표 좌표
     private Vector3 cubeDestPos;
     // 상하좌우 이동 값
     private Vector2 moveKeyValue;
+    // 상태
+    private MoveState playerMoveState = MoveState.IDLE;
 
     private enum MoveState {
         IDLE,                       // 대기
@@ -115,9 +117,6 @@ public class PlayerMovement : MonoBehaviour
         BL_LL_CHANGE_CLIMBING       // 뒤쪽에서 왼쪽으로 방향 전환
     }
 
-    // 상태
-    private MoveState playerMoveState = MoveState.IDLE;
-
 
     private void Start()
     {
@@ -155,71 +154,6 @@ public class PlayerMovement : MonoBehaviour
         MoveProcess();
     }
 
-    private void Update()
-    {
-        //Vector2 move;
-
-        //switch (playerMoveState)
-        //{
-        //    case MoveState.L_MOVE:
-        //        move.x = -1;
-        //        move.y = 0;
-        //        break;
-        //    case MoveState.R_MOVE:
-        //        move.x = 1;
-        //        move.y = 0;
-        //        break;
-        //    case MoveState.B_MOVE:
-        //        move.x = 0;
-        //        move.y = -1;
-        //        break;
-        //    case MoveState.F_MOVE:
-        //        move.x = 0;
-        //        move.y = 1;
-        //        break;
-        //    case MoveState.R_INTERACTION_PULL:
-        //    case MoveState.R_INTERACTION_PULL_CLIMBING:
-        //    case MoveState.L_INTERACTION_PULL:
-        //    case MoveState.L_INTERACTION_PULL_CLIMBING:
-        //    case MoveState.F_INTERACTION_PULL:
-        //    case MoveState.F_INTERACTION_PULL_CLIMBING:
-        //    case MoveState.B_INTERACTION_PULL:
-        //    case MoveState.B_INTERACTION_PULL_CLIMBING:
-        //    case MoveState.RL_CLIMBING_MOVE:
-        //    case MoveState.LL_CLIMBING_MOVE:
-        //    case MoveState.FR_CLIMBING_MOVE:
-        //    case MoveState.BL_CLIMBING_MOVE:
-        //    case MoveState.RL_BL_CHANGE_CLIMBING:
-        //    case MoveState.LL_FR_CHANGE_CLIMBING:
-        //    case MoveState.FR_RL_CHANGE_CLIMBING:
-        //    case MoveState.BL_LL_CHANGE_CLIMBING:
-        //        move.x = -1;
-        //        move.y = 0;
-        //        break;
-        //    case MoveState.R_INTERACTION_PUSH:
-        //    case MoveState.L_INTERACTION_PUSH:
-        //    case MoveState.F_INTERACTION_PUSH:
-        //    case MoveState.B_INTERACTION_PUSH:
-        //    case MoveState.RR_CLIMBING_MOVE:
-        //    case MoveState.LR_CLIMBING_MOVE:
-        //    case MoveState.FL_CLIMBING_MOVE:
-        //    case MoveState.BR_CLIMBING_MOVE:
-        //    case MoveState.RR_FL_CHANGE_CLIMBING:
-        //    case MoveState.LR_BR_CHANGE_CLIMBING:
-        //    case MoveState.FL_LR_CHANGE_CLIMBING:
-        //    case MoveState.BR_RR_CHANGE_CLIMBING:
-        //        move.x = 1;
-        //        move.y = 0;
-        //        break;
-        //    default:
-        //        move.x = 0;
-        //        move.y = 0;
-        //        break;
-        //}
-
-        //UpdateAnimation(move);
-    }
-
     //--------------------------------------------
     // 플레이어 이동 처리
     // moveInput : 입력받은 이동 키값 -1 ~ 1
@@ -242,37 +176,49 @@ public class PlayerMovement : MonoBehaviour
         moveValue.z = 0f;
         followCamAngleY = followCam.transform.eulerAngles.y;
 
-        //------------------------------------------------
-        // 카메라 방향에 따른 키 입력 값 변화
-        //------------------------------------------------
-        // 오른쪽 →
-        if (45 <= followCamAngleY && followCamAngleY < 135)
-        {
-            // 오른쪽 방향에서의 y 값은 x 값
-            moveInput.x = playerInput.moveInput.y;
-            // 키입력 x 값이 음수는 +y, 양수는 -y 변환
-            moveInput.y = -playerInput.moveInput.x;
-        }
-        // 뒤쪽 ↓
-        else if (135 <= followCamAngleY && followCamAngleY < 225)
-        {
-            // 뒤쪽 방향에서의 키입력은 전부 뒤집어진다
-            moveInput.x = -playerInput.moveInput.x;
-            moveInput.y = -playerInput.moveInput.y;
-        }
-        // 왼쪽 ←
-        else if (225 <= followCamAngleY && followCamAngleY < 315)
-        { 
-            // 키입력 y 값이 음수는 +x, 양수는 -x 변환
-            moveInput.x = -playerInput.moveInput.y;
-            // 왼쪽 방향에서의 x 값은 y 값
-            moveInput.y = playerInput.moveInput.x;
-        }
-        // 앞쪽 ↑
-        //else if (315 <= followCamAngleY && 360|| followCamAngleY< 45)
-        else {
-            // 정방향에서는 같다
-            moveInput = playerInput.moveInput;
+        switch (playerMoveState) {
+            case MoveState.R_IDLE_CLIMBING:
+            case MoveState.L_IDLE_CLIMBING:
+            case MoveState.F_IDLE_CLIMBING:
+            case MoveState.B_IDLE_CLIMBING:
+                // 매달려 있을 때는 키입력 그대로
+                moveInput = playerInput.moveInput;
+                break;
+            default:
+                //------------------------------------------------
+                // 카메라 방향에 따른 키 입력 값 변화
+                //------------------------------------------------
+                // 오른쪽 →
+                if (45 <= followCamAngleY && followCamAngleY < 135)
+                {
+                    // 오른쪽 방향에서의 y 값은 x 값
+                    moveInput.x = playerInput.moveInput.y;
+                    // 키입력 x 값이 음수는 +y, 양수는 -y 변환
+                    moveInput.y = -playerInput.moveInput.x;
+                }
+                // 뒤쪽 ↓
+                else if (135 <= followCamAngleY && followCamAngleY < 225)
+                {
+                    // 뒤쪽 방향에서의 키입력은 전부 뒤집어진다
+                    moveInput.x = -playerInput.moveInput.x;
+                    moveInput.y = -playerInput.moveInput.y;
+                }
+                // 왼쪽 ←
+                else if (225 <= followCamAngleY && followCamAngleY < 315)
+                {
+                    // 키입력 y 값이 음수는 +x, 양수는 -x 변환
+                    moveInput.x = -playerInput.moveInput.y;
+                    // 왼쪽 방향에서의 x 값은 y 값
+                    moveInput.y = playerInput.moveInput.x;
+                }
+                // 앞쪽 ↑
+                //else if (315 <= followCamAngleY && 360|| followCamAngleY< 45)
+                else
+                {
+                    // 정방향에서는 같다
+                    moveInput = playerInput.moveInput;
+                }
+                break;
         }
 
         //------------------------------------------------
@@ -368,9 +314,9 @@ public class PlayerMovement : MonoBehaviour
                         }
 
                         // 목표 이동 위치
-                        targetPos.x = rayHit.transform.position.x - 1f;
-                        targetPos.y = rayHit.transform.position.y + 1f;
-                        targetPos.z = rayHit.transform.position.z;
+                        destPos.x = rayHit.transform.position.x - 1f;
+                        destPos.y = rayHit.transform.position.y + 1f;
+                        destPos.z = rayHit.transform.position.z;
 
                         ray = centerTrans.position;
                         rayDir = transform.forward;
@@ -384,9 +330,9 @@ public class PlayerMovement : MonoBehaviour
                             // ■★
                             //--------------------------------
                             // 왼쪽 위쪽 검사
-                            check.x = targetPos.x;
-                            check.y = targetPos.y + 1f;
-                            check.z = targetPos.z;
+                            check.x = destPos.x;
+                            check.y = destPos.y + 1f;
+                            check.z = destPos.z;
                             // 없다
                             if (!Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
                             {
@@ -401,7 +347,7 @@ public class PlayerMovement : MonoBehaviour
                                 if (!Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
                                 {
                                     // 위쪽 이동
-                                    targetPos.y = targetPos.y + 0.5f;
+                                    destPos.y = destPos.y + 0.5f;
                                     // Move 함수에서 처리할 키 값
                                     moveKeyValue = Vector2.left;
                                     // 왼쪽 이동 등반 상태
@@ -425,9 +371,9 @@ public class PlayerMovement : MonoBehaviour
                             // ？■
                             //--------------------------------
                             // 왼쪽 아래 검사
-                            check.x = targetPos.x;
-                            check.y = targetPos.y - 1f;
-                            check.z = targetPos.z;
+                            check.x = destPos.x;
+                            check.y = destPos.y - 1f;
+                            check.z = destPos.z;
                             // 있다
                             if (Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
                             {
@@ -448,7 +394,7 @@ public class PlayerMovement : MonoBehaviour
                                 // 2칸 아래쪽 검사
                                 check.y = check.y - 1f;
                                 // 아래쪽 이동
-                                targetPos.y = targetPos.y - 1f;
+                                destPos.y = destPos.y - 1f;
                                 // 있다
                                 if (Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
                                 {
@@ -492,9 +438,9 @@ public class PlayerMovement : MonoBehaviour
                         }
 
                         // 목표 이동 위치
-                        targetPos.x = rayHit.transform.position.x + 1f;
-                        targetPos.y = rayHit.transform.position.y + 1f;
-                        targetPos.z = rayHit.transform.position.z;
+                        destPos.x = rayHit.transform.position.x + 1f;
+                        destPos.y = rayHit.transform.position.y + 1f;
+                        destPos.z = rayHit.transform.position.z;
 
                         ray = centerTrans.position;
                         rayDir = transform.forward;
@@ -508,9 +454,9 @@ public class PlayerMovement : MonoBehaviour
                             // ★■
                             //--------------------------------
                             // 오른쪽 위 검사
-                            check.x = targetPos.x;
-                            check.y = targetPos.y + 1f;
-                            check.z = targetPos.z;
+                            check.x = destPos.x;
+                            check.y = destPos.y + 1f;
+                            check.z = destPos.z;
                             // 없다
                             if (!Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
                             {
@@ -525,7 +471,7 @@ public class PlayerMovement : MonoBehaviour
                                 if (!Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
                                 {
                                     // 위쪽 이동
-                                    targetPos.y = targetPos.y + 0.5f;
+                                    destPos.y = destPos.y + 0.5f;
                                     // Move 함수에서 처리할 키 값
                                     //moveKeyValue = Vector2.right;
                                     // 오른쪽 이동 등반 상태
@@ -549,9 +495,9 @@ public class PlayerMovement : MonoBehaviour
                             // ？■
                             //--------------------------------
                             // 오른쪽 아래 검사
-                            check.x = targetPos.x;
-                            check.y = targetPos.y - 1f;
-                            check.z = targetPos.z;
+                            check.x = destPos.x;
+                            check.y = destPos.y - 1f;
+                            check.z = destPos.z;
                             // 있다
                             if (Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
                             {
@@ -572,7 +518,7 @@ public class PlayerMovement : MonoBehaviour
                                 // 2칸 아래쪽 검사
                                 check.y = check.y - 1f;
                                 // 아래쪽 이동
-                                targetPos.y = targetPos.y - 1f;
+                                destPos.y = destPos.y - 1f;
                                 // 있다
                                 if (Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
                                 {
@@ -618,9 +564,9 @@ public class PlayerMovement : MonoBehaviour
                         }
 
                         // 목표 이동 위치
-                        targetPos.x = rayHit.transform.position.x;
-                        targetPos.y = rayHit.transform.position.y + 1f;
-                        targetPos.z = rayHit.transform.position.z - 1f;
+                        destPos.x = rayHit.transform.position.x;
+                        destPos.y = rayHit.transform.position.y + 1f;
+                        destPos.z = rayHit.transform.position.z - 1f;
 
                         ray = centerTrans.position;
                         rayDir = transform.forward;
@@ -634,9 +580,9 @@ public class PlayerMovement : MonoBehaviour
                             // ■★
                             //--------------------------------
                             // 뒤쪽 위 검사
-                            check.x = targetPos.x;
-                            check.y = targetPos.y + 1f;
-                            check.z = targetPos.z;
+                            check.x = destPos.x;
+                            check.y = destPos.y + 1f;
+                            check.z = destPos.z;
                             // 없다
                             if (!Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
                             {
@@ -651,7 +597,7 @@ public class PlayerMovement : MonoBehaviour
                                 if (!Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
                                 {
                                     // 위쪽 이동
-                                    targetPos.y = targetPos.y + 0.5f;
+                                    destPos.y = destPos.y + 0.5f;
                                     // Move 함수에서 처리할 키 값
                                     moveKeyValue = Vector2.down;
                                     // 뒤쪽 이동 등반 상태
@@ -675,9 +621,9 @@ public class PlayerMovement : MonoBehaviour
                             // ？■
                             //--------------------------------
                             // 뒤쪽 아래 검사
-                            check.x = targetPos.x;
-                            check.y = targetPos.y - 1f;
-                            check.z = targetPos.z;
+                            check.x = destPos.x;
+                            check.y = destPos.y - 1f;
+                            check.z = destPos.z;
                             // 있다
                             if (Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
                             {
@@ -698,7 +644,7 @@ public class PlayerMovement : MonoBehaviour
                                 // 2칸 아래쪽 검사
                                 check.y = check.y - 1f;
                                 // 아래쪽 이동
-                                targetPos.y = targetPos.y - 1f;
+                                destPos.y = destPos.y - 1f;
                                 // 있다
                                 if (Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
                                 {
@@ -745,9 +691,9 @@ public class PlayerMovement : MonoBehaviour
                         }
 
                         // 목표 이동 위치
-                        targetPos.x = rayHit.transform.position.x;
-                        targetPos.y = rayHit.transform.position.y + 1f;
-                        targetPos.z = rayHit.transform.position.z + 1f;
+                        destPos.x = rayHit.transform.position.x;
+                        destPos.y = rayHit.transform.position.y + 1f;
+                        destPos.z = rayHit.transform.position.z + 1f;
 
                         ray = centerTrans.position;
                         rayDir = transform.forward;
@@ -761,9 +707,9 @@ public class PlayerMovement : MonoBehaviour
                             // ★■
                             //--------------------------------
                             // 앞쪽 위 검사
-                            check.x = targetPos.x;
-                            check.y = targetPos.y + 1;
-                            check.z = targetPos.z;
+                            check.x = destPos.x;
+                            check.y = destPos.y + 1;
+                            check.z = destPos.z;
                             // 없다
                             if (!Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
                             {
@@ -778,7 +724,7 @@ public class PlayerMovement : MonoBehaviour
                                 if (!Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
                                 {
                                     // 위쪽 이동
-                                    targetPos.y = targetPos.y + 0.5f;
+                                    destPos.y = destPos.y + 0.5f;
                                     // Move 함수에서 처리할 키 값
                                     moveKeyValue = Vector2.up;
                                     // 앞쪽 이동 등반 상태
@@ -802,9 +748,9 @@ public class PlayerMovement : MonoBehaviour
                             // ？■
                             //--------------------------------
                             // 앞쪽 아래 검사
-                            check.x = targetPos.x;
-                            check.y = targetPos.y - 1f;
-                            check.z = targetPos.z;
+                            check.x = destPos.x;
+                            check.y = destPos.y - 1f;
+                            check.z = destPos.z;
                             // 있다
                             if (Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
                             {
@@ -825,7 +771,7 @@ public class PlayerMovement : MonoBehaviour
                                 // 2칸 아래쪽 검사
                                 check.y = check.y - 1f;
                                 // 아래쪽 이동
-                                targetPos.y = targetPos.y - 1f;
+                                destPos.y = destPos.y - 1f;
                                 // 있다
                                 if (Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
                                 {
@@ -869,11 +815,11 @@ public class PlayerMovement : MonoBehaviour
                     // 매달린 상태에서는 캐릭터가 중앙에 있지 않음
                     //---------------------------------------------
                     // 목표 이동 위치
-                    targetPos.x = rayHit.transform.position.x + 1f;
-                    targetPos.y = rayHit.transform.position.y;
-                    targetPos.z = rayHit.transform.position.z - 1f;
+                    destPos.x = rayHit.transform.position.x + 1f;
+                    destPos.y = rayHit.transform.position.y;
+                    destPos.z = rayHit.transform.position.z - 1f;
                     // ↓ 방향 있음
-                    if (Physics.CheckBox(targetPos, box, Quaternion.identity, 1 << layerMaskCube))
+                    if (Physics.CheckBox(destPos, box, Quaternion.identity, 1 << layerMaskCube))
                     {
                         //--------------------------------
                         // 왼쪽 이동 방향에 벽 있음
@@ -895,9 +841,9 @@ public class PlayerMovement : MonoBehaviour
                         // ？←
                         //--------------------------------
                         // 앞쪽 검사
-                        check.x = targetPos.x - 1;
-                        check.y = targetPos.y;
-                        check.z = targetPos.z;
+                        check.x = destPos.x - 1;
+                        check.y = destPos.y;
+                        check.z = destPos.z;
 
                         // ← 방향 있음
                         if (Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
@@ -911,7 +857,7 @@ public class PlayerMovement : MonoBehaviour
                         else
                         {
                             // ← 방향 이동
-                            targetPos.x = targetPos.x - 1;
+                            destPos.x = destPos.x - 1;
                             // Move 함수에서 처리할 키 값
                             moveKeyValue = Vector2.down;
                             // 왼쪽 이동 매달림
@@ -938,11 +884,11 @@ public class PlayerMovement : MonoBehaviour
                     // 매달린 상태에서는 캐릭터가 중앙에 있지 않음
                     //---------------------------------------------
                     // 목표 이동 위치
-                    targetPos.x = rayHit.transform.position.x + 1f;
-                    targetPos.y = rayHit.transform.position.y;
-                    targetPos.z = rayHit.transform.position.z + 1f;
+                    destPos.x = rayHit.transform.position.x + 1f;
+                    destPos.y = rayHit.transform.position.y;
+                    destPos.z = rayHit.transform.position.z + 1f;
                     // ↑ 방향 있음
-                    if (Physics.CheckBox(targetPos, box, Quaternion.identity, 1 << layerMaskCube))
+                    if (Physics.CheckBox(destPos, box, Quaternion.identity, 1 << layerMaskCube))
                     {
                         //--------------------------------
                         // 오른쪽 이동 방향에 벽 있음
@@ -964,9 +910,9 @@ public class PlayerMovement : MonoBehaviour
                         // ■★
                         //--------------------------------
                         // 앞쪽 검사
-                        check.x = targetPos.x - 1;
-                        check.y = targetPos.y;
-                        check.z = targetPos.z;
+                        check.x = destPos.x - 1;
+                        check.y = destPos.y;
+                        check.z = destPos.z;
 
                         // ← 방향 있음
                         if (Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
@@ -980,7 +926,7 @@ public class PlayerMovement : MonoBehaviour
                         else
                         {
                             // ← 방향 이동
-                            targetPos.x = targetPos.x - 1;
+                            destPos.x = destPos.x - 1;
                             // Move 함수에서 처리할 키 값
                             moveKeyValue = Vector2.up;
                             // 왼쪽 이동 매달림
@@ -1015,14 +961,14 @@ public class PlayerMovement : MonoBehaviour
                     // 매달린 상태에서는 캐릭터가 중앙에 있지 않음
                     //---------------------------------------------
                     // 목표 이동 위치
-                    targetPos.x = rayHit.transform.position.x;
-                    targetPos.y = rayHit.transform.position.y + 1f;
-                    targetPos.z = rayHit.transform.position.z;
+                    destPos.x = rayHit.transform.position.x;
+                    destPos.y = rayHit.transform.position.y + 1f;
+                    destPos.z = rayHit.transform.position.z;
                     // ↑ 방향 없음
-                    if (!Physics.CheckBox(targetPos, box, Quaternion.identity, 1 << layerMaskCube))
+                    if (!Physics.CheckBox(destPos, box, Quaternion.identity, 1 << layerMaskCube))
                     {
                         // 실제 이동 높이
-                        targetPos.y = targetPos.y - 0.5f;
+                        destPos.y = destPos.y - 0.5f;
                         // 매달림 상태 해제
                         climbingFlag = false;
                         // Move 함수에서 처리할 키 값
@@ -1059,11 +1005,11 @@ public class PlayerMovement : MonoBehaviour
                     // 매달린 상태에서는 캐릭터가 중앙에 있지 않음
                     //---------------------------------------------
                     // 목표 이동 위치
-                    targetPos.x = rayHit.transform.position.x - 1f;
-                    targetPos.y = rayHit.transform.position.y;
-                    targetPos.z = rayHit.transform.position.z + 1f;
+                    destPos.x = rayHit.transform.position.x - 1f;
+                    destPos.y = rayHit.transform.position.y;
+                    destPos.z = rayHit.transform.position.z + 1f;
                     // ↑ 방향 있음
-                    if (Physics.CheckBox(targetPos, box, Quaternion.identity, 1 << layerMaskCube))
+                    if (Physics.CheckBox(destPos, box, Quaternion.identity, 1 << layerMaskCube))
                     {
                         //--------------------------------
                         // 왼쪽 이동 방향에 벽 있음
@@ -1085,9 +1031,9 @@ public class PlayerMovement : MonoBehaviour
                         // ★■
                         //--------------------------------
                         // 앞쪽 검사
-                        check.x = targetPos.x + 1;
-                        check.y = targetPos.y;
-                        check.z = targetPos.z;
+                        check.x = destPos.x + 1;
+                        check.y = destPos.y;
+                        check.z = destPos.z;
 
                         // → 방향 있음
                         if (Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
@@ -1101,7 +1047,7 @@ public class PlayerMovement : MonoBehaviour
                         else
                         {
                             // → 방향 이동
-                            targetPos.x = targetPos.x + 1;
+                            destPos.x = destPos.x + 1;
                             // Move 함수에서 처리할 키 값
                             moveKeyValue = Vector2.up;
                             // 왼쪽 이동 매달림
@@ -1128,11 +1074,11 @@ public class PlayerMovement : MonoBehaviour
                     // 매달린 상태에서는 캐릭터가 중앙에 있지 않음
                     //---------------------------------------------
                     // 목표 이동 위치
-                    targetPos.x = rayHit.transform.position.x - 1f;
-                    targetPos.y = rayHit.transform.position.y;
-                    targetPos.z = rayHit.transform.position.z - 1f;
+                    destPos.x = rayHit.transform.position.x - 1f;
+                    destPos.y = rayHit.transform.position.y;
+                    destPos.z = rayHit.transform.position.z - 1f;
                     // ↓ 방향 있음
-                    if (Physics.CheckBox(targetPos, box, Quaternion.identity, 1 << layerMaskCube))
+                    if (Physics.CheckBox(destPos, box, Quaternion.identity, 1 << layerMaskCube))
                     {
                         //--------------------------------
                         // 오른쪽 이동 방향에 벽 있음
@@ -1154,9 +1100,9 @@ public class PlayerMovement : MonoBehaviour
                         // →？
                         //--------------------------------
                         // 앞쪽 검사
-                        check.x = targetPos.x + 1;
-                        check.y = targetPos.y;
-                        check.z = targetPos.z;
+                        check.x = destPos.x + 1;
+                        check.y = destPos.y;
+                        check.z = destPos.z;
 
                         // → 방향 있음
                         if (Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
@@ -1170,7 +1116,7 @@ public class PlayerMovement : MonoBehaviour
                         else
                         {
                             // → 방향 이동
-                            targetPos.x = targetPos.x + 1;
+                            destPos.x = destPos.x + 1;
                             // Move 함수에서 처리할 키 값
                             moveKeyValue = Vector2.down;
                             // 왼쪽 이동 매달림
@@ -1205,14 +1151,14 @@ public class PlayerMovement : MonoBehaviour
                     // 매달린 상태에서는 캐릭터가 중앙에 있지 않음
                     //---------------------------------------------
                     // 목표 이동 위치
-                    targetPos.x = rayHit.transform.position.x;
-                    targetPos.y = rayHit.transform.position.y + 1f;
-                    targetPos.z = rayHit.transform.position.z;
+                    destPos.x = rayHit.transform.position.x;
+                    destPos.y = rayHit.transform.position.y + 1f;
+                    destPos.z = rayHit.transform.position.z;
                     // ↑ 방향 없음
-                    if (!Physics.CheckBox(targetPos, box, Quaternion.identity, 1 << layerMaskCube))
+                    if (!Physics.CheckBox(destPos, box, Quaternion.identity, 1 << layerMaskCube))
                     {
                         // 실제 이동 높이
-                        targetPos.y = targetPos.y - 0.5f;
+                        destPos.y = destPos.y - 0.5f;
                         // 매달림 상태 해제
                         climbingFlag = false;
                         // Move 함수에서 처리할 키 값
@@ -1249,11 +1195,11 @@ public class PlayerMovement : MonoBehaviour
                     // 매달린 상태에서는 캐릭터가 중앙에 있지 않음
                     //---------------------------------------------
                     // 목표 이동 위치
-                    targetPos.x = rayHit.transform.position.x + 1f;
-                    targetPos.y = rayHit.transform.position.y;
-                    targetPos.z = rayHit.transform.position.z + 1f;
+                    destPos.x = rayHit.transform.position.x + 1f;
+                    destPos.y = rayHit.transform.position.y;
+                    destPos.z = rayHit.transform.position.z + 1f;
                     // → 방향 있음
-                    if (Physics.CheckBox(targetPos, box, Quaternion.identity, 1 << layerMaskCube))
+                    if (Physics.CheckBox(destPos, box, Quaternion.identity, 1 << layerMaskCube))
                     {
                         //--------------------------------
                         // 오른쪽 이동 방향에 벽 있음 
@@ -1274,9 +1220,9 @@ public class PlayerMovement : MonoBehaviour
                         // ■？
                         //--------------------------------
                         // 앞쪽 검사
-                        check.x = targetPos.x;
-                        check.y = targetPos.y;
-                        check.z = targetPos.z - 1f;
+                        check.x = destPos.x;
+                        check.y = destPos.y;
+                        check.z = destPos.z - 1f;
 
                         // ↓ 방향 있음
                         if (Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
@@ -1290,7 +1236,7 @@ public class PlayerMovement : MonoBehaviour
                         else
                         {
                             // ↓ 방향 이동
-                            targetPos.z = targetPos.z - 1f;
+                            destPos.z = destPos.z - 1f;
                             // Move 함수에서 처리할 키 값
                             moveKeyValue = Vector2.right;
                             // 왼쪽 이동 매달림
@@ -1317,11 +1263,11 @@ public class PlayerMovement : MonoBehaviour
                     // 매달린 상태에서는 캐릭터가 중앙에 있지 않음
                     //---------------------------------------------
                     // 목표 이동 위치
-                    targetPos.x = rayHit.transform.position.x - 1f;
-                    targetPos.y = rayHit.transform.position.y;
-                    targetPos.z = rayHit.transform.position.z + 1f;
+                    destPos.x = rayHit.transform.position.x - 1f;
+                    destPos.y = rayHit.transform.position.y;
+                    destPos.z = rayHit.transform.position.z + 1f;
                     // ← 방향 있음
-                    if (Physics.CheckBox(targetPos, box, Quaternion.identity, 1 << layerMaskCube))
+                    if (Physics.CheckBox(destPos, box, Quaternion.identity, 1 << layerMaskCube))
                     {
                         //--------------------------------
                         // 왼쪽 이동 방향에 벽 있음 
@@ -1342,9 +1288,9 @@ public class PlayerMovement : MonoBehaviour
                         // ？■
                         //--------------------------------
                         // 앞쪽 검사
-                        check.x = targetPos.x;
-                        check.y = targetPos.y;
-                        check.z = targetPos.z - 1f;
+                        check.x = destPos.x;
+                        check.y = destPos.y;
+                        check.z = destPos.z - 1f;
 
                         // ↓ 방향 있음
                         if (Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
@@ -1358,7 +1304,7 @@ public class PlayerMovement : MonoBehaviour
                         else
                         {
                             // ↓ 방향 이동
-                            targetPos.z = targetPos.z - 1f;
+                            destPos.z = destPos.z - 1f;
                             // Move 함수에서 처리할 키 값
                             moveKeyValue = Vector2.left;
                             // 왼쪽 이동 매달림
@@ -1393,14 +1339,14 @@ public class PlayerMovement : MonoBehaviour
                     // 매달린 상태에서는 캐릭터가 중앙에 있지 않음
                     //---------------------------------------------
                     // 목표 이동 위치
-                    targetPos.x = rayHit.transform.position.x;
-                    targetPos.y = rayHit.transform.position.y + 1f;
-                    targetPos.z = rayHit.transform.position.z;
+                    destPos.x = rayHit.transform.position.x;
+                    destPos.y = rayHit.transform.position.y + 1f;
+                    destPos.z = rayHit.transform.position.z;
                     // ↑ 방향 없음
-                    if (!Physics.CheckBox(targetPos, box, Quaternion.identity, 1 << layerMaskCube))
+                    if (!Physics.CheckBox(destPos, box, Quaternion.identity, 1 << layerMaskCube))
                     {
                         // 실제 이동 높이
-                        targetPos.y = targetPos.y - 0.5f;
+                        destPos.y = destPos.y - 0.5f;
                         // 매달림 상태 해제
                         climbingFlag = false;
                         // Move 함수에서 처리할 키 값
@@ -1437,11 +1383,11 @@ public class PlayerMovement : MonoBehaviour
                     // 매달린 상태에서는 캐릭터가 중앙에 있지 않음
                     //---------------------------------------------
                     // 목표 이동 위치
-                    targetPos.x = rayHit.transform.position.x - 1f;
-                    targetPos.y = rayHit.transform.position.y;
-                    targetPos.z = rayHit.transform.position.z - 1f;
+                    destPos.x = rayHit.transform.position.x - 1f;
+                    destPos.y = rayHit.transform.position.y;
+                    destPos.z = rayHit.transform.position.z - 1f;
                     // ← 방향 있음
-                    if (Physics.CheckBox(targetPos, box, Quaternion.identity, 1 << layerMaskCube))
+                    if (Physics.CheckBox(destPos, box, Quaternion.identity, 1 << layerMaskCube))
                     {
                         //--------------------------------
                         // 왼쪽 이동 방향에 벽 있음 
@@ -1462,9 +1408,9 @@ public class PlayerMovement : MonoBehaviour
                         // ↑★
                         //--------------------------------
                         // 앞쪽 검사
-                        check.x = targetPos.x;
-                        check.y = targetPos.y;
-                        check.z = targetPos.z + 1f;
+                        check.x = destPos.x;
+                        check.y = destPos.y;
+                        check.z = destPos.z + 1f;
 
                         // ↑ 방향 있음
                         if (Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
@@ -1478,7 +1424,7 @@ public class PlayerMovement : MonoBehaviour
                         else
                         {
                             // ↑ 방향 이동
-                            targetPos.z = targetPos.z + 1f;
+                            destPos.z = destPos.z + 1f;
                             // Move 함수에서 처리할 키 값
                             moveKeyValue = Vector2.left;
                             // 왼쪽 이동 매달림
@@ -1505,11 +1451,11 @@ public class PlayerMovement : MonoBehaviour
                     // 매달린 상태에서는 캐릭터가 중앙에 있지 않음
                     //---------------------------------------------
                     // 목표 이동 위치
-                    targetPos.x = rayHit.transform.position.x + 1f;
-                    targetPos.y = rayHit.transform.position.y;
-                    targetPos.z = rayHit.transform.position.z - 1f;
+                    destPos.x = rayHit.transform.position.x + 1f;
+                    destPos.y = rayHit.transform.position.y;
+                    destPos.z = rayHit.transform.position.z - 1f;
                     // → 방향 있음
-                    if (Physics.CheckBox(targetPos, box, Quaternion.identity, 1 << layerMaskCube))
+                    if (Physics.CheckBox(destPos, box, Quaternion.identity, 1 << layerMaskCube))
                     {
                         //--------------------------------
                         // 오른쪽 이동 방향에 벽 있음 
@@ -1530,9 +1476,9 @@ public class PlayerMovement : MonoBehaviour
                         // ★↑
                         //--------------------------------
                         // 앞쪽 검사
-                        check.x = targetPos.x;
-                        check.y = targetPos.y;
-                        check.z = targetPos.z + 1f;
+                        check.x = destPos.x;
+                        check.y = destPos.y;
+                        check.z = destPos.z + 1f;
 
                         // ↑ 방향 있음
                         if (Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
@@ -1546,7 +1492,7 @@ public class PlayerMovement : MonoBehaviour
                         else
                         {
                             // ↑ 방향 이동
-                            targetPos.z = targetPos.z + 1f;
+                            destPos.z = destPos.z + 1f;
                             // Move 함수에서 처리할 키 값
                             moveKeyValue = Vector2.right;
                             // 왼쪽 이동 매달림
@@ -1581,13 +1527,13 @@ public class PlayerMovement : MonoBehaviour
                     // 매달린 상태에서는 캐릭터가 중앙에 있지 않음
                     //---------------------------------------------
                     // 목표 이동 위치
-                    targetPos.x = rayHit.transform.position.x;
-                    targetPos.y = rayHit.transform.position.y + 1f;
-                    targetPos.z = rayHit.transform.position.z;
+                    destPos.x = rayHit.transform.position.x;
+                    destPos.y = rayHit.transform.position.y + 1f;
+                    destPos.z = rayHit.transform.position.z;
                     // ↑ 방향 없음
-                    if (!Physics.CheckBox(targetPos, box, Quaternion.identity, 1 << layerMaskCube)) {
+                    if (!Physics.CheckBox(destPos, box, Quaternion.identity, 1 << layerMaskCube)) {
                         // 실제 이동 높이
-                        targetPos.y = targetPos.y - 0.5f;
+                        destPos.y = destPos.y - 0.5f;
                         // 매달림 상태 해제
                         climbingFlag = false;
                         // Move 함수에서 처리할 키 값
@@ -1638,12 +1584,12 @@ public class PlayerMovement : MonoBehaviour
                     // ？★■
                     //--------------------------------
                     // 목표 이동 위치
-                    targetPos.x = rayHit.transform.position.x - 2f;
-                    targetPos.y = rayHit.transform.position.y;
-                    targetPos.z = rayHit.transform.position.z;
+                    destPos.x = rayHit.transform.position.x - 2f;
+                    destPos.y = rayHit.transform.position.y;
+                    destPos.z = rayHit.transform.position.z;
                     
                     // 없다
-                    if (!Physics.CheckBox(targetPos, box, Quaternion.identity, 1 << layerMaskCube))
+                    if (!Physics.CheckBox(destPos, box, Quaternion.identity, 1 << layerMaskCube))
                     {
                         //--------------------------------
                         // 아래쪽 검사
@@ -1651,14 +1597,14 @@ public class PlayerMovement : MonoBehaviour
                         // ？
                         //--------------------------------
                         // 아래쪽 검사
-                        check.x = targetPos.x;
-                        check.y = targetPos.y - 1f;
-                        check.z = targetPos.z;
+                        check.x = destPos.x;
+                        check.y = destPos.y - 1f;
+                        check.z = destPos.z;
 
                         // 큐브 이동 목표 좌표
-                        cubeDestPos.x = targetPos.x + 1f;
-                        cubeDestPos.y = targetPos.y;
-                        cubeDestPos.z = targetPos.z;
+                        cubeDestPos.x = destPos.x + 1f;
+                        cubeDestPos.y = destPos.y;
+                        cubeDestPos.z = destPos.z;
                         // 이동할 큐브 오브젝트
                         moveCube = rayHit.transform.gameObject;
 
@@ -1676,7 +1622,7 @@ public class PlayerMovement : MonoBehaviour
                             // 오른쪽 상호작용 당김
                             playerMoveState = MoveState.R_INTERACTION_PULL_CLIMBING;
                             // 아래쪽에 매달림
-                            targetPos.y = targetPos.y - 1f;
+                            destPos.y = destPos.y - 1f;
                         }
 
                         // Move 함수에서 처리할 키 값
@@ -1698,18 +1644,18 @@ public class PlayerMovement : MonoBehaviour
                     }
 
                     // 목표 이동 위치
-                    targetPos.x = rayHit.transform.position.x;
-                    targetPos.y = rayHit.transform.position.y;
-                    targetPos.z = rayHit.transform.position.z;
+                    destPos.x = rayHit.transform.position.x;
+                    destPos.y = rayHit.transform.position.y;
+                    destPos.z = rayHit.transform.position.z;
 
                     //--------------------------------
                     // 오른쪽 검사
                     // ★■？
                     //--------------------------------
                     // 오른쪽 검사
-                    check.x = targetPos.x + 1f;
-                    check.y = targetPos.y;
-                    check.z = targetPos.z;
+                    check.x = destPos.x + 1f;
+                    check.y = destPos.y;
+                    check.z = destPos.z;
 
                     // 큐브 이동 목표 좌표
                     cubeDestPos = check;
@@ -1725,8 +1671,8 @@ public class PlayerMovement : MonoBehaviour
                         //   ？
                         //--------------------------------
                         // 아래쪽 검사
-                        check.x = targetPos.x;
-                        check.y = targetPos.y - 1f;
+                        check.x = destPos.x;
+                        check.y = destPos.y - 1f;
 
                         // 있다
                         if (Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
@@ -1772,18 +1718,18 @@ public class PlayerMovement : MonoBehaviour
                     }
 
                     // 목표 이동 위치
-                    targetPos.x = rayHit.transform.position.x;
-                    targetPos.y = rayHit.transform.position.y;
-                    targetPos.z = rayHit.transform.position.z;
+                    destPos.x = rayHit.transform.position.x;
+                    destPos.y = rayHit.transform.position.y;
+                    destPos.z = rayHit.transform.position.z;
 
                     //--------------------------------
                     // 왼쪽 검사
                     // ？■★
                     //--------------------------------
                     // 왼쪽 검사
-                    check.x = targetPos.x - 1f;
-                    check.y = targetPos.y;
-                    check.z = targetPos.z;
+                    check.x = destPos.x - 1f;
+                    check.y = destPos.y;
+                    check.z = destPos.z;
 
                     // 큐브 이동 목표 좌표
                     cubeDestPos = check;
@@ -1799,8 +1745,8 @@ public class PlayerMovement : MonoBehaviour
                         // ？
                         //--------------------------------
                         // 아래쪽 검사
-                        check.x = targetPos.x;
-                        check.y = targetPos.y - 1f;
+                        check.x = destPos.x;
+                        check.y = destPos.y - 1f;
 
                         // 있다
                         if (Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
@@ -1831,12 +1777,12 @@ public class PlayerMovement : MonoBehaviour
                     // ■★？
                     //--------------------------------
                     // 목표 이동 위치
-                    targetPos.x = rayHit.transform.position.x + 2f;
-                    targetPos.y = rayHit.transform.position.y;
-                    targetPos.z = rayHit.transform.position.z;
+                    destPos.x = rayHit.transform.position.x + 2f;
+                    destPos.y = rayHit.transform.position.y;
+                    destPos.z = rayHit.transform.position.z;
                     
                     // 없다
-                    if (!Physics.CheckBox(targetPos, box, Quaternion.identity, 1 << layerMaskCube))
+                    if (!Physics.CheckBox(destPos, box, Quaternion.identity, 1 << layerMaskCube))
                     {
                         //--------------------------------
                         // 아래쪽 검사
@@ -1844,14 +1790,14 @@ public class PlayerMovement : MonoBehaviour
                         //     ？
                         //--------------------------------
                         // 아래쪽 검사
-                        check.x = targetPos.x;
-                        check.y = targetPos.y - 1f;
-                        check.z = targetPos.z;
+                        check.x = destPos.x;
+                        check.y = destPos.y - 1f;
+                        check.z = destPos.z;
 
                         // 큐브 이동 목표 좌표
-                        cubeDestPos.x = targetPos.x - 1f;
-                        cubeDestPos.y = targetPos.y;
-                        cubeDestPos.z = targetPos.z;
+                        cubeDestPos.x = destPos.x - 1f;
+                        cubeDestPos.y = destPos.y;
+                        cubeDestPos.z = destPos.z;
                         // 이동할 큐브 오브젝트
                         moveCube = rayHit.transform.gameObject;
 
@@ -1869,7 +1815,7 @@ public class PlayerMovement : MonoBehaviour
                             // 왼쪽 상호작용 당기고 매달림
                             playerMoveState = MoveState.L_INTERACTION_PULL_CLIMBING;
                             // 아래쪽에 매달림
-                            targetPos.y = targetPos.y - 1f;
+                            destPos.y = destPos.y - 1f;
                         }
 
                         // Move 함수에서 처리할 키 값
@@ -1910,9 +1856,9 @@ public class PlayerMovement : MonoBehaviour
                     }
 
                     // 목표 이동 위치
-                    targetPos.x = rayHit.transform.position.x;
-                    targetPos.y = rayHit.transform.position.y;
-                    targetPos.z = rayHit.transform.position.z;
+                    destPos.x = rayHit.transform.position.x;
+                    destPos.y = rayHit.transform.position.y;
+                    destPos.z = rayHit.transform.position.z;
 
                     //--------------------------------
                     // 앞쪽 검사
@@ -1921,9 +1867,9 @@ public class PlayerMovement : MonoBehaviour
                     // ★
                     //--------------------------------
                     // 앞쪽 검사
-                    check.x = targetPos.x;
-                    check.y = targetPos.y;
-                    check.z = targetPos.z + 1f;
+                    check.x = destPos.x;
+                    check.y = destPos.y;
+                    check.z = destPos.z + 1f;
 
                     // 큐브 이동 목표 좌표
                     cubeDestPos = check;
@@ -1939,8 +1885,8 @@ public class PlayerMovement : MonoBehaviour
                         // ？
                         //--------------------------------
                         // 아래쪽 검사
-                        check.z = targetPos.z;
-                        check.y = targetPos.y - 1f;
+                        check.z = destPos.z;
+                        check.y = destPos.y - 1f;
 
                         // 있다
                         if (Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
@@ -1974,12 +1920,12 @@ public class PlayerMovement : MonoBehaviour
                     // ？
                     //--------------------------------
                     // 목표 이동 위치
-                    targetPos.x = rayHit.transform.position.x;
-                    targetPos.y = rayHit.transform.position.y;
-                    targetPos.z = rayHit.transform.position.z - 2f;
+                    destPos.x = rayHit.transform.position.x;
+                    destPos.y = rayHit.transform.position.y;
+                    destPos.z = rayHit.transform.position.z - 2f;
 
                     // 없다
-                    if (!Physics.CheckBox(targetPos, box, Quaternion.identity, 1 << layerMaskCube))
+                    if (!Physics.CheckBox(destPos, box, Quaternion.identity, 1 << layerMaskCube))
                     {
                         //--------------------------------
                         // 아래쪽 검사
@@ -1987,14 +1933,14 @@ public class PlayerMovement : MonoBehaviour
                         //     ？
                         //--------------------------------
                         // 아래쪽 검사
-                        check.x = targetPos.x;
-                        check.y = targetPos.y - 1f;
-                        check.z = targetPos.z;
+                        check.x = destPos.x;
+                        check.y = destPos.y - 1f;
+                        check.z = destPos.z;
 
                         // 큐브 이동 목표 좌표
-                        cubeDestPos.x = targetPos.x;
-                        cubeDestPos.y = targetPos.y;
-                        cubeDestPos.z = targetPos.z + 1f;
+                        cubeDestPos.x = destPos.x;
+                        cubeDestPos.y = destPos.y;
+                        cubeDestPos.z = destPos.z + 1f;
                         // 이동할 큐브 오브젝트
                         moveCube = rayHit.transform.gameObject;
 
@@ -2012,7 +1958,7 @@ public class PlayerMovement : MonoBehaviour
                             // 앞쪽 상호작용 당기고 매달림
                             playerMoveState = MoveState.F_INTERACTION_PULL_CLIMBING;
                             // 아래쪽에 매달림
-                            targetPos.y = targetPos.y - 1f;
+                            destPos.y = destPos.y - 1f;
                         }
 
                         // Move 함수에서 처리할 키 값
@@ -2059,12 +2005,12 @@ public class PlayerMovement : MonoBehaviour
                     // ■
                     //--------------------------------
                     // 목표 이동 위치
-                    targetPos.x = rayHit.transform.position.x;
-                    targetPos.y = rayHit.transform.position.y;
-                    targetPos.z = rayHit.transform.position.z + 2f;
+                    destPos.x = rayHit.transform.position.x;
+                    destPos.y = rayHit.transform.position.y;
+                    destPos.z = rayHit.transform.position.z + 2f;
 
                     // 없다
-                    if (!Physics.CheckBox(targetPos, box, Quaternion.identity, 1 << layerMaskCube))
+                    if (!Physics.CheckBox(destPos, box, Quaternion.identity, 1 << layerMaskCube))
                     {
                         //--------------------------------
                         // 아래쪽 검사
@@ -2072,14 +2018,14 @@ public class PlayerMovement : MonoBehaviour
                         //     ？
                         //--------------------------------
                         // 아래쪽 검사
-                        check.x = targetPos.x;
-                        check.y = targetPos.y - 1f;
-                        check.z = targetPos.z;
+                        check.x = destPos.x;
+                        check.y = destPos.y - 1f;
+                        check.z = destPos.z;
 
                         // 큐브 이동 목표 좌표
-                        cubeDestPos.x = targetPos.x;
-                        cubeDestPos.y = targetPos.y;
-                        cubeDestPos.z = targetPos.z - 1f;
+                        cubeDestPos.x = destPos.x;
+                        cubeDestPos.y = destPos.y;
+                        cubeDestPos.z = destPos.z - 1f;
                         // 이동할 큐브 오브젝트
                         moveCube = rayHit.transform.gameObject;
 
@@ -2097,7 +2043,7 @@ public class PlayerMovement : MonoBehaviour
                             // 앞쪽 상호작용 당기고 매달림
                             playerMoveState = MoveState.B_INTERACTION_PULL_CLIMBING;
                             // 아래쪽에 매달림
-                            targetPos.y = targetPos.y - 1f;
+                            destPos.y = destPos.y - 1f;
                         }
 
                         // Move 함수에서 처리할 키 값
@@ -2119,9 +2065,9 @@ public class PlayerMovement : MonoBehaviour
                     }
 
                     // 목표 이동 위치
-                    targetPos.x = rayHit.transform.position.x;
-                    targetPos.y = rayHit.transform.position.y;
-                    targetPos.z = rayHit.transform.position.z;
+                    destPos.x = rayHit.transform.position.x;
+                    destPos.y = rayHit.transform.position.y;
+                    destPos.z = rayHit.transform.position.z;
 
                     //--------------------------------
                     // 뒤쪽 검사
@@ -2130,9 +2076,9 @@ public class PlayerMovement : MonoBehaviour
                     // ？
                     //--------------------------------
                     // 앞쪽 검사
-                    check.x = targetPos.x;
-                    check.y = targetPos.y;
-                    check.z = targetPos.z - 1f;
+                    check.x = destPos.x;
+                    check.y = destPos.y;
+                    check.z = destPos.z - 1f;
 
                     // 큐브 이동 목표 좌표
                     cubeDestPos = check;
@@ -2148,8 +2094,8 @@ public class PlayerMovement : MonoBehaviour
                         // ？
                         //--------------------------------
                         // 아래쪽 검사
-                        check.z = targetPos.z;
-                        check.y = targetPos.y - 1f;
+                        check.z = destPos.z;
+                        check.y = destPos.y - 1f;
 
                         // 있다
                         if (Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
@@ -2164,7 +2110,7 @@ public class PlayerMovement : MonoBehaviour
                 break;
             case MoveState.R_MOVE:
                 // 이동 거리만큼 이동 했는가
-                if (targetPos.x <= centerTrans.position.x)
+                if (destPos.x <= centerTrans.position.x)
                 {
                     // 멈춤
                     moveKeyValue = Vector2.zero;
@@ -2178,7 +2124,7 @@ public class PlayerMovement : MonoBehaviour
                 break;
             case MoveState.L_MOVE:
                 // 이동 거리만큼 이동 했는가
-                if (targetPos.x >= centerTrans.position.x)
+                if (destPos.x >= centerTrans.position.x)
                 {
                     // 멈춤
                     moveKeyValue = Vector2.zero;
@@ -2192,7 +2138,7 @@ public class PlayerMovement : MonoBehaviour
                 break;
             case MoveState.F_MOVE:
                 // 이동 거리만큼 이동 했는가
-                if (targetPos.z <= centerTrans.position.z)
+                if (destPos.z <= centerTrans.position.z)
                 {
                     // 멈춤
                     moveKeyValue = Vector2.zero;
@@ -2205,7 +2151,7 @@ public class PlayerMovement : MonoBehaviour
                 break;
             case MoveState.B_MOVE:
                 // 이동 거리만큼 이동 했는가
-                if (targetPos.z >= centerTrans.position.z)
+                if (destPos.z >= centerTrans.position.z)
                 {
                     // 멈춤
                     moveKeyValue = Vector2.zero;
@@ -2230,7 +2176,7 @@ public class PlayerMovement : MonoBehaviour
                 }
 
                 // 수직 이동 거리만큼 이동 하지 못했나
-                if (targetPos.y > centerTrans.position.y)
+                if (destPos.y > centerTrans.position.y)
                 {
                     // 위로 이동함
                     currentVelocityY = Mathf.SmoothDamp(currentSpeed, jumpVelocity, ref jumpSmoothVertical, speedSmoothTime);
@@ -2242,7 +2188,7 @@ public class PlayerMovement : MonoBehaviour
                 }
 
                 // 수평 이동 거리만큼 이동 했는가
-                if (targetPos.x <= centerTrans.position.x)
+                if (destPos.x <= centerTrans.position.x)
                 {
                     // 캐릭터의 상태 변화는 애니메이션 클립에서 이벤트를 통해 함수를 호출해서 변경함
                     // 이동 정지
@@ -2266,7 +2212,7 @@ public class PlayerMovement : MonoBehaviour
                 }
 
                 // 수직 이동 거리만큼 이동 하지 못했나
-                if (targetPos.y > centerTrans.position.y)
+                if (destPos.y > centerTrans.position.y)
                 {
                     // 위로 이동함
                     currentVelocityY = Mathf.SmoothDamp(currentSpeed, jumpVelocity, ref jumpSmoothVertical, speedSmoothTime);
@@ -2279,7 +2225,7 @@ public class PlayerMovement : MonoBehaviour
                 }
 
                 // 수평 이동 거리만큼 이동 했는가
-                if (targetPos.x >= centerTrans.position.x)
+                if (destPos.x >= centerTrans.position.x)
                 {
                     // 캐릭터의 상태 변화는 애니메이션 클립에서 이벤트를 통해 함수를 호출해서 변경함
                     // 이동 정지
@@ -2303,7 +2249,7 @@ public class PlayerMovement : MonoBehaviour
                 }
 
                 // 수직 이동 거리만큼 이동 하지 못했나
-                if (targetPos.y > centerTrans.position.y)
+                if (destPos.y > centerTrans.position.y)
                 {
                     // 위로 이동함
                     currentVelocityY = Mathf.SmoothDamp(currentSpeed, jumpVelocity, ref jumpSmoothVertical, speedSmoothTime);
@@ -2316,7 +2262,7 @@ public class PlayerMovement : MonoBehaviour
                 }
 
                 // 수평 이동 거리만큼 이동 했는가
-                if (targetPos.z <= centerTrans.position.z)
+                if (destPos.z <= centerTrans.position.z)
                 {
                     // 캐릭터의 상태 변화는 애니메이션 클립에서 이벤트를 통해 함수를 호출해서 변경함
                     // 이동 정지
@@ -2340,7 +2286,7 @@ public class PlayerMovement : MonoBehaviour
                 }
 
                 // 수직 이동 거리만큼 이동 하지 못했나
-                if (targetPos.y > centerTrans.position.y)
+                if (destPos.y > centerTrans.position.y)
                 {
                     // 위로 이동함
                     currentVelocityY = Mathf.SmoothDamp(currentSpeed, jumpVelocity, ref jumpSmoothVertical, speedSmoothTime);
@@ -2353,7 +2299,7 @@ public class PlayerMovement : MonoBehaviour
                 }
 
                 // 수평 이동 거리만큼 이동 했는가
-                if (targetPos.z >= centerTrans.position.z)
+                if (destPos.z >= centerTrans.position.z)
                 {
                     // 캐릭터의 상태 변화는 애니메이션 클립에서 이벤트를 통해 함수를 호출해서 변경함
                     // 이동 정지
@@ -2711,7 +2657,7 @@ public class PlayerMovement : MonoBehaviour
                 }
 
                 // 이동 거리만큼 이동 했는가
-                if (targetPos.y >= centerTrans.position.y)
+                if (destPos.y >= centerTrans.position.y)
                 {
                     // 매달림
                     climbingFlag = true;
@@ -2738,7 +2684,7 @@ public class PlayerMovement : MonoBehaviour
                 }
 
                 // 이동 거리만큼 이동 했는가
-                if (targetPos.y >= centerTrans.position.y)
+                if (destPos.y >= centerTrans.position.y)
                 {
                     // 매달림
                     climbingFlag = true;
@@ -2765,7 +2711,7 @@ public class PlayerMovement : MonoBehaviour
                 }
 
                 // 이동 거리만큼 이동 했는가
-                if (targetPos.y >= centerTrans.position.y)
+                if (destPos.y >= centerTrans.position.y)
                 {
                     // 매달림
                     climbingFlag = true;
@@ -2792,7 +2738,7 @@ public class PlayerMovement : MonoBehaviour
                 }
 
                 // 이동 거리만큼 이동 했는가
-                if (targetPos.y >= centerTrans.position.y)
+                if (destPos.y >= centerTrans.position.y)
                 {
                     // 매달림
                     climbingFlag = true;
@@ -2842,7 +2788,7 @@ public class PlayerMovement : MonoBehaviour
                 }
 
                 // 이동 거리만큼 이동 했는가
-                if (targetPos.z <= centerTrans.position.z)
+                if (destPos.z <= centerTrans.position.z)
                 {
                     // 이동을 끝마쳤으니 상태를 대기로 변경
                     playerMoveState = MoveState.R_IDLE_CLIMBING;
@@ -2890,7 +2836,7 @@ public class PlayerMovement : MonoBehaviour
                 }
 
                 // 이동 거리만큼 이동 했는가
-                if (targetPos.z >= centerTrans.position.z)
+                if (destPos.z >= centerTrans.position.z)
                 {
                     // 이동을 끝마쳤으니 상태를 대기로 변경
                     playerMoveState = MoveState.R_IDLE_CLIMBING;
@@ -2938,7 +2884,7 @@ public class PlayerMovement : MonoBehaviour
                 }
 
                 // 이동 거리만큼 이동 했는가
-                if (targetPos.z >= centerTrans.position.z)
+                if (destPos.z >= centerTrans.position.z)
                 {
                     // 이동을 끝마쳤으니 상태를 대기로 변경
                     playerMoveState = MoveState.L_IDLE_CLIMBING;
@@ -2986,7 +2932,7 @@ public class PlayerMovement : MonoBehaviour
                 }
 
                 // 이동 거리만큼 이동 했는가
-                if (targetPos.z <= centerTrans.position.z)
+                if (destPos.z <= centerTrans.position.z)
                 {
                     // 이동을 끝마쳤으니 상태를 대기로 변경
                     playerMoveState = MoveState.L_IDLE_CLIMBING;
@@ -3033,7 +2979,7 @@ public class PlayerMovement : MonoBehaviour
                 }
 
                 // 이동 거리만큼 이동 했는가
-                if (targetPos.x <= centerTrans.position.x)
+                if (destPos.x <= centerTrans.position.x)
                 {
                     // 이동을 끝마쳤으니 상태를 대기로 변경
                     playerMoveState = MoveState.F_IDLE_CLIMBING;
@@ -3080,7 +3026,7 @@ public class PlayerMovement : MonoBehaviour
                 }
 
                 // 이동 거리만큼 이동 했는가
-                if (targetPos.x >= centerTrans.position.x)
+                if (destPos.x >= centerTrans.position.x)
                 {
                     // 이동을 끝마쳤으니 상태를 대기로 변경
                     playerMoveState = MoveState.F_IDLE_CLIMBING;
@@ -3127,7 +3073,7 @@ public class PlayerMovement : MonoBehaviour
                 }
 
                 // 이동 거리만큼 이동 했는가
-                if (targetPos.x <= centerTrans.position.x)
+                if (destPos.x <= centerTrans.position.x)
                 {
                     // 이동을 끝마쳤으니 상태를 대기로 변경
                     playerMoveState = MoveState.B_IDLE_CLIMBING;
@@ -3174,7 +3120,7 @@ public class PlayerMovement : MonoBehaviour
                 }
 
                 // 이동 거리만큼 이동 했는가
-                if (targetPos.x >= centerTrans.position.x)
+                if (destPos.x >= centerTrans.position.x)
                 {
                     // 이동을 끝마쳤으니 상태를 대기로 변경
                     playerMoveState = MoveState.B_IDLE_CLIMBING;
@@ -3201,7 +3147,7 @@ public class PlayerMovement : MonoBehaviour
                 }
 
                 // 이동 거리만큼 이동 했는가
-                if (targetPos.x >= centerTrans.position.x)
+                if (destPos.x >= centerTrans.position.x)
                 {
                     // 이동을 끝마쳤으니 상태를 대기로 변경
                     playerMoveState = MoveState.F_IDLE_CLIMBING;
@@ -3229,7 +3175,7 @@ public class PlayerMovement : MonoBehaviour
                 }
 
                 // 이동 거리만큼 이동 했는가
-                if (targetPos.x >= centerTrans.position.x)
+                if (destPos.x >= centerTrans.position.x)
                 {
                     // 이동을 끝마쳤으니 상태를 대기로 변경
                     playerMoveState = MoveState.B_IDLE_CLIMBING;
@@ -3257,7 +3203,7 @@ public class PlayerMovement : MonoBehaviour
                 }
 
                 // 이동 거리만큼 이동 했는가
-                if (targetPos.x <= centerTrans.position.x)
+                if (destPos.x <= centerTrans.position.x)
                 {
                     // 이동을 끝마쳤으니 상태를 대기로 변경
                     playerMoveState = MoveState.B_IDLE_CLIMBING;
@@ -3285,7 +3231,7 @@ public class PlayerMovement : MonoBehaviour
                 }
 
                 // 이동 거리만큼 이동 했는가
-                if (targetPos.x <= centerTrans.position.x)
+                if (destPos.x <= centerTrans.position.x)
                 {
                     // 이동을 끝마쳤으니 상태를 대기로 변경
                     playerMoveState = MoveState.F_IDLE_CLIMBING;
@@ -3314,7 +3260,7 @@ public class PlayerMovement : MonoBehaviour
                 }
 
                 // 이동 거리만큼 이동 했는가
-                if (targetPos.z >= centerTrans.position.z)
+                if (destPos.z >= centerTrans.position.z)
                 {
                     // 이동을 끝마쳤으니 상태를 대기로 변경
                     playerMoveState = MoveState.R_IDLE_CLIMBING;
@@ -3343,7 +3289,7 @@ public class PlayerMovement : MonoBehaviour
                 }
 
                 // 이동 거리만큼 이동 했는가
-                if (targetPos.z >= centerTrans.position.z)
+                if (destPos.z >= centerTrans.position.z)
                 {
                     // 이동을 끝마쳤으니 상태를 대기로 변경
                     playerMoveState = MoveState.L_IDLE_CLIMBING;
@@ -3372,7 +3318,7 @@ public class PlayerMovement : MonoBehaviour
                 }
 
                 // 이동 거리만큼 이동 했는가
-                if (targetPos.z <= centerTrans.position.z)
+                if (destPos.z <= centerTrans.position.z)
                 {
                     // 이동을 끝마쳤으니 상태를 대기로 변경
                     playerMoveState = MoveState.R_IDLE_CLIMBING;
@@ -3401,7 +3347,7 @@ public class PlayerMovement : MonoBehaviour
                 }
 
                 // 이동 거리만큼 이동 했는가
-                if (targetPos.z <= centerTrans.position.z)
+                if (destPos.z <= centerTrans.position.z)
                 {
                     // 이동을 끝마쳤으니 상태를 대기로 변경
                     playerMoveState = MoveState.L_IDLE_CLIMBING;
