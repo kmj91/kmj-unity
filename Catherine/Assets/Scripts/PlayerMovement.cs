@@ -83,16 +83,13 @@ public class PlayerMovement : MonoBehaviour
         L_UP,                       // 왼쪽 위
         F_UP,                       // 앞쪽 위
         B_UP,                       // 뒤쪽 위
-        R_INTERACTION_PUSH,         // 오른쪽 밀기
+        INTERACTION_PUSH,           // 상호작용 밀기
         R_INTERACTION_PULL,         // 오른쪽 당김
         R_INTERACTION_PULL_CLIMBING, // 오른쪽 당기고 매달림
-        L_INTERACTION_PUSH,         // 왼쪽 밀기
         L_INTERACTION_PULL,         // 왼쪽 당김
         L_INTERACTION_PULL_CLIMBING, // 왼쪽 당기고 매달림
-        F_INTERACTION_PUSH,         // 앞쪽 밀기
         F_INTERACTION_PULL,         // 앞쪽 당김
         F_INTERACTION_PULL_CLIMBING, // 앞쪽 당기고 매달림
-        B_INTERACTION_PUSH,         // 뒤쪽 밀기
         B_INTERACTION_PULL,         // 뒤쪽 당김
         B_INTERACTION_PULL_CLIMBING, // 뒤쪽 당기고 매달림
         R_CLIMBING,                 // 오른쪽 등반
@@ -1657,11 +1654,6 @@ public class PlayerMovement : MonoBehaviour
                     check.y = destPos.y;
                     check.z = destPos.z;
 
-                    // 큐브 이동 목표 좌표
-                    cubeDestPos = check;
-                    // 이동할 큐브 오브젝트
-                    moveCube = rayHit.transform.gameObject;
-
                     // 없다
                     if (!Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
                     {
@@ -1677,10 +1669,10 @@ public class PlayerMovement : MonoBehaviour
                         // 있다
                         if (Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
                         {
-                            // Move 함수에서 처리할 키 값
-                            moveKeyValue = Vector2.right;
                             // 오른쪽 상호작용 밀기
-                            playerMoveState = MoveState.R_INTERACTION_PUSH;
+                            playerMoveState = MoveState.INTERACTION_PUSH;
+                            // 큐브 이동 처리
+                            rayHit.transform.gameObject.GetComponent<CubeMovement>().MoveRight();
                         }
                     }
                 }
@@ -1731,11 +1723,6 @@ public class PlayerMovement : MonoBehaviour
                     check.y = destPos.y;
                     check.z = destPos.z;
 
-                    // 큐브 이동 목표 좌표
-                    cubeDestPos = check;
-                    // 이동할 큐브 오브젝트
-                    moveCube = rayHit.transform.gameObject;
-
                     // 없다
                     if (!Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
                     {
@@ -1751,10 +1738,10 @@ public class PlayerMovement : MonoBehaviour
                         // 있다
                         if (Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
                         {
-                            // Move 함수에서 처리할 키 값
-                            moveKeyValue = Vector2.left;
                             // 오른쪽 상호작용 밀기
-                            playerMoveState = MoveState.L_INTERACTION_PUSH;
+                            playerMoveState = MoveState.INTERACTION_PUSH;
+                            // 큐브 이동 처리
+                            rayHit.transform.gameObject.GetComponent<CubeMovement>().MoveLeft();
                         }
                     }
                 }
@@ -1871,11 +1858,6 @@ public class PlayerMovement : MonoBehaviour
                     check.y = destPos.y;
                     check.z = destPos.z + 1f;
 
-                    // 큐브 이동 목표 좌표
-                    cubeDestPos = check;
-                    // 이동할 큐브 오브젝트
-                    moveCube = rayHit.transform.gameObject;
-
                     // 없다
                     if (!Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
                     {
@@ -1891,11 +1873,10 @@ public class PlayerMovement : MonoBehaviour
                         // 있다
                         if (Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
                         {
-                            // Move 함수에서 처리할 키 값
-                            moveKeyValue = Vector2.up;
                             // 앞쪽 상호작용 밀기
-                            playerMoveState = MoveState.F_INTERACTION_PUSH;
-
+                            playerMoveState = MoveState.INTERACTION_PUSH;
+                            // 큐브 이동 처리
+                            rayHit.transform.gameObject.GetComponent<CubeMovement>().MoveForward();
                         }
                     }
                 }
@@ -2080,11 +2061,6 @@ public class PlayerMovement : MonoBehaviour
                     check.y = destPos.y;
                     check.z = destPos.z - 1f;
 
-                    // 큐브 이동 목표 좌표
-                    cubeDestPos = check;
-                    // 이동할 큐브 오브젝트
-                    moveCube = rayHit.transform.gameObject;
-
                     // 없다
                     if (!Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
                     {
@@ -2100,10 +2076,10 @@ public class PlayerMovement : MonoBehaviour
                         // 있다
                         if (Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
                         {
-                            // Move 함수에서 처리할 키 값
-                            moveKeyValue = Vector2.down;
                             // 앞쪽 상호작용 밀기
-                            playerMoveState = MoveState.B_INTERACTION_PUSH;
+                            playerMoveState = MoveState.INTERACTION_PUSH;
+                            // 큐브 이동 처리
+                            rayHit.transform.gameObject.GetComponent<CubeMovement>().MoveBack();
                         }
                     }
                 }
@@ -2308,36 +2284,9 @@ public class PlayerMovement : MonoBehaviour
                     speed = saveSpeed;
                 }
                 break;
-            case MoveState.R_INTERACTION_PUSH:
-                // 오른쪽 밀기
-                // 큐브 이동
-                moveCube.transform.position = moveCube.transform.position + (Vector3.right * speed) * Time.deltaTime;
-                // 큐브가 이동 거리만큼 이동 했는가
-                if (cubeDestPos.x <= moveCube.transform.position.x)
-                {
-                    // 이동 완료
-                    moveKeyValue = Vector2.zero;
-                    moveCube.transform.position = cubeDestPos;
+            case MoveState.INTERACTION_PUSH:
+                // 상호작용 밀기
 
-                    // 마우스를 계속 클릭 중이라면
-                    if (mouseClick)
-                    {
-                        // 마우스 클릭 중
-                        // 상호작용 대기 상태
-                        playerMoveState = MoveState.R_IDLE_INTERACTION;
-                    }
-                    else
-                    {
-                        // 마우스 클릭 중이 아님
-                        // 대기 상태
-                        playerMoveState = MoveState.IDLE;
-                        // 애니메이션 종료
-                        interactionAnimeEnd = true;
-                        // 원 위치로 돌아감
-                        moveValue.x = -0.25f;
-                        characterController.Move(moveValue);
-                    }
-                }
                 break;
             case MoveState.R_INTERACTION_PULL:
                 // 오른쪽 당김
@@ -2388,37 +2337,6 @@ public class PlayerMovement : MonoBehaviour
                         climbingDownAnime = true;
                         // 상태 변경
                         playerMoveState = MoveState.L_CLIMBING;
-                    }
-                }
-                break;
-            case MoveState.L_INTERACTION_PUSH:
-                // 왼쪽 밀기
-                // 큐브 이동
-                moveCube.transform.position = moveCube.transform.position + (Vector3.left * speed) * Time.deltaTime;
-                // 큐브가 이동 거리만큼 이동 했는가
-                if (cubeDestPos.x >= moveCube.transform.position.x)
-                {
-                    // 이동 완료
-                    moveKeyValue = Vector2.zero;
-                    moveCube.transform.position = cubeDestPos;
-
-                    // 마우스를 계속 클릭 중이라면
-                    if (mouseClick)
-                    {
-                        // 마우스 클릭 중
-                        // 상호작용 대기 상태
-                        playerMoveState = MoveState.L_IDLE_INTERACTION;
-                    }
-                    else
-                    {
-                        // 마우스 클릭 중이 아님
-                        // 대기 상태
-                        playerMoveState = MoveState.IDLE;
-                        // 애니메이션 종료
-                        interactionAnimeEnd = true;
-                        // 원 위치로 돌아감
-                        moveValue.x = 0.25f;
-                        characterController.Move(moveValue);
                     }
                 }
                 break;
@@ -2474,36 +2392,6 @@ public class PlayerMovement : MonoBehaviour
                     }
                 }
                 break;
-            case MoveState.F_INTERACTION_PUSH:
-                // 앞쪽 밀기
-                // 큐브 이동
-                moveCube.transform.position = moveCube.transform.position + (Vector3.forward * speed) * Time.deltaTime;
-                // 큐브가 이동 거리만큼 이동 했는가
-                if (cubeDestPos.z <= moveCube.transform.position.z)
-                {
-                    // 이동 완료
-                    moveKeyValue = Vector2.zero;
-                    moveCube.transform.position = cubeDestPos;
-
-                    // 마우스를 계속 클릭 중이라면
-                    if (mouseClick)
-                    {
-                        // 마우스 클릭 중
-                        // 상호작용 대기 상태
-                        playerMoveState = MoveState.F_IDLE_INTERACTION;
-                    }
-                    else {
-                        // 마우스 클릭 중이 아님
-                        // 대기 상태
-                        playerMoveState = MoveState.IDLE;
-                        // 애니메이션 종료
-                        interactionAnimeEnd = true;
-                        // 원 위치로 돌아감
-                        moveValue.z = -0.25f;
-                        characterController.Move(moveValue);
-                    }
-                }
-                break;
             case MoveState.F_INTERACTION_PULL:
                 // 앞쪽 당김
                 // 큐브 이동
@@ -2553,37 +2441,6 @@ public class PlayerMovement : MonoBehaviour
                         climbingDownAnime = true;
                         // 상태 변경
                         playerMoveState = MoveState.B_CLIMBING;
-                    }
-                }
-                break;
-            case MoveState.B_INTERACTION_PUSH:
-                // 뒤쪽 밀기
-                // 큐브 이동
-                moveCube.transform.position = moveCube.transform.position + (Vector3.back * speed) * Time.deltaTime;
-                // 큐브가 이동 거리만큼 이동 했는가
-                if (cubeDestPos.z >= moveCube.transform.position.z)
-                {
-                    // 이동 완료
-                    moveKeyValue = Vector2.zero;
-                    moveCube.transform.position = cubeDestPos;
-
-                    // 마우스를 계속 클릭 중이라면
-                    if (mouseClick)
-                    {
-                        // 마우스 클릭 중
-                        // 상호작용 대기 상태
-                        playerMoveState = MoveState.B_IDLE_INTERACTION;
-                    }
-                    else
-                    {
-                        // 마우스 클릭 중이 아님
-                        // 대기 상태
-                        playerMoveState = MoveState.IDLE;
-                        // 애니메이션 종료
-                        interactionAnimeEnd = true;
-                        // 원 위치로 돌아감
-                        moveValue.z = 0.25f;
-                        characterController.Move(moveValue);
                     }
                 }
                 break;
@@ -3454,10 +3311,7 @@ public class PlayerMovement : MonoBehaviour
                 move.x = -1;
                 move.y = 0;
                 break;
-            case MoveState.R_INTERACTION_PUSH:
-            case MoveState.L_INTERACTION_PUSH:
-            case MoveState.F_INTERACTION_PUSH:
-            case MoveState.B_INTERACTION_PUSH:
+            case MoveState.INTERACTION_PUSH:
             case MoveState.RR_CLIMBING_MOVE:
             case MoveState.LR_CLIMBING_MOVE:
             case MoveState.FL_CLIMBING_MOVE:
