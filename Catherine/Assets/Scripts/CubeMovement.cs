@@ -9,7 +9,7 @@ public class CubeMovement : MonoBehaviour
     // 큐브 이동 목표 좌표
     public Vector3 destPos;
     // 큐브 이동 속도
-    public float speed = 2f;
+    public float speed = 4f;
 
     // 상태
     private CubeMoveState cubeMoveState = CubeMoveState.IDLE;

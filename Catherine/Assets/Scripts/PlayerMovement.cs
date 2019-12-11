@@ -13,7 +13,7 @@ public class PlayerMovement : MonoBehaviour
     private GameManager gameManager;
     private Transform centerTrans;
     private LayerMask layerMaskCube;
-    private GameObject moveCube;
+    private GameObject cubeObject;            // 이동할 큐브 오브젝트
 
     // 캐릭터 스피드
     public float speed = 2f;
@@ -46,26 +46,20 @@ public class PlayerMovement : MonoBehaviour
     private float saveSpeed;
     // 등반 플래그
     private bool climbingFlag;
-    // 위로 점프 애니메이션
-    private bool climbingUpAnime;
-    // 아래로 점프 애니메이션
-    private bool climbingDownAnime;
     // 마우스 클릭
     private bool mouseClick;
-    // 상호작용 애니메이션 시작
-    private bool interactionAnimeStart;
-    // 상호작용 애니메이션 끝
-    private bool interactionAnimeEnd;
     // 캐릭터 이동 목표 좌표
     private Vector3 destPos;
     // 큐브 이동 목표 좌표
     private Vector3 cubeDestPos;
     // 상하좌우 이동 값
     private Vector2 moveKeyValue;
-    // 상태
-    private MoveState playerMoveState = MoveState.IDLE;
+    // 플레이어 상태
+    private PlayerState playerState = PlayerState.IDLE;
+    // 애니메이션
+    private AnimationSwitch animeSwitch = AnimationSwitch.IDLE;
 
-    private enum MoveState {
+    private enum PlayerState {
         IDLE,                       // 대기
         R_IDLE_CLIMBING,            // 오른쪽 매달림 대기
         L_IDLE_CLIMBING,            // 왼쪽 매달림 대기
@@ -83,7 +77,18 @@ public class PlayerMovement : MonoBehaviour
         L_UP,                       // 왼쪽 위
         F_UP,                       // 앞쪽 위
         B_UP,                       // 뒤쪽 위
-        INTERACTION_PUSH,           // 상호작용 밀기
+        R_INTERACTION_PUSH_READY,   // 오른쪽 밀기 준비
+        L_INTERACTION_PUSH_READY,   // 왼쪽 밀기 준비
+        F_INTERACTION_PUSH_READY,   // 앞쪽 밀기 준비
+        B_INTERACTION_PUSH_READY,   // 뒤쪽 밀기 준비
+        R_INTERACTION_PUSH,         // 오른쪽 밀기
+        L_INTERACTION_PUSH,         // 왼쪽 밀기
+        F_INTERACTION_PUSH,         // 앞쪽 밀기
+        B_INTERACTION_PUSH,         // 뒤쪽 밀기
+        R_INTERACTION_PUSH_END,     // 오른쪽 밀기 끝
+        L_INTERACTION_PUSH_END,     // 왼쪽 밀기 끝
+        F_INTERACTION_PUSH_END,     // 앞쪽 밀기 끝
+        B_INTERACTION_PUSH_END,     // 뒤쪽 밀기 끝
         R_INTERACTION_PULL,         // 오른쪽 당김
         R_INTERACTION_PULL_CLIMBING, // 오른쪽 당기고 매달림
         L_INTERACTION_PULL,         // 왼쪽 당김
@@ -113,6 +118,24 @@ public class PlayerMovement : MonoBehaviour
         BR_RR_CHANGE_CLIMBING,      // 뒤쪽에서 오른쪽으로 방향 전환
         BL_LL_CHANGE_CLIMBING       // 뒤쪽에서 왼쪽으로 방향 전환
     }
+
+    // 애니메이션 스위치
+    private enum AnimationSwitch
+    {
+        IDLE,
+        UP,
+        DOWN,
+        INTERACTION_START,
+        INTERACTION_END,
+        PUSH_IDLE,
+        PUSH,
+        PUSH_END,
+    }
+
+    private const float INTERACTION_MOVE_VALUE = 0.25f;
+    private const float JUMP_DELAY = 0.15f;
+    private const float PUSH_DELAY = 0.5f;
+    private const float PUSH_END_DELAY = 0.15f;
 
 
     private void Start()
@@ -173,11 +196,11 @@ public class PlayerMovement : MonoBehaviour
         moveValue.z = 0f;
         followCamAngleY = followCam.transform.eulerAngles.y;
 
-        switch (playerMoveState) {
-            case MoveState.R_IDLE_CLIMBING:
-            case MoveState.L_IDLE_CLIMBING:
-            case MoveState.F_IDLE_CLIMBING:
-            case MoveState.B_IDLE_CLIMBING:
+        switch (playerState) {
+            case PlayerState.R_IDLE_CLIMBING:
+            case PlayerState.L_IDLE_CLIMBING:
+            case PlayerState.F_IDLE_CLIMBING:
+            case PlayerState.B_IDLE_CLIMBING:
                 // 매달려 있을 때는 키입력 그대로
                 moveInput = playerInput.moveInput;
                 break;
@@ -224,9 +247,9 @@ public class PlayerMovement : MonoBehaviour
         // 키 입력 처리를 합니다
         // 그 외에는 입력된 키의 행동 수행
         //------------------------------------------------
-        switch (playerMoveState)
+        switch (playerState)
         {
-            case MoveState.IDLE:
+            case PlayerState.IDLE:
                 //------------------------------------------------
                 // 기본 대기 상태일 때의 마우스 클릭 입력 처리
                 //------------------------------------------------
@@ -247,40 +270,48 @@ public class PlayerMovement : MonoBehaviour
                         // 정면 보고 있음
                         if ((int)transform.eulerAngles.y == 0)
                         {
-                            playerMoveState = MoveState.F_IDLE_INTERACTION;
-                            interactionAnimeStart = true;
+                            // 앞쪽 상호작용
+                            playerState = PlayerState.F_IDLE_INTERACTION;
+                            // 애니메이션 상호작용
+                            animeSwitch = AnimationSwitch.INTERACTION_START;
                             // 큐브에 바싹 붙음
-                            moveValue.z = 0.25f;
+                            moveValue.z = INTERACTION_MOVE_VALUE;
                             characterController.Move(moveValue);
                             break;
                         }
                         // 오른쪽 보고 있음
                         else if ((int)transform.eulerAngles.y == 90)
                         {
-                            playerMoveState = MoveState.R_IDLE_INTERACTION;
-                            interactionAnimeStart = true;
+                            // 오른쪽 상호작용
+                            playerState = PlayerState.R_IDLE_INTERACTION;
+                            // 애니메이션 상호작용
+                            animeSwitch = AnimationSwitch.INTERACTION_START;
                             // 큐브에 바싹 붙음
-                            moveValue.x = 0.25f;
+                            moveValue.x = INTERACTION_MOVE_VALUE;
                             characterController.Move(moveValue);
                             break;
                         }
                         // 뒤쪽 보고 있음
                         else if ((int)transform.eulerAngles.y == 180)
                         {
-                            playerMoveState = MoveState.B_IDLE_INTERACTION;
-                            interactionAnimeStart = true;
+                            // 뒤쪽 상호작용
+                            playerState = PlayerState.B_IDLE_INTERACTION;
+                            // 애니메이션 상호작용
+                            animeSwitch = AnimationSwitch.INTERACTION_START;
                             // 큐브에 바싹 붙음
-                            moveValue.z = -0.25f;
+                            moveValue.z = -INTERACTION_MOVE_VALUE;
                             characterController.Move(moveValue);
                             break;
                         }
                         // 왼쪽 보고 있음
                         else if ((int)transform.eulerAngles.y == 270)
                         {
-                            playerMoveState = MoveState.L_IDLE_INTERACTION;
-                            interactionAnimeStart = true;
+                            // 왼쪽 상호작용
+                            playerState = PlayerState.L_IDLE_INTERACTION;
+                            // 애니메이션 상호작용
+                            animeSwitch = AnimationSwitch.INTERACTION_START;
                             // 큐브에 바싹 붙음
-                            moveValue.x = -0.25f;
+                            moveValue.x = -INTERACTION_MOVE_VALUE;
                             characterController.Move(moveValue);
                             break;
                         }
@@ -348,9 +379,9 @@ public class PlayerMovement : MonoBehaviour
                                     // Move 함수에서 처리할 키 값
                                     moveKeyValue = Vector2.left;
                                     // 왼쪽 이동 등반 상태
-                                    playerMoveState = MoveState.L_UP;
-                                    // 애니메이션
-                                    climbingUpAnime = true;
+                                    playerState = PlayerState.L_UP;
+                                    // 애니메이션 점프
+                                    animeSwitch = AnimationSwitch.UP;
                                     // 점프 애니메이션은 약간의 딜레이가 필요합니다
                                     actionDelay = 0;
                                     // 캐릭터 속도 관련 셋팅
@@ -377,7 +408,7 @@ public class PlayerMovement : MonoBehaviour
                                 // Move 함수에서 처리할 키 값
                                 moveKeyValue = Vector2.left;
                                 // 왼쪽 이동 상태
-                                playerMoveState = MoveState.L_MOVE;
+                                playerState = PlayerState.L_MOVE;
                             }
                             // 없다
                             else
@@ -398,7 +429,7 @@ public class PlayerMovement : MonoBehaviour
                                     // Move 함수에서 처리할 키 값
                                     moveKeyValue = Vector2.left;
                                     // 왼쪽 이동 상태
-                                    playerMoveState = MoveState.L_MOVE;
+                                    playerState = PlayerState.L_MOVE;
                                 }
                                 // 없다
                                 else
@@ -406,9 +437,9 @@ public class PlayerMovement : MonoBehaviour
                                     // Move 함수에서 처리할 키 값
                                     moveKeyValue = Vector2.left;
                                     // 왼쪽 이동 매달림
-                                    playerMoveState = MoveState.L_CLIMBING;
-                                    // 애니메이션
-                                    climbingDownAnime = true;
+                                    playerState = PlayerState.L_CLIMBING;
+                                    // 애니메이션 아래 점프
+                                    animeSwitch = AnimationSwitch.DOWN;
                                 }
                             }
                         }
@@ -472,9 +503,9 @@ public class PlayerMovement : MonoBehaviour
                                     // Move 함수에서 처리할 키 값
                                     //moveKeyValue = Vector2.right;
                                     // 오른쪽 이동 등반 상태
-                                    playerMoveState = MoveState.R_UP;
-                                    // 애니메이션
-                                    climbingUpAnime = true;
+                                    playerState = PlayerState.R_UP;
+                                    // 애니메이션 점프
+                                    animeSwitch = AnimationSwitch.UP;
                                     // 점프 애니메이션은 약간의 딜레이가 필요합니다
                                     actionDelay = 0;
                                     // 캐릭터 속도 관련 셋팅
@@ -501,7 +532,7 @@ public class PlayerMovement : MonoBehaviour
                                 // Move 함수에서 처리할 키 값
                                 moveKeyValue = Vector2.right;
                                 // 오른쪽 이동 상태
-                                playerMoveState = MoveState.R_MOVE;
+                                playerState = PlayerState.R_MOVE;
                             }
                             // 없다
                             else
@@ -522,7 +553,7 @@ public class PlayerMovement : MonoBehaviour
                                     // Move 함수에서 처리할 키 값
                                     moveKeyValue = Vector2.right;
                                     // 오른쪽 이동 상태
-                                    playerMoveState = MoveState.R_MOVE;
+                                    playerState = PlayerState.R_MOVE;
                                 }
                                 // 없다
                                 else
@@ -530,9 +561,9 @@ public class PlayerMovement : MonoBehaviour
                                     // Move 함수에서 처리할 키 값
                                     moveKeyValue = Vector2.right;
                                     // 오른쪽 이동 매달림
-                                    playerMoveState = MoveState.R_CLIMBING;
-                                    // 애니메이션
-                                    climbingDownAnime = true;
+                                    playerState = PlayerState.R_CLIMBING;
+                                    // 애니메이션 아래 점프
+                                    animeSwitch = AnimationSwitch.DOWN;
                                 }
                             }
                         }
@@ -598,9 +629,9 @@ public class PlayerMovement : MonoBehaviour
                                     // Move 함수에서 처리할 키 값
                                     moveKeyValue = Vector2.down;
                                     // 뒤쪽 이동 등반 상태
-                                    playerMoveState = MoveState.B_UP;
-                                    // 애니메이션
-                                    climbingUpAnime = true;
+                                    playerState = PlayerState.B_UP;
+                                    // 애니메이션 점프
+                                    animeSwitch = AnimationSwitch.UP;
                                     // 점프 애니메이션은 약간의 딜레이가 필요합니다
                                     actionDelay = 0;
                                     // 캐릭터 속도 관련 셋팅
@@ -627,7 +658,7 @@ public class PlayerMovement : MonoBehaviour
                                 // Move 함수에서 처리할 키 값
                                 moveKeyValue = Vector2.down;
                                 // 뒤쪽 이동 상태
-                                playerMoveState = MoveState.B_MOVE;
+                                playerState = PlayerState.B_MOVE;
                             }
                             // 없다
                             else
@@ -648,7 +679,7 @@ public class PlayerMovement : MonoBehaviour
                                     // Move 함수에서 처리할 키 값
                                     moveKeyValue = Vector2.down;
                                     // 뒤쪽 이동 상태
-                                    playerMoveState = MoveState.B_MOVE;
+                                    playerState = PlayerState.B_MOVE;
                                 }
                                 // 없다
                                 else
@@ -656,9 +687,9 @@ public class PlayerMovement : MonoBehaviour
                                     // Move 함수에서 처리할 키 값
                                     moveKeyValue = Vector2.down;
                                     // 뒤쪽 이동 매달림
-                                    playerMoveState = MoveState.B_CLIMBING;
-                                    // 애니메이션
-                                    climbingDownAnime = true;
+                                    playerState = PlayerState.B_CLIMBING;
+                                    // 애니메이션 아래 점프
+                                    animeSwitch = AnimationSwitch.DOWN;
                                 }
                             }
                         }
@@ -725,9 +756,9 @@ public class PlayerMovement : MonoBehaviour
                                     // Move 함수에서 처리할 키 값
                                     moveKeyValue = Vector2.up;
                                     // 앞쪽 이동 등반 상태
-                                    playerMoveState = MoveState.F_UP;
-                                    // 애니메이션
-                                    climbingUpAnime = true;
+                                    playerState = PlayerState.F_UP;
+                                    // 애니메이션 점프
+                                    animeSwitch = AnimationSwitch.UP;
                                     // 점프 애니메이션은 약간의 딜레이가 필요합니다
                                     actionDelay = 0;
                                     // 캐릭터 속도 관련 셋팅
@@ -754,7 +785,7 @@ public class PlayerMovement : MonoBehaviour
                                 // Move 함수에서 처리할 키 값
                                 moveKeyValue = Vector2.up;
                                 // 앞쪽 이동 상태
-                                playerMoveState = MoveState.F_MOVE;
+                                playerState = PlayerState.F_MOVE;
                             }
                             // 없다
                             else
@@ -775,7 +806,7 @@ public class PlayerMovement : MonoBehaviour
                                     // Move 함수에서 처리할 키 값
                                     moveKeyValue = Vector2.up;
                                     // 앞쪽 이동 상태
-                                    playerMoveState = MoveState.F_MOVE;
+                                    playerState = PlayerState.F_MOVE;
                                 }
                                 // 없다
                                 else
@@ -783,16 +814,16 @@ public class PlayerMovement : MonoBehaviour
                                     // Move 함수에서 처리할 키 값
                                     moveKeyValue = Vector2.up;
                                     // 앞쪽 이동 매달림
-                                    playerMoveState = MoveState.F_CLIMBING;
-                                    // 애니메이션
-                                    climbingDownAnime = true;
+                                    playerState = PlayerState.F_CLIMBING;
+                                    // 애니메이션 아래 점프
+                                    animeSwitch = AnimationSwitch.DOWN;
                                 }
                             }
                         }
                     }
                 }
                 break;
-            case MoveState.R_IDLE_CLIMBING:
+            case PlayerState.R_IDLE_CLIMBING:
                 //------------------------------------------------
                 // 오른쪽 매달림 대기 상태 키처리
                 //------------------------------------------------
@@ -827,7 +858,7 @@ public class PlayerMovement : MonoBehaviour
                         // Move 함수에서 처리할 키 값
                         moveKeyValue = Vector2.down;
                         // 왼쪽 이동 매달림
-                        playerMoveState = MoveState.RL_CLIMBING_MOVE;
+                        playerState = PlayerState.RL_CLIMBING_MOVE;
                     }
                     // ↓ 방향 없음
                     else
@@ -848,7 +879,7 @@ public class PlayerMovement : MonoBehaviour
                             // Move 함수에서 처리할 키 값
                             moveKeyValue = Vector2.down;
                             // 왼쪽 이동 매달림
-                            playerMoveState = MoveState.RL_CLIMBING_MOVE;
+                            playerState = PlayerState.RL_CLIMBING_MOVE;
                         }
                         // ← 방향 없음
                         else
@@ -858,7 +889,7 @@ public class PlayerMovement : MonoBehaviour
                             // Move 함수에서 처리할 키 값
                             moveKeyValue = Vector2.down;
                             // 왼쪽 이동 매달림
-                            playerMoveState = MoveState.RL_CLIMBING_MOVE;
+                            playerState = PlayerState.RL_CLIMBING_MOVE;
                         }
                     }
                 }
@@ -896,7 +927,7 @@ public class PlayerMovement : MonoBehaviour
                         // Move 함수에서 처리할 키 값
                         moveKeyValue = Vector2.up;
                         // 왼쪽 이동 매달림
-                        playerMoveState = MoveState.RR_CLIMBING_MOVE;
+                        playerState = PlayerState.RR_CLIMBING_MOVE;
                     }
                     // ↑ 방향 없음
                     else
@@ -917,7 +948,7 @@ public class PlayerMovement : MonoBehaviour
                             // Move 함수에서 처리할 키 값
                             moveKeyValue = Vector2.up;
                             // 왼쪽 이동 매달림
-                            playerMoveState = MoveState.RR_CLIMBING_MOVE;
+                            playerState = PlayerState.RR_CLIMBING_MOVE;
                         }
                         // ← 방향 없음
                         else
@@ -927,7 +958,7 @@ public class PlayerMovement : MonoBehaviour
                             // Move 함수에서 처리할 키 값
                             moveKeyValue = Vector2.up;
                             // 왼쪽 이동 매달림
-                            playerMoveState = MoveState.RR_CLIMBING_MOVE;
+                            playerState = PlayerState.RR_CLIMBING_MOVE;
                         }
                     }
                 }
@@ -971,9 +1002,9 @@ public class PlayerMovement : MonoBehaviour
                         // Move 함수에서 처리할 키 값
                         moveKeyValue = Vector2.left;
                         // 앞쪽 이동 등반 상태
-                        playerMoveState = MoveState.L_UP;
-                        // 애니메이션
-                        climbingUpAnime = true;
+                        playerState = PlayerState.L_UP;
+                        // 애니메이션 점프
+                        animeSwitch = AnimationSwitch.UP;
                         // 점프 애니메이션은 약간의 딜레이가 필요합니다
                         actionDelay = 0;
                         // 캐릭터 속도 관련 셋팅
@@ -982,7 +1013,7 @@ public class PlayerMovement : MonoBehaviour
                     }
                 }
                 break;
-            case MoveState.L_IDLE_CLIMBING:
+            case PlayerState.L_IDLE_CLIMBING:
                 //------------------------------------------------
                 // 왼쪽 매달림 대기 상태 키처리
                 //------------------------------------------------
@@ -1017,7 +1048,7 @@ public class PlayerMovement : MonoBehaviour
                         // Move 함수에서 처리할 키 값
                         moveKeyValue = Vector2.up;
                         // 왼쪽 이동 매달림
-                        playerMoveState = MoveState.LL_CLIMBING_MOVE;
+                        playerState = PlayerState.LL_CLIMBING_MOVE;
                     }
                     // ↑ 방향 없음
                     else
@@ -1038,7 +1069,7 @@ public class PlayerMovement : MonoBehaviour
                             // Move 함수에서 처리할 키 값
                             moveKeyValue = Vector2.up;
                             // 왼쪽 이동 매달림
-                            playerMoveState = MoveState.LL_CLIMBING_MOVE;
+                            playerState = PlayerState.LL_CLIMBING_MOVE;
                         }
                         // → 방향 없음
                         else
@@ -1048,7 +1079,7 @@ public class PlayerMovement : MonoBehaviour
                             // Move 함수에서 처리할 키 값
                             moveKeyValue = Vector2.up;
                             // 왼쪽 이동 매달림
-                            playerMoveState = MoveState.LL_CLIMBING_MOVE;
+                            playerState = PlayerState.LL_CLIMBING_MOVE;
                         }
                     }
                 }
@@ -1086,7 +1117,7 @@ public class PlayerMovement : MonoBehaviour
                         // Move 함수에서 처리할 키 값
                         moveKeyValue = Vector2.down;
                         // 왼쪽 이동 매달림
-                        playerMoveState = MoveState.LR_CLIMBING_MOVE;
+                        playerState = PlayerState.LR_CLIMBING_MOVE;
                     }
                     // ↓ 방향 없음
                     else
@@ -1107,7 +1138,7 @@ public class PlayerMovement : MonoBehaviour
                             // Move 함수에서 처리할 키 값
                             moveKeyValue = Vector2.down;
                             // 왼쪽 이동 매달림
-                            playerMoveState = MoveState.LR_CLIMBING_MOVE;
+                            playerState = PlayerState.LR_CLIMBING_MOVE;
                         }
                         // → 방향 없음
                         else
@@ -1117,7 +1148,7 @@ public class PlayerMovement : MonoBehaviour
                             // Move 함수에서 처리할 키 값
                             moveKeyValue = Vector2.down;
                             // 왼쪽 이동 매달림
-                            playerMoveState = MoveState.LR_CLIMBING_MOVE;
+                            playerState = PlayerState.LR_CLIMBING_MOVE;
                         }
                     }
                 }
@@ -1161,9 +1192,9 @@ public class PlayerMovement : MonoBehaviour
                         // Move 함수에서 처리할 키 값
                         moveKeyValue = Vector2.right;
                         // 앞쪽 이동 등반 상태
-                        playerMoveState = MoveState.R_UP;
-                        // 애니메이션
-                        climbingUpAnime = true;
+                        playerState = PlayerState.R_UP;
+                        // 애니메이션 점프
+                        animeSwitch = AnimationSwitch.UP;
                         // 점프 애니메이션은 약간의 딜레이가 필요합니다
                         actionDelay = 0;
                         // 캐릭터 속도 관련 셋팅
@@ -1172,7 +1203,7 @@ public class PlayerMovement : MonoBehaviour
                     }
                 }
                 break;
-            case MoveState.F_IDLE_CLIMBING:
+            case PlayerState.F_IDLE_CLIMBING:
                 //------------------------------------------------
                 // 앞쪽 매달림 대기 상태 키처리
                 //------------------------------------------------
@@ -1206,7 +1237,7 @@ public class PlayerMovement : MonoBehaviour
                         // Move 함수에서 처리할 키 값
                         moveKeyValue = Vector2.right;
                         // 왼쪽 이동 매달림
-                        playerMoveState = MoveState.FR_CLIMBING_MOVE;
+                        playerState = PlayerState.FR_CLIMBING_MOVE;
                     }
                     // → 방향 없음
                     else
@@ -1227,7 +1258,7 @@ public class PlayerMovement : MonoBehaviour
                             // Move 함수에서 처리할 키 값
                             moveKeyValue = Vector2.right;
                             // 왼쪽 이동 매달림
-                            playerMoveState = MoveState.FR_CLIMBING_MOVE;
+                            playerState = PlayerState.FR_CLIMBING_MOVE;
                         }
                         // ↓방향 없음
                         else
@@ -1237,7 +1268,7 @@ public class PlayerMovement : MonoBehaviour
                             // Move 함수에서 처리할 키 값
                             moveKeyValue = Vector2.right;
                             // 왼쪽 이동 매달림
-                            playerMoveState = MoveState.FR_CLIMBING_MOVE;
+                            playerState = PlayerState.FR_CLIMBING_MOVE;
                         }
                     }
                 }
@@ -1274,7 +1305,7 @@ public class PlayerMovement : MonoBehaviour
                         // Move 함수에서 처리할 키 값
                         moveKeyValue = Vector2.left;
                         // 왼쪽 이동 매달림
-                        playerMoveState = MoveState.FL_CLIMBING_MOVE;
+                        playerState = PlayerState.FL_CLIMBING_MOVE;
                     }
                     // ← 방향 없음
                     else
@@ -1295,7 +1326,7 @@ public class PlayerMovement : MonoBehaviour
                             // Move 함수에서 처리할 키 값
                             moveKeyValue = Vector2.left;
                             // 왼쪽 이동 매달림
-                            playerMoveState = MoveState.FL_CLIMBING_MOVE;
+                            playerState = PlayerState.FL_CLIMBING_MOVE;
                         }
                         // ↓방향 없음
                         else
@@ -1305,7 +1336,7 @@ public class PlayerMovement : MonoBehaviour
                             // Move 함수에서 처리할 키 값
                             moveKeyValue = Vector2.left;
                             // 왼쪽 이동 매달림
-                            playerMoveState = MoveState.FL_CLIMBING_MOVE;
+                            playerState = PlayerState.FL_CLIMBING_MOVE;
                         }
                     }
                 }
@@ -1349,9 +1380,9 @@ public class PlayerMovement : MonoBehaviour
                         // Move 함수에서 처리할 키 값
                         moveKeyValue = Vector2.down;
                         // 앞쪽 이동 등반 상태
-                        playerMoveState = MoveState.B_UP;
-                        // 애니메이션
-                        climbingUpAnime = true;
+                        playerState = PlayerState.B_UP;
+                        // 애니메이션 점프
+                        animeSwitch = AnimationSwitch.UP;
                         // 점프 애니메이션은 약간의 딜레이가 필요합니다
                         actionDelay = 0;
                         // 캐릭터 속도 관련 셋팅
@@ -1360,7 +1391,7 @@ public class PlayerMovement : MonoBehaviour
                     }
                 }
                 break;
-            case MoveState.B_IDLE_CLIMBING:
+            case PlayerState.B_IDLE_CLIMBING:
                 //------------------------------------------------
                 // 뒤쪽 매달림 대기 상태 키처리
                 //------------------------------------------------
@@ -1394,7 +1425,7 @@ public class PlayerMovement : MonoBehaviour
                         // Move 함수에서 처리할 키 값
                         moveKeyValue = Vector2.left;
                         // 왼쪽 이동 매달림
-                        playerMoveState = MoveState.BL_CLIMBING_MOVE;
+                        playerState = PlayerState.BL_CLIMBING_MOVE;
                     }
                     // ← 방향 없음
                     else
@@ -1415,7 +1446,7 @@ public class PlayerMovement : MonoBehaviour
                             // Move 함수에서 처리할 키 값
                             moveKeyValue = Vector2.left;
                             // 왼쪽 이동 매달림
-                            playerMoveState = MoveState.BL_CLIMBING_MOVE;
+                            playerState = PlayerState.BL_CLIMBING_MOVE;
                         }
                         // ↑방향 없음
                         else
@@ -1425,7 +1456,7 @@ public class PlayerMovement : MonoBehaviour
                             // Move 함수에서 처리할 키 값
                             moveKeyValue = Vector2.left;
                             // 왼쪽 이동 매달림
-                            playerMoveState = MoveState.BL_CLIMBING_MOVE;
+                            playerState = PlayerState.BL_CLIMBING_MOVE;
                         }
                     }
                 }
@@ -1462,7 +1493,7 @@ public class PlayerMovement : MonoBehaviour
                         // Move 함수에서 처리할 키 값
                         moveKeyValue = Vector2.right;
                         // 왼쪽 이동 매달림
-                        playerMoveState = MoveState.BR_CLIMBING_MOVE;
+                        playerState = PlayerState.BR_CLIMBING_MOVE;
                     }
                     // → 방향 없음
                     else
@@ -1483,7 +1514,7 @@ public class PlayerMovement : MonoBehaviour
                             // Move 함수에서 처리할 키 값
                             moveKeyValue = Vector2.right;
                             // 왼쪽 이동 매달림
-                            playerMoveState = MoveState.BR_CLIMBING_MOVE;
+                            playerState = PlayerState.BR_CLIMBING_MOVE;
                         }
                         // ↑방향 없음
                         else
@@ -1493,7 +1524,7 @@ public class PlayerMovement : MonoBehaviour
                             // Move 함수에서 처리할 키 값
                             moveKeyValue = Vector2.right;
                             // 왼쪽 이동 매달림
-                            playerMoveState = MoveState.BR_CLIMBING_MOVE;
+                            playerState = PlayerState.BR_CLIMBING_MOVE;
                         }
                     }
                 }
@@ -1536,9 +1567,9 @@ public class PlayerMovement : MonoBehaviour
                         // Move 함수에서 처리할 키 값
                         moveKeyValue = Vector2.up;
                         // 앞쪽 이동 등반 상태
-                        playerMoveState = MoveState.F_UP;
-                        // 애니메이션
-                        climbingUpAnime = true;
+                        playerState = PlayerState.F_UP;
+                        // 애니메이션 점프
+                        animeSwitch = AnimationSwitch.UP;
                         // 점프 애니메이션은 약간의 딜레이가 필요합니다
                         actionDelay = 0;
                         // 캐릭터 속도 관련 셋팅
@@ -1547,17 +1578,19 @@ public class PlayerMovement : MonoBehaviour
                     }
                 }
                 break;
-            case MoveState.R_IDLE_INTERACTION:
+            case PlayerState.R_IDLE_INTERACTION:
                 // 오른쪽 상호작용 대기
                 //------------------------------------------------
                 // 기본 대기 상태일 때의 마우스 클릭 입력 처리
                 //------------------------------------------------
                 if (!mouseClick) {
                     moveKeyValue = Vector2.zero;
-                    playerMoveState = MoveState.IDLE;
-                    interactionAnimeEnd = true;
+                    // 대기 상태
+                    playerState = PlayerState.IDLE;
+                    // 애니메이션 종료
+                    animeSwitch = AnimationSwitch.INTERACTION_END;
                     // 원 위치로 돌아감
-                    moveValue.x = -0.25f;
+                    moveValue.x = -INTERACTION_MOVE_VALUE;
                     characterController.Move(moveValue);
                 }
 
@@ -1603,21 +1636,21 @@ public class PlayerMovement : MonoBehaviour
                         cubeDestPos.y = destPos.y;
                         cubeDestPos.z = destPos.z;
                         // 이동할 큐브 오브젝트
-                        moveCube = rayHit.transform.gameObject;
+                        cubeObject = rayHit.transform.gameObject;
 
                         // 있다
                         // 당김
                         if (Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
                         {
                             // 오른쪽 상호작용 당김
-                            playerMoveState = MoveState.R_INTERACTION_PULL;
+                            playerState = PlayerState.R_INTERACTION_PULL;
                         }
                         // 없다
                         // 당기고 매달림
                         else
                         {
                             // 오른쪽 상호작용 당김
-                            playerMoveState = MoveState.R_INTERACTION_PULL_CLIMBING;
+                            playerState = PlayerState.R_INTERACTION_PULL_CLIMBING;
                             // 아래쪽에 매달림
                             destPos.y = destPos.y - 1f;
                         }
@@ -1640,44 +1673,15 @@ public class PlayerMovement : MonoBehaviour
                         break;
                     }
 
-                    // 목표 이동 위치
-                    destPos.x = rayHit.transform.position.x;
-                    destPos.y = rayHit.transform.position.y;
-                    destPos.z = rayHit.transform.position.z;
-
-                    //--------------------------------
-                    // 오른쪽 검사
-                    // ★■？
-                    //--------------------------------
-                    // 오른쪽 검사
-                    check.x = destPos.x + 1f;
-                    check.y = destPos.y;
-                    check.z = destPos.z;
-
-                    // 없다
-                    if (!Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
-                    {
-                        //--------------------------------
-                        // 아래쪽 검사
-                        // ★■
-                        //   ？
-                        //--------------------------------
-                        // 아래쪽 검사
-                        check.x = destPos.x;
-                        check.y = destPos.y - 1f;
-
-                        // 있다
-                        if (Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
-                        {
-                            // 오른쪽 상호작용 밀기
-                            playerMoveState = MoveState.INTERACTION_PUSH;
-                            // 큐브 이동 처리
-                            rayHit.transform.gameObject.GetComponent<CubeMovement>().MoveRight();
-                        }
-                    }
+                    // 이동할 큐브 오브젝트
+                    cubeObject = rayHit.transform.gameObject;
+                    // 오른쪽 상호작용 밀기 준비
+                    playerState = PlayerState.R_INTERACTION_PUSH_READY;
+                    // 애니메이션 밀기 대기
+                    animeSwitch = AnimationSwitch.PUSH_IDLE;
                 }
                 break;
-            case MoveState.L_IDLE_INTERACTION:
+            case PlayerState.L_IDLE_INTERACTION:
                 // 왼쪽 상호작용 대기
                 //------------------------------------------------
                 // 기본 대기 상태일 때의 마우스 클릭 입력 처리
@@ -1685,10 +1689,12 @@ public class PlayerMovement : MonoBehaviour
                 if (!mouseClick)
                 {
                     moveKeyValue = Vector2.zero;
-                    playerMoveState = MoveState.IDLE;
-                    interactionAnimeEnd = true;
+                    // 대기 상태
+                    playerState = PlayerState.IDLE;
+                    // 애니메이션 종료
+                    animeSwitch = AnimationSwitch.INTERACTION_END;
                     // 원 위치로 돌아감
-                    moveValue.x = 0.25f;
+                    moveValue.x = INTERACTION_MOVE_VALUE;
                     characterController.Move(moveValue);
                 }
 
@@ -1709,41 +1715,12 @@ public class PlayerMovement : MonoBehaviour
                         break;
                     }
 
-                    // 목표 이동 위치
-                    destPos.x = rayHit.transform.position.x;
-                    destPos.y = rayHit.transform.position.y;
-                    destPos.z = rayHit.transform.position.z;
-
-                    //--------------------------------
-                    // 왼쪽 검사
-                    // ？■★
-                    //--------------------------------
-                    // 왼쪽 검사
-                    check.x = destPos.x - 1f;
-                    check.y = destPos.y;
-                    check.z = destPos.z;
-
-                    // 없다
-                    if (!Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
-                    {
-                        //--------------------------------
-                        // 아래쪽 검사
-                        // ■★
-                        // ？
-                        //--------------------------------
-                        // 아래쪽 검사
-                        check.x = destPos.x;
-                        check.y = destPos.y - 1f;
-
-                        // 있다
-                        if (Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
-                        {
-                            // 오른쪽 상호작용 밀기
-                            playerMoveState = MoveState.INTERACTION_PUSH;
-                            // 큐브 이동 처리
-                            rayHit.transform.gameObject.GetComponent<CubeMovement>().MoveLeft();
-                        }
-                    }
+                    // 이동할 큐브 오브젝트
+                    cubeObject = rayHit.transform.gameObject;
+                    // 왼쪽 상호작용 밀기 준비
+                    playerState = PlayerState.L_INTERACTION_PUSH_READY;
+                    // 애니메이션 밀기 대기
+                    animeSwitch = AnimationSwitch.PUSH_IDLE;
                 }
                 // 입력 키 값 →
                 else if (moveInput.x >= 0.3)
@@ -1786,21 +1763,21 @@ public class PlayerMovement : MonoBehaviour
                         cubeDestPos.y = destPos.y;
                         cubeDestPos.z = destPos.z;
                         // 이동할 큐브 오브젝트
-                        moveCube = rayHit.transform.gameObject;
+                        cubeObject = rayHit.transform.gameObject;
 
                         // 있다
                         // 당김
                         if (Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
                         {
                             // 왼쪽 상호작용 당김
-                            playerMoveState = MoveState.L_INTERACTION_PULL;
+                            playerState = PlayerState.L_INTERACTION_PULL;
                         }
                         // 없다
                         // 당기고 매달림
                         else
                         {
                             // 왼쪽 상호작용 당기고 매달림
-                            playerMoveState = MoveState.L_INTERACTION_PULL_CLIMBING;
+                            playerState = PlayerState.L_INTERACTION_PULL_CLIMBING;
                             // 아래쪽에 매달림
                             destPos.y = destPos.y - 1f;
                         }
@@ -1810,7 +1787,7 @@ public class PlayerMovement : MonoBehaviour
                     }
                 }
                 break;
-            case MoveState.F_IDLE_INTERACTION:
+            case PlayerState.F_IDLE_INTERACTION:
                 // 앞쪽 상호작용 대기
                 //------------------------------------------------
                 // 기본 대기 상태일 때의 마우스 클릭 입력 처리
@@ -1818,10 +1795,12 @@ public class PlayerMovement : MonoBehaviour
                 if (!mouseClick)
                 {
                     moveKeyValue = Vector2.zero;
-                    playerMoveState = MoveState.IDLE;
-                    interactionAnimeEnd = true;
+                    // 대기 상태
+                    playerState = PlayerState.IDLE;
+                    // 애니메이션 종료
+                    animeSwitch = AnimationSwitch.INTERACTION_END;
                     // 원 위치로 돌아감
-                    moveValue.z = -0.25f;
+                    moveValue.z = -INTERACTION_MOVE_VALUE;
                     characterController.Move(moveValue);
                 }
 
@@ -1842,43 +1821,12 @@ public class PlayerMovement : MonoBehaviour
                         break;
                     }
 
-                    // 목표 이동 위치
-                    destPos.x = rayHit.transform.position.x;
-                    destPos.y = rayHit.transform.position.y;
-                    destPos.z = rayHit.transform.position.z;
-
-                    //--------------------------------
-                    // 앞쪽 검사
-                    // ？
-                    // ■
-                    // ★
-                    //--------------------------------
-                    // 앞쪽 검사
-                    check.x = destPos.x;
-                    check.y = destPos.y;
-                    check.z = destPos.z + 1f;
-
-                    // 없다
-                    if (!Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
-                    {
-                        //--------------------------------
-                        // 아래쪽 검사
-                        // ■★
-                        // ？
-                        //--------------------------------
-                        // 아래쪽 검사
-                        check.z = destPos.z;
-                        check.y = destPos.y - 1f;
-
-                        // 있다
-                        if (Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
-                        {
-                            // 앞쪽 상호작용 밀기
-                            playerMoveState = MoveState.INTERACTION_PUSH;
-                            // 큐브 이동 처리
-                            rayHit.transform.gameObject.GetComponent<CubeMovement>().MoveForward();
-                        }
-                    }
+                    // 이동할 큐브 오브젝트
+                    cubeObject = rayHit.transform.gameObject;
+                    // 앞쪽 상호작용 밀기 준비
+                    playerState = PlayerState.F_INTERACTION_PUSH_READY;
+                    // 애니메이션 밀기 대기
+                    animeSwitch = AnimationSwitch.PUSH_IDLE;
                 }
                 // 입력 키 값 ↓
                 else if (moveInput.y <= -0.3)
@@ -1923,21 +1871,21 @@ public class PlayerMovement : MonoBehaviour
                         cubeDestPos.y = destPos.y;
                         cubeDestPos.z = destPos.z + 1f;
                         // 이동할 큐브 오브젝트
-                        moveCube = rayHit.transform.gameObject;
+                        cubeObject = rayHit.transform.gameObject;
 
                         // 있다
                         // 당김
                         if (Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
                         {
                             // 앞쪽 상호작용 당김
-                            playerMoveState = MoveState.F_INTERACTION_PULL;
+                            playerState = PlayerState.F_INTERACTION_PULL;
                         }
                         // 없다
                         // 당기고 매달림
                         else
                         {
                             // 앞쪽 상호작용 당기고 매달림
-                            playerMoveState = MoveState.F_INTERACTION_PULL_CLIMBING;
+                            playerState = PlayerState.F_INTERACTION_PULL_CLIMBING;
                             // 아래쪽에 매달림
                             destPos.y = destPos.y - 1f;
                         }
@@ -1947,7 +1895,7 @@ public class PlayerMovement : MonoBehaviour
                     }
                 }
                 break;
-            case MoveState.B_IDLE_INTERACTION:
+            case PlayerState.B_IDLE_INTERACTION:
                 // 뒤쪽 상호작용 대기
                 //------------------------------------------------
                 // 기본 대기 상태일 때의 마우스 클릭 입력 처리
@@ -1955,10 +1903,12 @@ public class PlayerMovement : MonoBehaviour
                 if (!mouseClick)
                 {
                     moveKeyValue = Vector2.zero;
-                    playerMoveState = MoveState.IDLE;
-                    interactionAnimeEnd = true;
+                    // 대기 상태
+                    playerState = PlayerState.IDLE;
+                    // 애니메이션 종료
+                    animeSwitch = AnimationSwitch.INTERACTION_END;
                     // 원 위치로 돌아감
-                    moveValue.z = 0.25f;
+                    moveValue.z = INTERACTION_MOVE_VALUE;
                     characterController.Move(moveValue);
                 }
 
@@ -2008,21 +1958,21 @@ public class PlayerMovement : MonoBehaviour
                         cubeDestPos.y = destPos.y;
                         cubeDestPos.z = destPos.z - 1f;
                         // 이동할 큐브 오브젝트
-                        moveCube = rayHit.transform.gameObject;
+                        cubeObject = rayHit.transform.gameObject;
 
                         // 있다
                         // 당김
                         if (Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
                         {
                             // 뒤쪽 상호작용 당김
-                            playerMoveState = MoveState.B_INTERACTION_PULL;
+                            playerState = PlayerState.B_INTERACTION_PULL;
                         }
                         // 없다
                         // 당기고 매달림
                         else
                         {
                             // 앞쪽 상호작용 당기고 매달림
-                            playerMoveState = MoveState.B_INTERACTION_PULL_CLIMBING;
+                            playerState = PlayerState.B_INTERACTION_PULL_CLIMBING;
                             // 아래쪽에 매달림
                             destPos.y = destPos.y - 1f;
                         }
@@ -2045,46 +1995,15 @@ public class PlayerMovement : MonoBehaviour
                         break;
                     }
 
-                    // 목표 이동 위치
-                    destPos.x = rayHit.transform.position.x;
-                    destPos.y = rayHit.transform.position.y;
-                    destPos.z = rayHit.transform.position.z;
-
-                    //--------------------------------
-                    // 뒤쪽 검사
-                    // ★
-                    // ■
-                    // ？
-                    //--------------------------------
-                    // 앞쪽 검사
-                    check.x = destPos.x;
-                    check.y = destPos.y;
-                    check.z = destPos.z - 1f;
-
-                    // 없다
-                    if (!Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
-                    {
-                        //--------------------------------
-                        // 아래쪽 검사
-                        // ■★
-                        // ？
-                        //--------------------------------
-                        // 아래쪽 검사
-                        check.z = destPos.z;
-                        check.y = destPos.y - 1f;
-
-                        // 있다
-                        if (Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
-                        {
-                            // 앞쪽 상호작용 밀기
-                            playerMoveState = MoveState.INTERACTION_PUSH;
-                            // 큐브 이동 처리
-                            rayHit.transform.gameObject.GetComponent<CubeMovement>().MoveBack();
-                        }
-                    }
+                    // 이동할 큐브 오브젝트
+                    cubeObject = rayHit.transform.gameObject;
+                    // 뒤쪽 상호작용 밀기 준비
+                    playerState = PlayerState.B_INTERACTION_PUSH_READY;
+                    // 애니메이션 밀기 대기
+                    animeSwitch = AnimationSwitch.PUSH_IDLE;
                 }
                 break;
-            case MoveState.R_MOVE:
+            case PlayerState.R_MOVE:
                 // 이동 거리만큼 이동 했는가
                 if (destPos.x <= centerTrans.position.x)
                 {
@@ -2094,11 +2013,11 @@ public class PlayerMovement : MonoBehaviour
                     if (characterController.isGrounded)
                     {
                         // 이동을 끝마쳤으니 상태를 대기로 변경
-                        playerMoveState = MoveState.IDLE;
+                        playerState = PlayerState.IDLE;
                     }
                 }
                 break;
-            case MoveState.L_MOVE:
+            case PlayerState.L_MOVE:
                 // 이동 거리만큼 이동 했는가
                 if (destPos.x >= centerTrans.position.x)
                 {
@@ -2108,11 +2027,11 @@ public class PlayerMovement : MonoBehaviour
                     if (characterController.isGrounded)
                     {
                         // 이동을 끝마쳤으니 상태를 대기로 변경
-                        playerMoveState = MoveState.IDLE;
+                        playerState = PlayerState.IDLE;
                     }
                 }
                 break;
-            case MoveState.F_MOVE:
+            case PlayerState.F_MOVE:
                 // 이동 거리만큼 이동 했는가
                 if (destPos.z <= centerTrans.position.z)
                 {
@@ -2121,11 +2040,11 @@ public class PlayerMovement : MonoBehaviour
                     // 바닥에 닿고 상태 변환
                     if (characterController.isGrounded) {
                         // 이동을 끝마쳤으니 상태를 대기로 변경
-                        playerMoveState = MoveState.IDLE;
+                        playerState = PlayerState.IDLE;
                     }
                 }
                 break;
-            case MoveState.B_MOVE:
+            case PlayerState.B_MOVE:
                 // 이동 거리만큼 이동 했는가
                 if (destPos.z >= centerTrans.position.z)
                 {
@@ -2134,15 +2053,15 @@ public class PlayerMovement : MonoBehaviour
                     // 바닥에 닿고 상태 변환
                     if (characterController.isGrounded) {
                         // 이동을 끝마쳤으니 상태를 대기로 변경
-                        playerMoveState = MoveState.IDLE;
+                        playerState = PlayerState.IDLE;
                     }
                 }
                 break;
-            case MoveState.R_UP:
+            case PlayerState.R_UP:
                 actionDelay = actionDelay + Time.deltaTime;
 
                 // 점프 준비 동작때문에 약 0.15 대기합니다
-                if (actionDelay < 0.15f)
+                if (actionDelay < JUMP_DELAY)
                 {
                     break;
                 }
@@ -2173,11 +2092,11 @@ public class PlayerMovement : MonoBehaviour
                     speed = saveSpeed;
                 }
                 break;
-            case MoveState.L_UP:
+            case PlayerState.L_UP:
                 actionDelay = actionDelay + Time.deltaTime;
 
                 // 점프 준비 동작때문에 약 0.15 대기합니다
-                if (actionDelay < 0.15f)
+                if (actionDelay < JUMP_DELAY)
                 {
                     break;
                 }
@@ -2210,11 +2129,11 @@ public class PlayerMovement : MonoBehaviour
                     speed = saveSpeed;
                 }
                 break;
-            case MoveState.F_UP:
+            case PlayerState.F_UP:
                 actionDelay = actionDelay + Time.deltaTime;
 
                 // 점프 준비 동작때문에 약 0.15 대기합니다
-                if (actionDelay < 0.15f)
+                if (actionDelay < JUMP_DELAY)
                 {
                     break;
                 }
@@ -2247,11 +2166,11 @@ public class PlayerMovement : MonoBehaviour
                     speed = saveSpeed;
                 }
                 break;
-            case MoveState.B_UP:
+            case PlayerState.B_UP:
                 actionDelay = actionDelay + Time.deltaTime;
 
                 // 점프 준비 동작때문에 약 0.15 대기합니다
-                if (actionDelay < 0.15f)
+                if (actionDelay < JUMP_DELAY)
                 {
                     break;
                 }
@@ -2284,219 +2203,326 @@ public class PlayerMovement : MonoBehaviour
                     speed = saveSpeed;
                 }
                 break;
-            case MoveState.INTERACTION_PUSH:
-                // 상호작용 밀기
+            case PlayerState.R_INTERACTION_PUSH_READY:
+                // 오른쪽 밀기 준비
 
+                // 오른쪽 밀기 상태
+                playerState = PlayerState.R_INTERACTION_PUSH;
+                // 애니메이션 밀기
+                animeSwitch = AnimationSwitch.PUSH;
+                // 밀기 애니메이션은 약간의 딜레이가 필요합니다
+                actionDelay = 0;
                 break;
-            case MoveState.R_INTERACTION_PULL:
+            case PlayerState.R_INTERACTION_PUSH:
+                // 오른쪽 밀기
+
+                actionDelay = actionDelay + Time.deltaTime;
+
+                if (actionDelay < PUSH_DELAY)
+                {
+                    break;
+                }
+                else
+                {
+                    // 밀기 상태
+                    playerState = PlayerState.R_INTERACTION_PUSH_END;
+                    // 큐브 오른쪽 이동 처리
+                    cubeObject.GetComponent<CubeMovement>().MoveRight();
+                    // 애니메이션 밀기
+                    animeSwitch = AnimationSwitch.PUSH;
+                    // 밀기 애니메이션은 약간의 딜레이가 필요합니다
+                    actionDelay = 0;
+                }
+                break;
+            case PlayerState.R_INTERACTION_PUSH_END:
+                // 오른쪽 밀기 끝
+
+                actionDelay = actionDelay + Time.deltaTime;
+
+                if (actionDelay < PUSH_END_DELAY)
+                {
+                    break;
+                }
+                else
+                {
+                    // 대기 상태
+                    playerState = PlayerState.IDLE;
+                    // 애니메이션 밀기 끝
+                    animeSwitch = AnimationSwitch.PUSH_END;
+                    // 원 위치로 돌아감
+                    moveValue.x = -INTERACTION_MOVE_VALUE;
+                    characterController.Move(moveValue);
+                }
+                break;
+            case PlayerState.L_INTERACTION_PUSH_END:
+                // 왼쪽 밀기 끝
+
+                actionDelay = actionDelay + Time.deltaTime;
+
+                if (actionDelay < PUSH_END_DELAY)
+                {
+                    break;
+                }
+                else
+                {
+                    // 대기 상태
+                    playerState = PlayerState.IDLE;
+                    // 애니메이션 밀기 끝
+                    animeSwitch = AnimationSwitch.PUSH_END;
+                    // 원 위치로 돌아감
+                    moveValue.x = INTERACTION_MOVE_VALUE;
+                    characterController.Move(moveValue);
+                }
+                break;
+            case PlayerState.F_INTERACTION_PUSH_END:
+                // 앞쪽 밀기 끝
+
+                actionDelay = actionDelay + Time.deltaTime;
+
+                if (actionDelay < PUSH_END_DELAY)
+                {
+                    break;
+                }
+                else
+                {
+                    // 대기 상태
+                    playerState = PlayerState.IDLE;
+                    // 애니메이션 밀기 끝
+                    animeSwitch = AnimationSwitch.PUSH_END;
+                    // 원 위치로 돌아감
+                    moveValue.z = -INTERACTION_MOVE_VALUE;
+                    characterController.Move(moveValue);
+                }
+                break;
+            case PlayerState.B_INTERACTION_PUSH_END:
+                // 뒤쪽 밀기 끝
+
+                actionDelay = actionDelay + Time.deltaTime;
+
+                if (actionDelay < PUSH_END_DELAY)
+                {
+                    break;
+                }
+                else
+                {
+                    // 대기 상태
+                    playerState = PlayerState.IDLE;
+                    // 애니메이션 밀기 끝
+                    animeSwitch = AnimationSwitch.PUSH_END;
+                    // 원 위치로 돌아감
+                    moveValue.z = INTERACTION_MOVE_VALUE;
+                    characterController.Move(moveValue);
+                }
+                break;
+            case PlayerState.R_INTERACTION_PULL:
                 // 오른쪽 당김
                 // 큐브 이동
-                moveCube.transform.position = moveCube.transform.position + (Vector3.left * speed) * Time.deltaTime;
+                cubeObject.transform.position = cubeObject.transform.position + (Vector3.left * speed) * Time.deltaTime;
                 // 큐브가 이동 거리만큼 이동 했는가
-                if (cubeDestPos.x >= moveCube.transform.position.x)
+                if (cubeDestPos.x >= cubeObject.transform.position.x)
                 {
                     // 이동 완료
                     moveKeyValue = Vector2.zero;
-                    moveCube.transform.position = cubeDestPos;
+                    cubeObject.transform.position = cubeDestPos;
 
                     // 마우스를 계속 클릭 중이라면
                     if (mouseClick)
                     {
                         // 마우스 클릭 중
                         // 상호작용 대기 상태
-                        playerMoveState = MoveState.R_IDLE_INTERACTION;
+                        playerState = PlayerState.R_IDLE_INTERACTION;
                     }
                     else
                     {
                         // 마우스 클릭 중이 아님
                         // 대기 상태
-                        playerMoveState = MoveState.IDLE;
+                        playerState = PlayerState.IDLE;
                         // 애니메이션 종료
-                        interactionAnimeEnd = true;
+                        animeSwitch = AnimationSwitch.INTERACTION_END;
                         // 원 위치로 돌아감
-                        moveValue.x = -0.25f;
+                        moveValue.x = -INTERACTION_MOVE_VALUE;
                         characterController.Move(moveValue);
                     }
                 }
                 break;
-            case MoveState.R_INTERACTION_PULL_CLIMBING:
+            case PlayerState.R_INTERACTION_PULL_CLIMBING:
                 // 오른쪽 당기고 매달림
                 // 큐브 이동
-                moveCube.transform.position = moveCube.transform.position + (Vector3.left * speed) * Time.deltaTime;
+                cubeObject.transform.position = cubeObject.transform.position + (Vector3.left * speed) * Time.deltaTime;
                 // 큐브가 이동 거리만큼 이동 했는가
-                if (cubeDestPos.x >= moveCube.transform.position.x)
+                if (cubeDestPos.x >= cubeObject.transform.position.x)
                 {
                     // 이동 완료
-                    moveCube.transform.position = cubeDestPos;
+                    cubeObject.transform.position = cubeDestPos;
                     // 바닥에 닿아있지 않음
                     if (!characterController.isGrounded)
                     {
                         // x,z 이동 멈춤
                         moveKeyValue = Vector2.zero;
                         // 애니메이션
-                        climbingDownAnime = true;
+                        animeSwitch = AnimationSwitch.DOWN;
                         // 상태 변경
-                        playerMoveState = MoveState.L_CLIMBING;
+                        playerState = PlayerState.L_CLIMBING;
                     }
                 }
                 break;
-            case MoveState.L_INTERACTION_PULL:
+            case PlayerState.L_INTERACTION_PULL:
                 // 왼쪽 당김
                 // 큐브 이동
-                moveCube.transform.position = moveCube.transform.position + (Vector3.right * speed) * Time.deltaTime;
+                cubeObject.transform.position = cubeObject.transform.position + (Vector3.right * speed) * Time.deltaTime;
                 // 큐브가 이동 거리만큼 이동 했는가
-                if (cubeDestPos.x <= moveCube.transform.position.x)
+                if (cubeDestPos.x <= cubeObject.transform.position.x)
                 {
                     // 이동 완료
                     moveKeyValue = Vector2.zero;
-                    moveCube.transform.position = cubeDestPos;
+                    cubeObject.transform.position = cubeDestPos;
 
                     // 마우스를 계속 클릭 중이라면
                     if (mouseClick)
                     {
                         // 마우스 클릭 중
                         // 상호작용 대기 상태
-                        playerMoveState = MoveState.L_IDLE_INTERACTION;
+                        playerState = PlayerState.L_IDLE_INTERACTION;
                     }
                     else
                     {
                         // 마우스 클릭 중이 아님
                         // 대기 상태
-                        playerMoveState = MoveState.IDLE;
+                        playerState = PlayerState.IDLE;
                         // 애니메이션 종료
-                        interactionAnimeEnd = true;
+                        animeSwitch = AnimationSwitch.INTERACTION_END;
                         // 원 위치로 돌아감
-                        moveValue.x = 0.25f;
+                        moveValue.x = INTERACTION_MOVE_VALUE;
                         characterController.Move(moveValue);
                     }
                 }
                 break;
-            case MoveState.L_INTERACTION_PULL_CLIMBING:
+            case PlayerState.L_INTERACTION_PULL_CLIMBING:
                 // 왼쪽 당기고 매달림
                 // 큐브 이동
-                moveCube.transform.position = moveCube.transform.position + (Vector3.right * speed) * Time.deltaTime;
+                cubeObject.transform.position = cubeObject.transform.position + (Vector3.right * speed) * Time.deltaTime;
                 // 큐브가 이동 거리만큼 이동 했는가
-                if (cubeDestPos.x <= moveCube.transform.position.x)
+                if (cubeDestPos.x <= cubeObject.transform.position.x)
                 {
                     // 이동 완료
-                    moveCube.transform.position = cubeDestPos;
+                    cubeObject.transform.position = cubeDestPos;
                     // 바닥에 닿아있지 않음
                     if (!characterController.isGrounded)
                     {
                         // x,z 이동 멈춤
                         moveKeyValue = Vector2.zero;
                         // 애니메이션
-                        climbingDownAnime = true;
+                        animeSwitch = AnimationSwitch.DOWN;
                         // 상태 변경
-                        playerMoveState = MoveState.R_CLIMBING;
+                        playerState = PlayerState.R_CLIMBING;
                     }
                 }
                 break;
-            case MoveState.F_INTERACTION_PULL:
+            case PlayerState.F_INTERACTION_PULL:
                 // 앞쪽 당김
                 // 큐브 이동
-                moveCube.transform.position = moveCube.transform.position + (Vector3.back * speed) * Time.deltaTime;
+                cubeObject.transform.position = cubeObject.transform.position + (Vector3.back * speed) * Time.deltaTime;
                 // 큐브가 이동 거리만큼 이동 했는가
-                if (cubeDestPos.z >= moveCube.transform.position.z)
+                if (cubeDestPos.z >= cubeObject.transform.position.z)
                 {
                     // 이동 완료
                     moveKeyValue = Vector2.zero;
-                    moveCube.transform.position = cubeDestPos;
+                    cubeObject.transform.position = cubeDestPos;
 
                     // 마우스를 계속 클릭 중이라면
                     if (mouseClick)
                     {
                         // 마우스 클릭 중
                         // 상호작용 대기 상태
-                        playerMoveState = MoveState.F_IDLE_INTERACTION;
+                        playerState = PlayerState.F_IDLE_INTERACTION;
                     }
                     else
                     {
                         // 마우스 클릭 중이 아님
                         // 대기 상태
-                        playerMoveState = MoveState.IDLE;
+                        playerState = PlayerState.IDLE;
                         // 애니메이션 종료
-                        interactionAnimeEnd = true;
+                        animeSwitch = AnimationSwitch.INTERACTION_END;
                         // 원 위치로 돌아감
-                        moveValue.z = -0.25f;
+                        moveValue.z = -INTERACTION_MOVE_VALUE;
                         characterController.Move(moveValue);
                     }
                 }
                 break;
-            case MoveState.F_INTERACTION_PULL_CLIMBING:
+            case PlayerState.F_INTERACTION_PULL_CLIMBING:
                 // 앞쪽 당기고 매달림
                 // 큐브 이동
-                moveCube.transform.position = moveCube.transform.position + (Vector3.back * speed) * Time.deltaTime;
+                cubeObject.transform.position = cubeObject.transform.position + (Vector3.back * speed) * Time.deltaTime;
                 // 큐브가 이동 거리만큼 이동 했는가
-                if (cubeDestPos.z >= moveCube.transform.position.z)
+                if (cubeDestPos.z >= cubeObject.transform.position.z)
                 {
                     // 이동 완료
-                    moveCube.transform.position = cubeDestPos;
+                    cubeObject.transform.position = cubeDestPos;
                     // 바닥에 닿아있지 않음
                     if (!characterController.isGrounded)
                     {
                         // x,z 이동 멈춤
                         moveKeyValue = Vector2.zero;
                         // 애니메이션
-                        climbingDownAnime = true;
+                        animeSwitch = AnimationSwitch.DOWN;
                         // 상태 변경
-                        playerMoveState = MoveState.B_CLIMBING;
+                        playerState = PlayerState.B_CLIMBING;
                     }
                 }
                 break;
-            case MoveState.B_INTERACTION_PULL:
+            case PlayerState.B_INTERACTION_PULL:
                 // 뒤쪽 당김
                 // 큐브 이동
-                moveCube.transform.position = moveCube.transform.position + (Vector3.forward * speed) * Time.deltaTime;
+                cubeObject.transform.position = cubeObject.transform.position + (Vector3.forward * speed) * Time.deltaTime;
                 // 큐브가 이동 거리만큼 이동 했는가
-                if (cubeDestPos.z <= moveCube.transform.position.z)
+                if (cubeDestPos.z <= cubeObject.transform.position.z)
                 {
                     // 이동 완료
                     moveKeyValue = Vector2.zero;
-                    moveCube.transform.position = cubeDestPos;
+                    cubeObject.transform.position = cubeDestPos;
 
                     // 마우스를 계속 클릭 중이라면
                     if (mouseClick)
                     {
                         // 마우스 클릭 중
                         // 상호작용 대기 상태
-                        playerMoveState = MoveState.B_IDLE_INTERACTION;
+                        playerState = PlayerState.B_IDLE_INTERACTION;
                     }
                     else
                     {
                         // 마우스 클릭 중이 아님
                         // 대기 상태
-                        playerMoveState = MoveState.IDLE;
+                        playerState = PlayerState.IDLE;
                         // 애니메이션 종료
-                        interactionAnimeEnd = true;
+                        animeSwitch = AnimationSwitch.INTERACTION_END;
                         // 원 위치로 돌아감
-                        moveValue.z = 0.25f;
+                        moveValue.z = INTERACTION_MOVE_VALUE;
                         characterController.Move(moveValue);
                     }
                 }
                 break;
-            case MoveState.B_INTERACTION_PULL_CLIMBING:
+            case PlayerState.B_INTERACTION_PULL_CLIMBING:
                 // 뒤쪽 당기고 매달림
                 // 큐브 이동
-                moveCube.transform.position = moveCube.transform.position + (Vector3.forward * speed) * Time.deltaTime;
+                cubeObject.transform.position = cubeObject.transform.position + (Vector3.forward * speed) * Time.deltaTime;
                 // 큐브가 이동 거리만큼 이동 했는가
-                if (cubeDestPos.z <= moveCube.transform.position.z)
+                if (cubeDestPos.z <= cubeObject.transform.position.z)
                 {
                     // 이동 완료
-                    moveCube.transform.position = cubeDestPos;
+                    cubeObject.transform.position = cubeDestPos;
                     // 바닥에 닿아있지 않음
                     if (!characterController.isGrounded)
                     {
                         // x,z 이동 멈춤
                         moveKeyValue = Vector2.zero;
                         // 애니메이션
-                        climbingDownAnime = true;
+                        animeSwitch = AnimationSwitch.DOWN;
                         // 상태 변경
-                        playerMoveState = MoveState.F_CLIMBING;
+                        playerState = PlayerState.F_CLIMBING;
                     }
                 }
                 break;
-            case MoveState.R_CLIMBING:
+            case PlayerState.R_CLIMBING:
                 // 바닥에 닿아있지 않음
                 if (!characterController.isGrounded)
                 {
@@ -2519,11 +2545,11 @@ public class PlayerMovement : MonoBehaviour
                     // 매달림
                     climbingFlag = true;
                     // 이동을 끝마쳤으니 상태를 대기로 변경
-                    playerMoveState = MoveState.R_IDLE_CLIMBING;
+                    playerState = PlayerState.R_IDLE_CLIMBING;
                     moveKeyValue = Vector2.zero;
                 }
                 break;
-            case MoveState.L_CLIMBING:
+            case PlayerState.L_CLIMBING:
                 // 바닥에 닿아있지 않음
                 if (!characterController.isGrounded)
                 {
@@ -2546,11 +2572,11 @@ public class PlayerMovement : MonoBehaviour
                     // 매달림
                     climbingFlag = true;
                     // 이동을 끝마쳤으니 상태를 대기로 변경
-                    playerMoveState = MoveState.L_IDLE_CLIMBING;
+                    playerState = PlayerState.L_IDLE_CLIMBING;
                     moveKeyValue = Vector2.zero;
                 }
                 break;
-            case MoveState.F_CLIMBING:
+            case PlayerState.F_CLIMBING:
                 // 바닥에 닿아있지 않음
                 if (!characterController.isGrounded)
                 {
@@ -2573,11 +2599,11 @@ public class PlayerMovement : MonoBehaviour
                     // 매달림
                     climbingFlag = true;
                     // 이동을 끝마쳤으니 상태를 대기로 변경
-                    playerMoveState = MoveState.F_IDLE_CLIMBING;
+                    playerState = PlayerState.F_IDLE_CLIMBING;
                     moveKeyValue = Vector2.zero;
                 }
                 break;
-            case MoveState.B_CLIMBING:
+            case PlayerState.B_CLIMBING:
                 // 바닥에 닿아있지 않음
                 if (!characterController.isGrounded)
                 {
@@ -2600,11 +2626,11 @@ public class PlayerMovement : MonoBehaviour
                     // 매달림
                     climbingFlag = true;
                     // 이동을 끝마쳤으니 상태를 대기로 변경
-                    playerMoveState = MoveState.B_IDLE_CLIMBING;
+                    playerState = PlayerState.B_IDLE_CLIMBING;
                     moveKeyValue = Vector2.zero;
                 }
                 break;
-            case MoveState.RR_CLIMBING_MOVE:
+            case PlayerState.RR_CLIMBING_MOVE:
                 //------------------------------
                 // 오른쪽 매달림 오른쪽 이동
                 //------------------------------
@@ -2620,7 +2646,7 @@ public class PlayerMovement : MonoBehaviour
                     // 오른쪽으로 이동
                     moveKeyValue = Vector2.right;
                     // 이동 상태 변경
-                    playerMoveState = MoveState.BR_CLIMBING_MOVE;
+                    playerState = PlayerState.BR_CLIMBING_MOVE;
                     // 방향 바꿈
                     transform.eulerAngles = new Vector3(0, 0, 0);
                 }
@@ -2639,7 +2665,7 @@ public class PlayerMovement : MonoBehaviour
                     // 앞으로 이동
                     moveKeyValue = Vector2.left;
                     // 이동 상태 변경
-                    playerMoveState = MoveState.RR_FL_CHANGE_CLIMBING;
+                    playerState = PlayerState.RR_FL_CHANGE_CLIMBING;
                     // 방향 바꿈
                     transform.eulerAngles = new Vector3(0, 180, 0);
                 }
@@ -2648,11 +2674,11 @@ public class PlayerMovement : MonoBehaviour
                 if (destPos.z <= centerTrans.position.z)
                 {
                     // 이동을 끝마쳤으니 상태를 대기로 변경
-                    playerMoveState = MoveState.R_IDLE_CLIMBING;
+                    playerState = PlayerState.R_IDLE_CLIMBING;
                     moveKeyValue = Vector2.zero;
                 }
                 break;
-            case MoveState.RL_CLIMBING_MOVE:
+            case PlayerState.RL_CLIMBING_MOVE:
                 //------------------------------
                 // 오른쪽 매달림 왼쪽 이동
                 //------------------------------
@@ -2668,7 +2694,7 @@ public class PlayerMovement : MonoBehaviour
                     // 오른쪽으로 이동
                     moveKeyValue = Vector2.right;
                     // 이동 상태 변경
-                    playerMoveState = MoveState.FR_CLIMBING_MOVE;
+                    playerState = PlayerState.FR_CLIMBING_MOVE;
                     // 방향 바꿈
                     transform.eulerAngles = new Vector3(0, 180, 0);
                 }
@@ -2687,7 +2713,7 @@ public class PlayerMovement : MonoBehaviour
                     // 앞으로 이동
                     moveKeyValue = Vector2.left;
                     // 이동 상태 변경
-                    playerMoveState = MoveState.RL_BL_CHANGE_CLIMBING;
+                    playerState = PlayerState.RL_BL_CHANGE_CLIMBING;
                     // 방향 바꿈
                     transform.eulerAngles = new Vector3(0, 0, 0);
                 }
@@ -2696,11 +2722,11 @@ public class PlayerMovement : MonoBehaviour
                 if (destPos.z >= centerTrans.position.z)
                 {
                     // 이동을 끝마쳤으니 상태를 대기로 변경
-                    playerMoveState = MoveState.R_IDLE_CLIMBING;
+                    playerState = PlayerState.R_IDLE_CLIMBING;
                     moveKeyValue = Vector2.zero;
                 }
                 break;
-            case MoveState.LR_CLIMBING_MOVE:
+            case PlayerState.LR_CLIMBING_MOVE:
                 //------------------------------
                 // 왼쪽 매달림 오른쪽 이동
                 //------------------------------
@@ -2716,7 +2742,7 @@ public class PlayerMovement : MonoBehaviour
                     // 왼쪽으로 이동
                     moveKeyValue = Vector2.left;
                     // 이동 상태 변경
-                    playerMoveState = MoveState.FL_CLIMBING_MOVE;
+                    playerState = PlayerState.FL_CLIMBING_MOVE;
                     // 방향 바꿈
                     transform.eulerAngles = new Vector3(0, 180, 0);
                 }
@@ -2735,7 +2761,7 @@ public class PlayerMovement : MonoBehaviour
                     // 앞으로 이동
                     moveKeyValue = Vector2.right;
                     // 이동 상태 변경
-                    playerMoveState = MoveState.LR_BR_CHANGE_CLIMBING;
+                    playerState = PlayerState.LR_BR_CHANGE_CLIMBING;
                     // 방향 바꿈
                     transform.eulerAngles = new Vector3(0, 0, 0);
                 }
@@ -2744,11 +2770,11 @@ public class PlayerMovement : MonoBehaviour
                 if (destPos.z >= centerTrans.position.z)
                 {
                     // 이동을 끝마쳤으니 상태를 대기로 변경
-                    playerMoveState = MoveState.L_IDLE_CLIMBING;
+                    playerState = PlayerState.L_IDLE_CLIMBING;
                     moveKeyValue = Vector2.zero;
                 }
                 break;
-            case MoveState.LL_CLIMBING_MOVE:
+            case PlayerState.LL_CLIMBING_MOVE:
                 //------------------------------
                 // 왼쪽 매달림 왼쪽 이동
                 //------------------------------
@@ -2764,7 +2790,7 @@ public class PlayerMovement : MonoBehaviour
                     // 왼쪽으로 이동
                     moveKeyValue = Vector2.left;
                     // 이동 상태 변경
-                    playerMoveState = MoveState.BL_CLIMBING_MOVE;
+                    playerState = PlayerState.BL_CLIMBING_MOVE;
                     // 방향 바꿈
                     transform.eulerAngles = new Vector3(0, 0, 0);
                 }
@@ -2783,7 +2809,7 @@ public class PlayerMovement : MonoBehaviour
                     // 앞으로 이동
                     moveKeyValue = Vector2.right;
                     // 이동 상태 변경
-                    playerMoveState = MoveState.LL_FR_CHANGE_CLIMBING;
+                    playerState = PlayerState.LL_FR_CHANGE_CLIMBING;
                     // 방향 바꿈
                     transform.eulerAngles = new Vector3(0, 180, 0);
                 }
@@ -2792,11 +2818,11 @@ public class PlayerMovement : MonoBehaviour
                 if (destPos.z <= centerTrans.position.z)
                 {
                     // 이동을 끝마쳤으니 상태를 대기로 변경
-                    playerMoveState = MoveState.L_IDLE_CLIMBING;
+                    playerState = PlayerState.L_IDLE_CLIMBING;
                     moveKeyValue = Vector2.zero;
                 }
                 break;
-            case MoveState.FR_CLIMBING_MOVE:
+            case PlayerState.FR_CLIMBING_MOVE:
                 //------------------------------
                 // 앞쪽 매달림 오른쪽 이동
                 //------------------------------
@@ -2811,7 +2837,7 @@ public class PlayerMovement : MonoBehaviour
                     // 앞쪽으로 이동
                     moveKeyValue = Vector2.up;
                     // 이동 상태 변경
-                    playerMoveState = MoveState.LL_CLIMBING_MOVE;
+                    playerState = PlayerState.LL_CLIMBING_MOVE;
                     // 방향 바꿈
                     transform.eulerAngles = new Vector3(0, 90, 0);
                 }
@@ -2830,7 +2856,7 @@ public class PlayerMovement : MonoBehaviour
                     // 앞으로 이동
                     moveKeyValue = Vector2.down;
                     // 이동 상태 변경
-                    playerMoveState = MoveState.FR_RL_CHANGE_CLIMBING;
+                    playerState = PlayerState.FR_RL_CHANGE_CLIMBING;
                     // 방향 바꿈
                     transform.eulerAngles = new Vector3(0, 270, 0);
                 }
@@ -2839,11 +2865,11 @@ public class PlayerMovement : MonoBehaviour
                 if (destPos.x <= centerTrans.position.x)
                 {
                     // 이동을 끝마쳤으니 상태를 대기로 변경
-                    playerMoveState = MoveState.F_IDLE_CLIMBING;
+                    playerState = PlayerState.F_IDLE_CLIMBING;
                     moveKeyValue = Vector2.zero;
                 }
                 break;
-            case MoveState.FL_CLIMBING_MOVE:
+            case PlayerState.FL_CLIMBING_MOVE:
                 //------------------------------
                 // 앞쪽 매달림 왼쪽 이동
                 //------------------------------
@@ -2858,7 +2884,7 @@ public class PlayerMovement : MonoBehaviour
                     // 앞쪽으로 이동
                     moveKeyValue = Vector2.up;
                     // 이동 상태 변경
-                    playerMoveState = MoveState.RR_CLIMBING_MOVE;
+                    playerState = PlayerState.RR_CLIMBING_MOVE;
                     // 방향 바꿈
                     transform.eulerAngles = new Vector3(0, 270, 0);
                 }
@@ -2877,7 +2903,7 @@ public class PlayerMovement : MonoBehaviour
                     // 앞으로 이동
                     moveKeyValue = Vector2.down;
                     // 이동 상태 변경
-                    playerMoveState = MoveState.FL_LR_CHANGE_CLIMBING;
+                    playerState = PlayerState.FL_LR_CHANGE_CLIMBING;
                     // 방향 바꿈
                     transform.eulerAngles = new Vector3(0, 90, 0);
                 }
@@ -2886,11 +2912,11 @@ public class PlayerMovement : MonoBehaviour
                 if (destPos.x >= centerTrans.position.x)
                 {
                     // 이동을 끝마쳤으니 상태를 대기로 변경
-                    playerMoveState = MoveState.F_IDLE_CLIMBING;
+                    playerState = PlayerState.F_IDLE_CLIMBING;
                     moveKeyValue = Vector2.zero;
                 }
                 break;
-            case MoveState.BR_CLIMBING_MOVE:
+            case PlayerState.BR_CLIMBING_MOVE:
                 //------------------------------
                 // 뒤쪽 매달림 오른쪽 이동
                 //------------------------------
@@ -2905,7 +2931,7 @@ public class PlayerMovement : MonoBehaviour
                     // 뒤쪽으로 이동
                     moveKeyValue = Vector2.down;
                     // 이동 상태 변경
-                    playerMoveState = MoveState.LR_CLIMBING_MOVE;
+                    playerState = PlayerState.LR_CLIMBING_MOVE;
                     // 방향 바꿈
                     transform.eulerAngles = new Vector3(0, 90, 0);
                 }
@@ -2924,7 +2950,7 @@ public class PlayerMovement : MonoBehaviour
                     // 앞으로 이동
                     moveKeyValue = Vector2.up;
                     // 이동 상태 변경
-                    playerMoveState = MoveState.BR_RR_CHANGE_CLIMBING;
+                    playerState = PlayerState.BR_RR_CHANGE_CLIMBING;
                     // 방향 바꿈
                     transform.eulerAngles = new Vector3(0, 270, 0);
                 }
@@ -2933,11 +2959,11 @@ public class PlayerMovement : MonoBehaviour
                 if (destPos.x <= centerTrans.position.x)
                 {
                     // 이동을 끝마쳤으니 상태를 대기로 변경
-                    playerMoveState = MoveState.B_IDLE_CLIMBING;
+                    playerState = PlayerState.B_IDLE_CLIMBING;
                     moveKeyValue = Vector2.zero;
                 }
                 break;
-            case MoveState.BL_CLIMBING_MOVE:
+            case PlayerState.BL_CLIMBING_MOVE:
                 //------------------------------
                 // 앞쪽 매달림 왼쪽 이동
                 //------------------------------
@@ -2952,7 +2978,7 @@ public class PlayerMovement : MonoBehaviour
                     // 뒤쪽으로 이동
                     moveKeyValue = Vector2.down;
                     // 이동 상태 변경
-                    playerMoveState = MoveState.RL_CLIMBING_MOVE;
+                    playerState = PlayerState.RL_CLIMBING_MOVE;
                     // 방향 바꿈
                     transform.eulerAngles = new Vector3(0, 270, 0);
                 }
@@ -2971,7 +2997,7 @@ public class PlayerMovement : MonoBehaviour
                     // 앞으로 이동
                     moveKeyValue = Vector2.up;
                     // 이동 상태 변경
-                    playerMoveState = MoveState.BL_LL_CHANGE_CLIMBING;
+                    playerState = PlayerState.BL_LL_CHANGE_CLIMBING;
                     // 방향 바꿈
                     transform.eulerAngles = new Vector3(0, 90, 0);
                 }
@@ -2980,11 +3006,11 @@ public class PlayerMovement : MonoBehaviour
                 if (destPos.x >= centerTrans.position.x)
                 {
                     // 이동을 끝마쳤으니 상태를 대기로 변경
-                    playerMoveState = MoveState.B_IDLE_CLIMBING;
+                    playerState = PlayerState.B_IDLE_CLIMBING;
                     moveKeyValue = Vector2.zero;
                 }
                 break;
-            case MoveState.RR_FL_CHANGE_CLIMBING:
+            case PlayerState.RR_FL_CHANGE_CLIMBING:
                 //------------------------------
                 // 오른쪽에서 앞쪽으로 방향 전환
                 //------------------------------
@@ -3007,11 +3033,11 @@ public class PlayerMovement : MonoBehaviour
                 if (destPos.x >= centerTrans.position.x)
                 {
                     // 이동을 끝마쳤으니 상태를 대기로 변경
-                    playerMoveState = MoveState.F_IDLE_CLIMBING;
+                    playerState = PlayerState.F_IDLE_CLIMBING;
                     moveKeyValue = Vector2.zero;
                 }
                 break;
-            case MoveState.RL_BL_CHANGE_CLIMBING:
+            case PlayerState.RL_BL_CHANGE_CLIMBING:
                 //------------------------------
                 // 오른쪽에서 뒤쪽으로 방향 전환
                 //------------------------------
@@ -3035,11 +3061,11 @@ public class PlayerMovement : MonoBehaviour
                 if (destPos.x >= centerTrans.position.x)
                 {
                     // 이동을 끝마쳤으니 상태를 대기로 변경
-                    playerMoveState = MoveState.B_IDLE_CLIMBING;
+                    playerState = PlayerState.B_IDLE_CLIMBING;
                     moveKeyValue = Vector2.zero;
                 }
                 break;
-            case MoveState.LR_BR_CHANGE_CLIMBING:
+            case PlayerState.LR_BR_CHANGE_CLIMBING:
                 //------------------------------
                 // 왼쪽에서 뒤쪽으로 방향 전환
                 //------------------------------
@@ -3063,11 +3089,11 @@ public class PlayerMovement : MonoBehaviour
                 if (destPos.x <= centerTrans.position.x)
                 {
                     // 이동을 끝마쳤으니 상태를 대기로 변경
-                    playerMoveState = MoveState.B_IDLE_CLIMBING;
+                    playerState = PlayerState.B_IDLE_CLIMBING;
                     moveKeyValue = Vector2.zero;
                 }
                 break;
-            case MoveState.LL_FR_CHANGE_CLIMBING:
+            case PlayerState.LL_FR_CHANGE_CLIMBING:
                 //------------------------------
                 // 왼쪽에서 앞쪽으로 방향 전환
                 //------------------------------
@@ -3091,11 +3117,11 @@ public class PlayerMovement : MonoBehaviour
                 if (destPos.x <= centerTrans.position.x)
                 {
                     // 이동을 끝마쳤으니 상태를 대기로 변경
-                    playerMoveState = MoveState.F_IDLE_CLIMBING;
+                    playerState = PlayerState.F_IDLE_CLIMBING;
                     moveKeyValue = Vector2.zero;
                 }
                 break;
-            case MoveState.FR_RL_CHANGE_CLIMBING:
+            case PlayerState.FR_RL_CHANGE_CLIMBING:
                 //------------------------------
                 // 앞쪽에서 오른쪽으로 방향 전환
                 //------------------------------
@@ -3120,11 +3146,11 @@ public class PlayerMovement : MonoBehaviour
                 if (destPos.z >= centerTrans.position.z)
                 {
                     // 이동을 끝마쳤으니 상태를 대기로 변경
-                    playerMoveState = MoveState.R_IDLE_CLIMBING;
+                    playerState = PlayerState.R_IDLE_CLIMBING;
                     moveKeyValue = Vector2.zero;
                 }
                 break;
-            case MoveState.FL_LR_CHANGE_CLIMBING:
+            case PlayerState.FL_LR_CHANGE_CLIMBING:
                 //------------------------------
                 // 앞쪽에서 왼쪽으로 방향 전환
                 //------------------------------
@@ -3149,11 +3175,11 @@ public class PlayerMovement : MonoBehaviour
                 if (destPos.z >= centerTrans.position.z)
                 {
                     // 이동을 끝마쳤으니 상태를 대기로 변경
-                    playerMoveState = MoveState.L_IDLE_CLIMBING;
+                    playerState = PlayerState.L_IDLE_CLIMBING;
                     moveKeyValue = Vector2.zero;
                 }
                 break;
-            case MoveState.BR_RR_CHANGE_CLIMBING:
+            case PlayerState.BR_RR_CHANGE_CLIMBING:
                 //------------------------------
                 // 뒤쪽에서 오른쪽으로 방향 전환
                 //------------------------------
@@ -3178,11 +3204,11 @@ public class PlayerMovement : MonoBehaviour
                 if (destPos.z <= centerTrans.position.z)
                 {
                     // 이동을 끝마쳤으니 상태를 대기로 변경
-                    playerMoveState = MoveState.R_IDLE_CLIMBING;
+                    playerState = PlayerState.R_IDLE_CLIMBING;
                     moveKeyValue = Vector2.zero;
                 }
                 break;
-            case MoveState.BL_LL_CHANGE_CLIMBING:
+            case PlayerState.BL_LL_CHANGE_CLIMBING:
                 //------------------------------
                 // 뒤쪽에서 왼쪽으로 방향 전환
                 //------------------------------
@@ -3207,16 +3233,15 @@ public class PlayerMovement : MonoBehaviour
                 if (destPos.z <= centerTrans.position.z)
                 {
                     // 이동을 끝마쳤으니 상태를 대기로 변경
-                    playerMoveState = MoveState.L_IDLE_CLIMBING;
+                    playerState = PlayerState.L_IDLE_CLIMBING;
                     moveKeyValue = Vector2.zero;
                 }
                 break;
-        }// switch(playerMoveState)
+        }// switch(playerState)
 
-        //Debug.Log("playerMoveState : " + playerMoveState);
+        //Debug.Log("playerState : " + playerState);
         //Debug.Log("moveKeyValue : " + moveKeyValue);
         //Debug.Log(mouseClick);
-        //Debug.Log(interactionAnimeStart);
         //Debug.Log(followCam.transform.eulerAngles);
         //Debug.Log("--------------------------------");
         Move(moveKeyValue);
@@ -3274,52 +3299,86 @@ public class PlayerMovement : MonoBehaviour
     {
         Vector2 move;
 
-        switch (playerMoveState)
+
+        switch (animeSwitch)
         {
-            case MoveState.L_MOVE:
+            case AnimationSwitch.UP:
+                animator.SetTrigger("Climbing Up");
+                animeSwitch = AnimationSwitch.IDLE;
+                break;
+            case AnimationSwitch.DOWN:
+                animator.SetTrigger("Climbing Down");
+                animeSwitch = AnimationSwitch.IDLE;
+                break;
+            case AnimationSwitch.INTERACTION_START:
+                animator.SetTrigger("Idle Interaction Start");
+                animeSwitch = AnimationSwitch.IDLE;
+                break;
+            case AnimationSwitch.INTERACTION_END:
+                animator.SetTrigger("Idle Interaction End");
+                animeSwitch = AnimationSwitch.IDLE;
+                break;
+            case AnimationSwitch.PUSH_IDLE:
+                animator.SetTrigger("Push Idle");
+                animeSwitch = AnimationSwitch.IDLE;
+                break;
+            case AnimationSwitch.PUSH:
+                animator.SetTrigger("Push");
+                animeSwitch = AnimationSwitch.IDLE;
+                break;
+            case AnimationSwitch.PUSH_END:
+                animator.SetTrigger("Push End");
+                animeSwitch = AnimationSwitch.IDLE;
+                break;
+            default:
+                break;
+        }
+
+        switch (playerState)
+        {
+            case PlayerState.L_MOVE:
                 move.x = -1;
                 move.y = 0;
                 break;
-            case MoveState.R_MOVE:
+            case PlayerState.R_MOVE:
                 move.x = 1;
                 move.y = 0;
                 break;
-            case MoveState.B_MOVE:
+            case PlayerState.B_MOVE:
                 move.x = 0;
                 move.y = -1;
                 break;
-            case MoveState.F_MOVE:
+            case PlayerState.F_MOVE:
                 move.x = 0;
                 move.y = 1;
                 break;
-            case MoveState.R_INTERACTION_PULL:
-            case MoveState.R_INTERACTION_PULL_CLIMBING:
-            case MoveState.L_INTERACTION_PULL:
-            case MoveState.L_INTERACTION_PULL_CLIMBING:
-            case MoveState.F_INTERACTION_PULL:
-            case MoveState.F_INTERACTION_PULL_CLIMBING:
-            case MoveState.B_INTERACTION_PULL:
-            case MoveState.B_INTERACTION_PULL_CLIMBING:
-            case MoveState.RL_CLIMBING_MOVE:
-            case MoveState.LL_CLIMBING_MOVE:
-            case MoveState.FR_CLIMBING_MOVE:
-            case MoveState.BL_CLIMBING_MOVE:
-            case MoveState.RL_BL_CHANGE_CLIMBING:
-            case MoveState.LL_FR_CHANGE_CLIMBING:
-            case MoveState.FR_RL_CHANGE_CLIMBING:
-            case MoveState.BL_LL_CHANGE_CLIMBING:
+            case PlayerState.R_INTERACTION_PULL:
+            case PlayerState.R_INTERACTION_PULL_CLIMBING:
+            case PlayerState.L_INTERACTION_PULL:
+            case PlayerState.L_INTERACTION_PULL_CLIMBING:
+            case PlayerState.F_INTERACTION_PULL:
+            case PlayerState.F_INTERACTION_PULL_CLIMBING:
+            case PlayerState.B_INTERACTION_PULL:
+            case PlayerState.B_INTERACTION_PULL_CLIMBING:
+            case PlayerState.RL_CLIMBING_MOVE:
+            case PlayerState.LL_CLIMBING_MOVE:
+            case PlayerState.FR_CLIMBING_MOVE:
+            case PlayerState.BL_CLIMBING_MOVE:
+            case PlayerState.RL_BL_CHANGE_CLIMBING:
+            case PlayerState.LL_FR_CHANGE_CLIMBING:
+            case PlayerState.FR_RL_CHANGE_CLIMBING:
+            case PlayerState.BL_LL_CHANGE_CLIMBING:
                 move.x = -1;
                 move.y = 0;
                 break;
-            case MoveState.INTERACTION_PUSH:
-            case MoveState.RR_CLIMBING_MOVE:
-            case MoveState.LR_CLIMBING_MOVE:
-            case MoveState.FL_CLIMBING_MOVE:
-            case MoveState.BR_CLIMBING_MOVE:
-            case MoveState.RR_FL_CHANGE_CLIMBING:
-            case MoveState.LR_BR_CHANGE_CLIMBING:
-            case MoveState.FL_LR_CHANGE_CLIMBING:
-            case MoveState.BR_RR_CHANGE_CLIMBING:
+            case PlayerState.RR_CLIMBING_MOVE:
+            case PlayerState.LR_CLIMBING_MOVE:
+            case PlayerState.FL_CLIMBING_MOVE:
+            case PlayerState.BR_CLIMBING_MOVE:
+            case PlayerState.RR_FL_CHANGE_CLIMBING:
+            case PlayerState.LR_BR_CHANGE_CLIMBING:
+            case PlayerState.FL_LR_CHANGE_CLIMBING:
+            case PlayerState.BR_RR_CHANGE_CLIMBING:
                 move.x = 1;
                 move.y = 0;
                 break;
@@ -3332,33 +3391,11 @@ public class PlayerMovement : MonoBehaviour
         animationSpeedPercent = currentSpeed / speed;
         animator.SetFloat("Vertical Move", move.y * animationSpeedPercent, 0.05f, Time.deltaTime);
         animator.SetFloat("Horizontal Move", move.x * animationSpeedPercent, 0.05f, Time.deltaTime);
-        if (climbingUpAnime)
-        {
-            animator.SetTrigger("Climbing Up");
-            climbingUpAnime = false;
-        }
-
-        if (climbingDownAnime) {
-            animator.SetTrigger("Climbing Down");
-            climbingDownAnime = false;
-        }
-
-        if (interactionAnimeStart)
-        {
-            animator.SetTrigger("Idle_Interaction_Start");
-            interactionAnimeStart = false;
-        }
-
-        if (interactionAnimeEnd)
-        {
-            animator.SetTrigger("Idle_Interaction_End");
-            interactionAnimeEnd = false;
-        }
     }
 
     // 캐릭터 상태를 대기 상태로 변경
     public void UpdateStateToIdle() {
-        playerMoveState = MoveState.IDLE;
+        playerState = PlayerState.IDLE;
     }
 
     private void OnControllerColliderHit(ControllerColliderHit hit)
