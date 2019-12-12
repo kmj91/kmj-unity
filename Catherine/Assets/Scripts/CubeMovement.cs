@@ -67,6 +67,7 @@ public class CubeMovement : MonoBehaviour
         }
         // 없다
         else {
+            destPos = check;
             cubeMoveState = CubeMoveState.RIGHT;
         }
 
@@ -100,10 +101,10 @@ public class CubeMovement : MonoBehaviour
         box.y = 0.1f;
         box.z = 0.1f;
 
-        // 큐브의 밑 8방향 검사
-        // □□□
+        // 큐브의 밑 십자가 5방향 검사
+        //   □
         // □？□
-        // □□□
+        //   □  
         // 바로 밑
         check.x = transform.position.x;
         check.y = transform.position.y - 1f;
@@ -125,6 +126,14 @@ public class CubeMovement : MonoBehaviour
             case CubeMoveState.RIGHT:
                 // 오른쪽 이동
                 transform.position = transform.position + (Vector3.right * speed) * Time.deltaTime;
+
+                // 수평 이동 거리만큼 이동 했는가
+                if (destPos.x <= transform.position.x) {
+                    // 위치 맞추기
+                    transform.position = destPos;
+                    // 큐브 정지
+                    cubeMoveState = CubeMoveState.IDLE;
+                }
                 break;
         }
     }
