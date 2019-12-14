@@ -41,6 +41,25 @@ public class CubeMovement : MonoBehaviour
         Vector3 box;            // 박스 크기
         RaycastHit rayHit;      // 레이 충돌한 물체
 
+        // 움직이지 않는 큐브인가?
+        if (gameObject.CompareTag("StaticCube"))
+        {
+            // 해당 타입의 큐브는 움직일 수 없다
+            return false;
+        }
+
+
+        //switch (transform.tag)
+        //{
+        //    case "NormalCube":
+        //        // 일반 큐브
+
+        //        break;
+        //    default:
+        //        break;
+        //}
+
+
         box.x = 0.1f;
         box.y = 0.1f;
         box.z = 0.1f;
@@ -54,22 +73,15 @@ public class CubeMovement : MonoBehaviour
         if (Physics.Raycast(transform.position, transform.right, out rayHit, 1f, 1 << layerMaskCube))
         {
             // 큐브 이동 처리
-            // 이동 가능
-            if (rayHit.transform.gameObject.GetComponent<CubeMovement>().MoveRight())
-            {
-
-            }
-            // 이동 불가
-            else
+            // 이동 불가?
+            if (!rayHit.transform.gameObject.GetComponent<CubeMovement>().MoveRight())
             {
                 return false;
             }
         }
-        // 없다
-        else {
-            destPos = check;
-            cubeMoveState = CubeMoveState.RIGHT;
-        }
+
+        destPos = check;
+        cubeMoveState = CubeMoveState.RIGHT;
 
         return true;
     }
