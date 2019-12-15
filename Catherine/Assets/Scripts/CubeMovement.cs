@@ -18,7 +18,10 @@ public class CubeMovement : MonoBehaviour
     {
         IDLE,                       // 대기
         DOWN,                       // 아래
-        RIGHT                       // 오른쪽
+        RIGHT,                      // 오른쪽
+        LEFT,                       // 왼쪽
+        FORWARD,                    // 앞쪽
+        BACK                        // 뒤쪽
     }
 
 
@@ -59,7 +62,6 @@ public class CubeMovement : MonoBehaviour
         //        break;
         //}
 
-
         box.x = 0.1f;
         box.y = 0.1f;
         box.z = 0.1f;
@@ -70,7 +72,7 @@ public class CubeMovement : MonoBehaviour
         // 만약 오른쪽으로 이동이 불가능한 상황이면 이동하지 않아야함
         // 오른쪽 검사
         // 있다
-        if (Physics.Raycast(transform.position, transform.right, out rayHit, 1f, 1 << layerMaskCube))
+        if (Physics.Raycast(transform.position, Vector3.right, out rayHit, 1f, 1 << layerMaskCube))
         {
             // 큐브 이동 처리
             // 이동 불가?
@@ -80,7 +82,9 @@ public class CubeMovement : MonoBehaviour
             }
         }
 
+        // 이동 좌표
         destPos = check;
+        // 오른쪽 이동
         cubeMoveState = CubeMoveState.RIGHT;
 
         return true;
@@ -89,18 +93,126 @@ public class CubeMovement : MonoBehaviour
     // 큐브 왼쪽 이동
     public bool MoveLeft()
     {
+        Vector3 check;          // 체크할 위치
+        Vector3 box;            // 박스 크기
+        RaycastHit rayHit;      // 레이 충돌한 물체
+
+        // 움직이지 않는 큐브인가?
+        if (gameObject.CompareTag("StaticCube"))
+        {
+            // 해당 타입의 큐브는 움직일 수 없다
+            return false;
+        }
+
+        box.x = 0.1f;
+        box.y = 0.1f;
+        box.z = 0.1f;
+
+        check = transform.position;
+        check.x = check.x - 1;
+
+        // 만약 왼쪽으로 이동이 불가능한 상황이면 이동하지 않아야함
+        // 왼쪽 검사
+        // 있다
+        if (Physics.Raycast(transform.position, Vector3.left, out rayHit, 1f, 1 << layerMaskCube))
+        {
+            // 큐브 이동 처리
+            // 이동 불가?
+            if (!rayHit.transform.gameObject.GetComponent<CubeMovement>().MoveLeft())
+            {
+                return false;
+            }
+        }
+
+        // 이동 좌표
+        destPos = check;
+        // 왼쪽 이동
+        cubeMoveState = CubeMoveState.LEFT;
+
         return true;
     }
 
     // 큐브 앞쪽 이동
     public bool MoveForward()
     {
+        Vector3 check;          // 체크할 위치
+        Vector3 box;            // 박스 크기
+        RaycastHit rayHit;      // 레이 충돌한 물체
+
+        // 움직이지 않는 큐브인가?
+        if (gameObject.CompareTag("StaticCube"))
+        {
+            // 해당 타입의 큐브는 움직일 수 없다
+            return false;
+        }
+
+        box.x = 0.1f;
+        box.y = 0.1f;
+        box.z = 0.1f;
+
+        check = transform.position;
+        check.x = check.z + 1;
+
+        // 만약 앞쪽으로 이동이 불가능한 상황이면 이동하지 않아야함
+        // 앞쪽 검사
+        // 있다
+        if (Physics.Raycast(transform.position, Vector3.forward, out rayHit, 1f, 1 << layerMaskCube))
+        {
+            // 큐브 이동 처리
+            // 이동 불가?
+            if (!rayHit.transform.gameObject.GetComponent<CubeMovement>().MoveForward())
+            {
+                return false;
+            }
+        }
+
+        // 이동 좌표
+        destPos = check;
+        // 앞쪽 이동
+        cubeMoveState = CubeMoveState.FORWARD;
+
         return true;
     }
 
     // 큐브 뒤쪽 이동
     public bool MoveBack()
     {
+        Vector3 check;          // 체크할 위치
+        Vector3 box;            // 박스 크기
+        RaycastHit rayHit;      // 레이 충돌한 물체
+
+        // 움직이지 않는 큐브인가?
+        if (gameObject.CompareTag("StaticCube"))
+        {
+            // 해당 타입의 큐브는 움직일 수 없다
+            return false;
+        }
+
+        box.x = 0.1f;
+        box.y = 0.1f;
+        box.z = 0.1f;
+
+        check = transform.position;
+        check.x = check.z - 1;
+
+        // 만약 뒤쪽으로 이동이 불가능한 상황이면 이동하지 않아야함
+        // 뒤쪽 검사
+        // 있다
+        if (Physics.Raycast(transform.position, Vector3.back, out rayHit, 1f, 1 << layerMaskCube))
+        {
+            // 큐브 이동 처리
+            // 이동 불가?
+            if (!rayHit.transform.gameObject.GetComponent<CubeMovement>().MoveBack())
+            {
+                return false;
+            }
+        }
+
+        // 이동 좌표
+        destPos = check;
+        // 뒤쪽 이동
+        cubeMoveState = CubeMoveState.BACK;
+
         return true;
     }
 

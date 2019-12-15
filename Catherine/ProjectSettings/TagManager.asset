@@ -6,6 +6,7 @@ TagManager:
   tags:
   - NormalCube
   - StaticCube
+  - IceCube
   layers:
   - Default
   - TransparentFX
