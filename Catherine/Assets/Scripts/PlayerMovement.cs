@@ -2213,6 +2213,36 @@ public class PlayerMovement : MonoBehaviour
                 // 밀기 애니메이션은 약간의 딜레이가 필요합니다
                 actionDelay = 0;
                 break;
+            case PlayerState.L_INTERACTION_PUSH_READY:
+                // 왼쪽 밀기 준비
+
+                // 왼쪽 밀기 상태
+                playerState = PlayerState.L_INTERACTION_PUSH;
+                // 애니메이션 밀기
+                animeSwitch = AnimationSwitch.PUSH;
+                // 밀기 애니메이션은 약간의 딜레이가 필요합니다
+                actionDelay = 0;
+                break;
+            case PlayerState.F_INTERACTION_PUSH_READY:
+                // 앞쪽 밀기 준비
+
+                // 앞쪽 밀기 상태
+                playerState = PlayerState.F_INTERACTION_PUSH;
+                // 애니메이션 밀기
+                animeSwitch = AnimationSwitch.PUSH;
+                // 밀기 애니메이션은 약간의 딜레이가 필요합니다
+                actionDelay = 0;
+                break;
+            case PlayerState.B_INTERACTION_PUSH_READY:
+                // 뒤쪽 밀기 준비
+
+                // 뒤쪽 밀기 상태
+                playerState = PlayerState.B_INTERACTION_PUSH;
+                // 애니메이션 밀기
+                animeSwitch = AnimationSwitch.PUSH;
+                // 밀기 애니메이션은 약간의 딜레이가 필요합니다
+                actionDelay = 0;
+                break;
             case PlayerState.R_INTERACTION_PUSH:
                 // 오른쪽 밀기
 
@@ -2228,8 +2258,63 @@ public class PlayerMovement : MonoBehaviour
                     playerState = PlayerState.R_INTERACTION_PUSH_END;
                     // 큐브 오른쪽 이동 처리
                     cubeObject.GetComponent<CubeMovement>().MoveRight();
-                    // 애니메이션 밀기
-                    animeSwitch = AnimationSwitch.PUSH;
+                    // 밀기 애니메이션은 약간의 딜레이가 필요합니다
+                    actionDelay = 0;
+                }
+                break;
+            case PlayerState.L_INTERACTION_PUSH:
+                // 왼쪽 밀기
+
+                actionDelay = actionDelay + Time.deltaTime;
+
+                if (actionDelay < PUSH_DELAY)
+                {
+                    break;
+                }
+                else
+                {
+                    // 밀기 상태
+                    playerState = PlayerState.L_INTERACTION_PUSH_END;
+                    // 큐브 오른쪽 이동 처리
+                    cubeObject.GetComponent<CubeMovement>().MoveLeft();
+                    // 밀기 애니메이션은 약간의 딜레이가 필요합니다
+                    actionDelay = 0;
+                }
+                break;
+            case PlayerState.F_INTERACTION_PUSH:
+                // 앞쪽 밀기
+
+                actionDelay = actionDelay + Time.deltaTime;
+
+                if (actionDelay < PUSH_DELAY)
+                {
+                    break;
+                }
+                else
+                {
+                    // 밀기 상태
+                    playerState = PlayerState.F_INTERACTION_PUSH_END;
+                    // 큐브 오른쪽 이동 처리
+                    cubeObject.GetComponent<CubeMovement>().MoveForward();
+                    // 밀기 애니메이션은 약간의 딜레이가 필요합니다
+                    actionDelay = 0;
+                }
+                break;
+            case PlayerState.B_INTERACTION_PUSH:
+                // 뒤쪽 밀기
+
+                actionDelay = actionDelay + Time.deltaTime;
+
+                if (actionDelay < PUSH_DELAY)
+                {
+                    break;
+                }
+                else
+                {
+                    // 밀기 상태
+                    playerState = PlayerState.B_INTERACTION_PUSH_END;
+                    // 큐브 오른쪽 이동 처리
+                    cubeObject.GetComponent<CubeMovement>().MoveBack();
                     // 밀기 애니메이션은 약간의 딜레이가 필요합니다
                     actionDelay = 0;
                 }

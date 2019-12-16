@@ -216,7 +216,7 @@ public class CubeMovement : MonoBehaviour
         return true;
     }
 
-    public void Gravity()
+    public void GravityCheck()
     {
         Vector3 check;          // 체크할 위치
         Vector3 box;            // 박스 크기
@@ -258,6 +258,47 @@ public class CubeMovement : MonoBehaviour
                     // 큐브 정지
                     cubeMoveState = CubeMoveState.IDLE;
                 }
+                break;
+            case CubeMoveState.LEFT:
+                // 왼쪽 이동
+                transform.position = transform.position + (Vector3.left * speed) * Time.deltaTime;
+
+                // 수평 이동 거리만큼 이동 했는가
+                if (destPos.x >= transform.position.x)
+                {
+                    // 위치 맞추기
+                    transform.position = destPos;
+                    // 큐브 정지
+                    cubeMoveState = CubeMoveState.IDLE;
+                }
+                break;
+            case CubeMoveState.FORWARD:
+                // 앞쪽 이동
+                transform.position = transform.position + (Vector3.forward * speed) * Time.deltaTime;
+
+                // 수평 이동 거리만큼 이동 했는가
+                if (destPos.z <= transform.position.z)
+                {
+                    // 위치 맞추기
+                    transform.position = destPos;
+                    // 큐브 정지
+                    cubeMoveState = CubeMoveState.IDLE;
+                }
+                break;
+            case CubeMoveState.BACK:
+                // 앞쪽 이동
+                transform.position = transform.position + (Vector3.back * speed) * Time.deltaTime;
+
+                // 수평 이동 거리만큼 이동 했는가
+                if (destPos.z >= transform.position.z)
+                {
+                    // 위치 맞추기
+                    transform.position = destPos;
+                    // 큐브 정지
+                    cubeMoveState = CubeMoveState.IDLE;
+                }
+                break;
+            default:
                 break;
         }
     }
