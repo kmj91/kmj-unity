@@ -28,7 +28,7 @@ public class CubeMovement : MonoBehaviour
     void Start()
     {
         // 레이어 마스크
-        layerMaskCube = LayerMask.NameToLayer("Cube");
+        layerMaskCube = (1 << LayerMask.NameToLayer("Cube")) + (1 << LayerMask.NameToLayer("Floor"));
     }
 
     
@@ -72,7 +72,7 @@ public class CubeMovement : MonoBehaviour
         // 만약 오른쪽으로 이동이 불가능한 상황이면 이동하지 않아야함
         // 오른쪽 검사
         // 있다
-        if (Physics.Raycast(transform.position, Vector3.right, out rayHit, 1f, 1 << layerMaskCube))
+        if (Physics.Raycast(transform.position, Vector3.right, out rayHit, 1f, layerMaskCube))
         {
             // 큐브 이동 처리
             // 이동 불가?
@@ -114,7 +114,7 @@ public class CubeMovement : MonoBehaviour
         // 만약 왼쪽으로 이동이 불가능한 상황이면 이동하지 않아야함
         // 왼쪽 검사
         // 있다
-        if (Physics.Raycast(transform.position, Vector3.left, out rayHit, 1f, 1 << layerMaskCube))
+        if (Physics.Raycast(transform.position, Vector3.left, out rayHit, 1f, layerMaskCube))
         {
             // 큐브 이동 처리
             // 이동 불가?
@@ -156,7 +156,7 @@ public class CubeMovement : MonoBehaviour
         // 만약 앞쪽으로 이동이 불가능한 상황이면 이동하지 않아야함
         // 앞쪽 검사
         // 있다
-        if (Physics.Raycast(transform.position, Vector3.forward, out rayHit, 1f, 1 << layerMaskCube))
+        if (Physics.Raycast(transform.position, Vector3.forward, out rayHit, 1f, layerMaskCube))
         {
             // 큐브 이동 처리
             // 이동 불가?
@@ -198,7 +198,7 @@ public class CubeMovement : MonoBehaviour
         // 만약 뒤쪽으로 이동이 불가능한 상황이면 이동하지 않아야함
         // 뒤쪽 검사
         // 있다
-        if (Physics.Raycast(transform.position, Vector3.back, out rayHit, 1f, 1 << layerMaskCube))
+        if (Physics.Raycast(transform.position, Vector3.back, out rayHit, 1f, layerMaskCube))
         {
             // 큐브 이동 처리
             // 이동 불가?
@@ -234,7 +234,7 @@ public class CubeMovement : MonoBehaviour
         check.y = transform.position.y - 1f;
         check.z = transform.position.z;
         // 없다
-        if (!Physics.CheckBox(check, box, Quaternion.identity, 1 << layerMaskCube))
+        if (!Physics.CheckBox(check, box, Quaternion.identity, layerMaskCube))
         {
             cubeMoveState = CubeMoveState.DOWN;
         }
@@ -299,6 +299,8 @@ public class CubeMovement : MonoBehaviour
                 }
                 break;
             default:
+                // 떨어지는 상황인지 확인
+                GravityCheck();
                 break;
         }
     }
