@@ -3159,10 +3159,10 @@ public class PlayerMovement : MonoBehaviour
                 {
                     //--------------------------------
                     // 오른쪽 이동중에 뭔가 거치적거려서 멈춤
-                    // →★
                     //     ■
+                    // →★
                     //--------------------------------
-                    moveKeyValue = Vector2.up;
+                    moveKeyValue = Vector2.down;
                 }
                 // 거치적 거리지 않음
                 else
