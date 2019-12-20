@@ -2007,13 +2007,17 @@ public class PlayerMovement : MonoBehaviour
                 // 이동 거리만큼 이동 했는가
                 if (destPos.x <= centerTrans.position.x)
                 {
-                    // 멈춤
-                    moveKeyValue = Vector2.zero;
                     // 바닥에 닿고 상태 변환
                     if (characterController.isGrounded)
                     {
-                        // 이동을 끝마쳤으니 상태를 대기로 변경
-                        playerState = PlayerState.IDLE;
+                        // 미끄러짐 검사
+                        if (!CheckSlide(Vector3.right))
+                        {
+                            // 멈춤
+                            moveKeyValue = Vector2.zero;
+                            // 이동을 끝마쳤으니 상태를 대기로 변경
+                            playerState = PlayerState.IDLE;
+                        }
                     }
                 }
                 break;
@@ -3481,6 +3485,31 @@ public class PlayerMovement : MonoBehaviour
     // 캐릭터 상태를 대기 상태로 변경
     public void UpdateStateToIdle() {
         playerState = PlayerState.IDLE;
+    }
+
+    // 미끄러짐 체크
+    private bool CheckSlide(Vector3 direction)
+    {
+        RaycastHit rayHit;      // 레이 충돌한 물체
+
+        // 바닥 검사
+        // 있다
+        if (Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskCube))
+        {
+            // 바닥이 아이스 큐브
+            if (rayHit.transform.gameObject.CompareTag("IceCube"))
+            {
+                // 캐릭터 정면 검사
+                if (!Physics.Raycast(transform.position, transform.forward, out rayHit, 1f, layerMaskCube))
+                {
+                    // 미끄러짐
+                    destPos = destPos + direction;
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     private void OnControllerColliderHit(ControllerColliderHit hit)
