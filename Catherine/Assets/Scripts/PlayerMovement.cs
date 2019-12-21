@@ -19,8 +19,10 @@ public class PlayerMovement : MonoBehaviour
     public float speed = 2f;
     // 수직 이동
     public float jumpVelocity = 2.5f;
-    // 속도 지연시간 값
-    public float speedSmoothTime = 0.01f;
+    // 위로 점프할 때 속도 지연시간 값
+    public float upSmoothTime = 0.01f;
+    // 아래로 점프할 때 속도 지연시간 값
+    public float downSmoothTime = 0.001f;
     // 방향을 바꾸는 스무스 지연시간 값
     public float turnSmoothTime = 0.1f;
     // magnitude 벡터의 길이를 반환
@@ -77,6 +79,10 @@ public class PlayerMovement : MonoBehaviour
         L_UP,                       // 왼쪽 위
         F_UP,                       // 앞쪽 위
         B_UP,                       // 뒤쪽 위
+        R_DOWN,                     // 오른쪽 아래
+        L_DOWN,                     // 왼쪽 아래
+        F_DOWN,                     // 앞쪽 아래
+        B_DOWN,                     // 뒤쪽 아래
         R_INTERACTION_PUSH_READY,   // 오른쪽 밀기 준비
         L_INTERACTION_PUSH_READY,   // 왼쪽 밀기 준비
         F_INTERACTION_PUSH_READY,   // 앞쪽 밀기 준비
@@ -426,10 +432,15 @@ public class PlayerMovement : MonoBehaviour
                                 // 있다
                                 if (Physics.CheckBox(check, box, Quaternion.identity, layerMaskCube))
                                 {
-                                    // Move 함수에서 처리할 키 값
-                                    moveKeyValue = Vector2.left;
                                     // 왼쪽 이동 상태
-                                    playerState = PlayerState.L_MOVE;
+                                    playerState = PlayerState.L_DOWN;
+                                    // 애니메이션 점프
+                                    animeSwitch = AnimationSwitch.UP;
+                                    // 점프 애니메이션은 약간의 딜레이가 필요합니다
+                                    actionDelay = 0;
+                                    // 캐릭터 속도 관련 셋팅
+                                    saveSpeed = speed;
+                                    speed = 0.5f;
                                 }
                                 // 없다
                                 else
@@ -500,8 +511,6 @@ public class PlayerMovement : MonoBehaviour
                                 {
                                     // 위쪽 이동
                                     destPos.y = destPos.y + 0.5f;
-                                    // Move 함수에서 처리할 키 값
-                                    //moveKeyValue = Vector2.right;
                                     // 오른쪽 이동 등반 상태
                                     playerState = PlayerState.R_UP;
                                     // 애니메이션 점프
@@ -550,10 +559,15 @@ public class PlayerMovement : MonoBehaviour
                                 // 있다
                                 if (Physics.CheckBox(check, box, Quaternion.identity, layerMaskCube))
                                 {
-                                    // Move 함수에서 처리할 키 값
-                                    moveKeyValue = Vector2.right;
-                                    // 오른쪽 이동 상태
-                                    playerState = PlayerState.R_MOVE;
+                                    // 오른쪽 아래로 이동 상태
+                                    playerState = PlayerState.R_DOWN;
+                                    // 애니메이션 점프
+                                    animeSwitch = AnimationSwitch.UP;
+                                    // 점프 애니메이션은 약간의 딜레이가 필요합니다
+                                    actionDelay = 0;
+                                    // 캐릭터 속도 관련 셋팅
+                                    saveSpeed = speed;
+                                    speed = 0.5f;
                                 }
                                 // 없다
                                 else
@@ -676,10 +690,15 @@ public class PlayerMovement : MonoBehaviour
                                 // 있다
                                 if (Physics.CheckBox(check, box, Quaternion.identity, layerMaskCube))
                                 {
-                                    // Move 함수에서 처리할 키 값
-                                    moveKeyValue = Vector2.down;
                                     // 뒤쪽 이동 상태
-                                    playerState = PlayerState.B_MOVE;
+                                    playerState = PlayerState.B_DOWN;
+                                    // 애니메이션 점프
+                                    animeSwitch = AnimationSwitch.UP;
+                                    // 점프 애니메이션은 약간의 딜레이가 필요합니다
+                                    actionDelay = 0;
+                                    // 캐릭터 속도 관련 셋팅
+                                    saveSpeed = speed;
+                                    speed = 0.5f;
                                 }
                                 // 없다
                                 else
@@ -803,10 +822,15 @@ public class PlayerMovement : MonoBehaviour
                                 // 있다
                                 if (Physics.CheckBox(check, box, Quaternion.identity, layerMaskCube))
                                 {
-                                    // Move 함수에서 처리할 키 값
-                                    moveKeyValue = Vector2.up;
                                     // 앞쪽 이동 상태
-                                    playerState = PlayerState.F_MOVE;
+                                    playerState = PlayerState.F_DOWN;
+                                    // 애니메이션 점프
+                                    animeSwitch = AnimationSwitch.UP;
+                                    // 점프 애니메이션은 약간의 딜레이가 필요합니다
+                                    actionDelay = 0;
+                                    // 캐릭터 속도 관련 셋팅
+                                    saveSpeed = speed;
+                                    speed = 0.5f;
                                 }
                                 // 없다
                                 else
@@ -2078,12 +2102,12 @@ public class PlayerMovement : MonoBehaviour
                 if (destPos.y > centerTrans.position.y)
                 {
                     // 위로 이동함
-                    currentVelocityY = Mathf.SmoothDamp(currentSpeed, jumpVelocity, ref jumpSmoothVertical, speedSmoothTime);
+                    currentVelocityY = Mathf.SmoothDamp(currentSpeed, jumpVelocity, ref jumpSmoothVertical, upSmoothTime);
                 }
                 // 수직 이동 거리만큼 이동 함
                 else {
                     // 캐릭터 이동 속도를 빠르게
-                    speed = Mathf.SmoothDamp(currentSpeed, saveSpeed * 1.5f, ref jumpSmoothHorizontal, speedSmoothTime);
+                    speed = Mathf.SmoothDamp(currentSpeed, saveSpeed * 1.5f, ref jumpSmoothHorizontal, upSmoothTime);
                 }
 
                 // 수평 이동 거리만큼 이동 했는가
@@ -2114,13 +2138,13 @@ public class PlayerMovement : MonoBehaviour
                 if (destPos.y > centerTrans.position.y)
                 {
                     // 위로 이동함
-                    currentVelocityY = Mathf.SmoothDamp(currentSpeed, jumpVelocity, ref jumpSmoothVertical, speedSmoothTime);
+                    currentVelocityY = Mathf.SmoothDamp(currentSpeed, jumpVelocity, ref jumpSmoothVertical, upSmoothTime);
                 }
                 // 수직 이동 거리만큼 이동 함
                 else
                 {
                     // 캐릭터 이동 속도를 빠르게
-                    speed = Mathf.SmoothDamp(currentSpeed, saveSpeed * 1.5f, ref jumpSmoothHorizontal, speedSmoothTime);
+                    speed = Mathf.SmoothDamp(currentSpeed, saveSpeed * 1.5f, ref jumpSmoothHorizontal, upSmoothTime);
                 }
 
                 // 수평 이동 거리만큼 이동 했는가
@@ -2151,13 +2175,13 @@ public class PlayerMovement : MonoBehaviour
                 if (destPos.y > centerTrans.position.y)
                 {
                     // 위로 이동함
-                    currentVelocityY = Mathf.SmoothDamp(currentSpeed, jumpVelocity, ref jumpSmoothVertical, speedSmoothTime);
+                    currentVelocityY = Mathf.SmoothDamp(currentSpeed, jumpVelocity, ref jumpSmoothVertical, upSmoothTime);
                 }
                 // 수직 이동 거리만큼 이동 함
                 else
                 {
                     // 캐릭터 이동 속도를 빠르게
-                    speed = Mathf.SmoothDamp(currentSpeed, saveSpeed * 1.5f, ref jumpSmoothHorizontal, speedSmoothTime);
+                    speed = Mathf.SmoothDamp(currentSpeed, saveSpeed * 1.5f, ref jumpSmoothHorizontal, upSmoothTime);
                 }
 
                 // 수평 이동 거리만큼 이동 했는가
@@ -2188,13 +2212,13 @@ public class PlayerMovement : MonoBehaviour
                 if (destPos.y > centerTrans.position.y)
                 {
                     // 위로 이동함
-                    currentVelocityY = Mathf.SmoothDamp(currentSpeed, jumpVelocity, ref jumpSmoothVertical, speedSmoothTime);
+                    currentVelocityY = Mathf.SmoothDamp(currentSpeed, jumpVelocity, ref jumpSmoothVertical, upSmoothTime);
                 }
                 // 수직 이동 거리만큼 이동 함
                 else
                 {
                     // 캐릭터 이동 속도를 빠르게
-                    speed = Mathf.SmoothDamp(currentSpeed, saveSpeed * 1.5f, ref jumpSmoothHorizontal, speedSmoothTime);
+                    speed = Mathf.SmoothDamp(currentSpeed, saveSpeed * 1.5f, ref jumpSmoothHorizontal, upSmoothTime);
                 }
 
                 // 수평 이동 거리만큼 이동 했는가
@@ -2205,6 +2229,126 @@ public class PlayerMovement : MonoBehaviour
                     moveKeyValue = Vector2.zero;
                     // 이동 속도 원상 복구
                     speed = saveSpeed;
+                }
+                break;
+            case PlayerState.R_DOWN:
+                actionDelay = actionDelay + Time.deltaTime;
+
+                // 점프 준비 동작때문에 약 0.15 대기합니다
+                if (actionDelay < JUMP_DELAY)
+                {
+                    break;
+                }
+                else
+                {
+                    // Move 함수에서 처리할 키 값
+                    moveKeyValue = Vector2.right;
+                }
+
+                // 수평 이동 거리만큼 이동 했는가
+                if (destPos.x <= centerTrans.position.x)
+                {
+                    // 캐릭터의 상태 변화는 애니메이션 클립에서 이벤트를 통해 함수를 호출해서 변경함
+                    // 이동 정지
+                    moveKeyValue = Vector2.zero;
+                    // 이동 속도 원상 복구
+                    speed = saveSpeed;
+                }
+                // 처음에는 느리게, 서서히 원래의 이동속도로 수평 이동함
+                else
+                {
+                    // 캐릭터 이동 속도를 빠르게
+                    speed = Mathf.SmoothDamp(currentSpeed, saveSpeed, ref jumpSmoothHorizontal, downSmoothTime);
+                }
+                break;
+            case PlayerState.L_DOWN:
+                actionDelay = actionDelay + Time.deltaTime;
+
+                // 점프 준비 동작때문에 약 0.15 대기합니다
+                if (actionDelay < JUMP_DELAY)
+                {
+                    break;
+                }
+                else
+                {
+                    // Move 함수에서 처리할 키 값
+                    moveKeyValue = Vector2.left;
+                }
+
+                // 수평 이동 거리만큼 이동 했는가
+                if (destPos.x >= centerTrans.position.x)
+                {
+                    // 캐릭터의 상태 변화는 애니메이션 클립에서 이벤트를 통해 함수를 호출해서 변경함
+                    // 이동 정지
+                    moveKeyValue = Vector2.zero;
+                    // 이동 속도 원상 복구
+                    speed = saveSpeed;
+                }
+                // 처음에는 느리게, 서서히 원래의 이동속도로 수평 이동함
+                else
+                {
+                    // 캐릭터 이동 속도를 빠르게
+                    speed = Mathf.SmoothDamp(currentSpeed, saveSpeed, ref jumpSmoothHorizontal, downSmoothTime);
+                }
+                break;
+            case PlayerState.F_DOWN:
+                actionDelay = actionDelay + Time.deltaTime;
+
+                // 점프 준비 동작때문에 약 0.15 대기합니다
+                if (actionDelay < JUMP_DELAY)
+                {
+                    break;
+                }
+                else
+                {
+                    // Move 함수에서 처리할 키 값
+                    moveKeyValue = Vector2.up;
+                }
+
+                // 수평 이동 거리만큼 이동 했는가
+                if (destPos.z <= centerTrans.position.z)
+                {
+                    // 캐릭터의 상태 변화는 애니메이션 클립에서 이벤트를 통해 함수를 호출해서 변경함
+                    // 이동 정지
+                    moveKeyValue = Vector2.zero;
+                    // 이동 속도 원상 복구
+                    speed = saveSpeed;
+                }
+                // 처음에는 느리게, 서서히 원래의 이동속도로 수평 이동함
+                else
+                {
+                    // 캐릭터 이동 속도를 빠르게
+                    speed = Mathf.SmoothDamp(currentSpeed, saveSpeed, ref jumpSmoothHorizontal, downSmoothTime);
+                }
+                break;
+            case PlayerState.B_DOWN:
+                actionDelay = actionDelay + Time.deltaTime;
+
+                // 점프 준비 동작때문에 약 0.15 대기합니다
+                if (actionDelay < JUMP_DELAY)
+                {
+                    break;
+                }
+                else
+                {
+                    // Move 함수에서 처리할 키 값
+                    moveKeyValue = Vector2.down;
+                }
+
+                // 수평 이동 거리만큼 이동 했는가
+                if (destPos.z >= centerTrans.position.z)
+                {
+                    // 캐릭터의 상태 변화는 애니메이션 클립에서 이벤트를 통해 함수를 호출해서 변경함
+                    // 이동 정지
+                    moveKeyValue = Vector2.zero;
+                    // 이동 속도 원상 복구
+                    speed = saveSpeed;
+                }
+                // 처음에는 느리게, 서서히 원래의 이동속도로 수평 이동함
+                else
+                {
+                    // 캐릭터 이동 속도를 빠르게
+                    speed = Mathf.SmoothDamp(currentSpeed, saveSpeed, ref jumpSmoothHorizontal, downSmoothTime);
                 }
                 break;
             case PlayerState.R_INTERACTION_PUSH_READY:
@@ -3343,9 +3487,7 @@ public class PlayerMovement : MonoBehaviour
         // x, z 평면
         //var moveDiection = Vector3.Normalize(transform.forward * moveInput.y + transform.forward * moveInput.x);
         var moveDiection = new Vector3(moveInput.x, 0, moveInput.y);
-        // 목표 까지 스무스하게
-        //targetSpeed = Mathf.SmoothDamp(currentSpeed, targetSpeed, ref speedSmoothVelocity, speedSmoothTime, 2.0f);
-        //Debug.Log("targetSpeed : " + targetSpeed);
+
         // 매달리는 중이 아닐때만 중력 처리
         if (!climbingFlag)
         {
