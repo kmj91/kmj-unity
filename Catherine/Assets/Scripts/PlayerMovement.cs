@@ -75,6 +75,10 @@ public class PlayerMovement : MonoBehaviour
         L_MOVE,                     // 왼쪽 이동
         F_MOVE,                     // 앞쪽 이동
         B_MOVE,                     // 뒤쪽 이동
+        R_SLIDE,                    // 오른쪽 미끄러짐
+        L_SLIDE,                    // 왼쪽 미끄러짐
+        F_SLIDE,                    // 앞쪽 미끄러짐
+        B_SLIDE,                    // 뒤쪽 미끄러짐
         R_UP,                       // 오른쪽 위
         L_UP,                       // 왼쪽 위
         F_UP,                       // 앞쪽 위
@@ -528,8 +532,8 @@ public class PlayerMovement : MonoBehaviour
                         {
                             //--------------------------------
                             // 아래쪽 검사
-                            //   ★
-                            // ？■
+                            // ★
+                            // ■？
                             //--------------------------------
                             // 오른쪽 아래 검사
                             check.x = destPos.x;
@@ -538,10 +542,28 @@ public class PlayerMovement : MonoBehaviour
                             // 있다
                             if (Physics.CheckBox(check, box, Quaternion.identity, layerMaskCube))
                             {
-                                // Move 함수에서 처리할 키 값
-                                moveKeyValue = Vector2.right;
-                                // 오른쪽 이동 상태
-                                playerState = PlayerState.R_MOVE;
+                                //--------------------------------
+                                // 빙판 검사
+                                // ★
+                                // □■
+                                //--------------------------------
+                                // 미끄러짐 검사
+                                if (CheckSlide())
+                                {
+                                    // 빙판임
+                                    // Move 함수에서 처리할 키 값
+                                    moveKeyValue = Vector2.right;
+                                    // 오른쪽 미끄러짐 상태
+                                    playerState = PlayerState.R_SLIDE;
+                                }
+                                else
+                                {
+                                    // 빙판이 아님
+                                    // Move 함수에서 처리할 키 값
+                                    moveKeyValue = Vector2.right;
+                                    // 오른쪽 이동 상태
+                                    playerState = PlayerState.R_MOVE;
+                                }
                             }
                             // 없다
                             else
@@ -2035,7 +2057,12 @@ public class PlayerMovement : MonoBehaviour
                     if (characterController.isGrounded)
                     {
                         // 미끄러짐 검사
-                        if (!CheckSlide(Vector3.right))
+                        if (CheckSlide(Vector3.right))
+                        {
+                            // 오른쪽 미끄러짐 상태
+                            playerState = PlayerState.R_SLIDE;
+                        }
+                        else
                         {
                             // 멈춤
                             moveKeyValue = Vector2.zero;
@@ -2080,6 +2107,22 @@ public class PlayerMovement : MonoBehaviour
                     moveKeyValue = Vector2.zero;
                     // 바닥에 닿고 상태 변환
                     if (characterController.isGrounded) {
+                        // 이동을 끝마쳤으니 상태를 대기로 변경
+                        playerState = PlayerState.IDLE;
+                    }
+                }
+                break;
+            case PlayerState.R_SLIDE:
+                // 오른쪽 미끄러짐
+
+                // 이동 거리만큼 이동 했는가
+                if (destPos.x <= centerTrans.position.x)
+                {
+                    // 미끄러짐 검사
+                    if (!CheckSlide(Vector3.right))
+                    {
+                        // 멈춤
+                        moveKeyValue = Vector2.zero;
                         // 이동을 끝마쳤으니 상태를 대기로 변경
                         playerState = PlayerState.IDLE;
                     }
@@ -3629,6 +3672,42 @@ public class PlayerMovement : MonoBehaviour
         playerState = PlayerState.IDLE;
     }
 
+    //-------------------------------------
+    // 두가지 경우가있음
+    // 처음부터 밟고있는 발판이 빙판이거나
+    // 이동 후 빙판이거나
+    // 이 함수는 전자의 경우 호출
+    //-------------------------------------
+    // 미끄러짐 체크
+    private bool CheckSlide()
+    {
+        RaycastHit rayHit;      // 레이 충돌한 물체
+
+        // 바닥 검사
+        // 있다
+        if (Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskCube))
+        {
+            // 바닥이 아이스 큐브
+            if (rayHit.transform.gameObject.CompareTag("IceCube"))
+            {
+                // 캐릭터 정면 검사
+                if (!Physics.Raycast(transform.position, transform.forward, out rayHit, 1f, layerMaskCube))
+                {
+                    // 미끄러짐
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    //-------------------------------------
+    // 두가지 경우가있음
+    // 처음부터 밟고있는 발판이 빙판이거나
+    // 이동 후 빙판이거나
+    // 이 함수는 후자의 경우 호출
+    //-------------------------------------
     // 미끄러짐 체크
     private bool CheckSlide(Vector3 direction)
     {
