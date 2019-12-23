@@ -140,6 +140,8 @@ public class PlayerMovement : MonoBehaviour
         PUSH_IDLE,
         PUSH,
         PUSH_END,
+        SLIDE,
+        SLIDE_END
     }
 
     private const float INTERACTION_MOVE_VALUE = 0.25f;
@@ -555,6 +557,8 @@ public class PlayerMovement : MonoBehaviour
                                     moveKeyValue = Vector2.right;
                                     // 오른쪽 미끄러짐 상태
                                     playerState = PlayerState.R_SLIDE;
+                                    // 애니메이션 미끄러짐
+                                    animeSwitch = AnimationSwitch.SLIDE;
                                 }
                                 else
                                 {
@@ -2061,6 +2065,8 @@ public class PlayerMovement : MonoBehaviour
                         {
                             // 오른쪽 미끄러짐 상태
                             playerState = PlayerState.R_SLIDE;
+                            // 애니메이션 미끄러짐
+                            animeSwitch = AnimationSwitch.SLIDE;
                         }
                         else
                         {
@@ -2125,6 +2131,8 @@ public class PlayerMovement : MonoBehaviour
                         moveKeyValue = Vector2.zero;
                         // 이동을 끝마쳤으니 상태를 대기로 변경
                         playerState = PlayerState.IDLE;
+                        // 애니메이션 미끄러짐 끝
+                        animeSwitch = AnimationSwitch.SLIDE_END;
                     }
                 }
                 break;
@@ -3515,11 +3523,12 @@ public class PlayerMovement : MonoBehaviour
                 break;
         }// switch(playerState)
 
-        //Debug.Log("playerState : " + playerState);
+        Debug.Log("playerState : " + playerState);
+        Debug.Log("destPos : " + destPos);
         //Debug.Log("moveKeyValue : " + moveKeyValue);
         //Debug.Log(mouseClick);
         //Debug.Log(followCam.transform.eulerAngles);
-        //Debug.Log("--------------------------------");
+        Debug.Log("--------------------------------");
         Move(moveKeyValue);
     }
 
@@ -3602,6 +3611,14 @@ public class PlayerMovement : MonoBehaviour
                 break;
             case AnimationSwitch.PUSH_END:
                 animator.SetTrigger("Push End");
+                animeSwitch = AnimationSwitch.IDLE;
+                break;
+            case AnimationSwitch.SLIDE:
+                animator.SetTrigger("Slide");
+                animeSwitch = AnimationSwitch.IDLE;
+                break;
+            case AnimationSwitch.SLIDE_END:
+                animator.SetTrigger("Slide End");
                 animeSwitch = AnimationSwitch.IDLE;
                 break;
             default:
