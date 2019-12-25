@@ -16,15 +16,15 @@ public class PlayerMovement : MonoBehaviour
     private GameObject cubeObject;            // 이동할 큐브 오브젝트
 
     // 캐릭터 스피드
-    public float speed = 2f;
+    public float speed;
     // 수직 이동
-    public float jumpVelocity = 2.5f;
+    public float jumpVelocity;
     // 위로 점프할 때 속도 지연시간 값
-    public float upSmoothTime = 0.01f;
+    public float upSmoothTime;
     // 아래로 점프할 때 속도 지연시간 값
-    public float downSmoothTime = 0.001f;
+    public float downSmoothTime;
     // 방향을 바꾸는 스무스 지연시간 값
-    public float turnSmoothTime = 0.1f;
+    public float turnSmoothTime;
     // magnitude 벡터의 길이를 반환
     // 지면상에서의 현제 속도
     public float currentSpeed =>
@@ -43,7 +43,7 @@ public class PlayerMovement : MonoBehaviour
     // 캐릭터 컬라이더의 이동 속도
     private float animationSpeedPercent;
     // 딜레이
-    private float actionDelay = 0;
+    private float actionDelay = 0f;
     // 캐릭터 스피드 저장
     private float saveSpeed;
     // 등반 플래그
@@ -395,7 +395,7 @@ public class PlayerMovement : MonoBehaviour
                                     // 애니메이션 점프
                                     animeSwitch = AnimationSwitch.UP;
                                     // 점프 애니메이션은 약간의 딜레이가 필요합니다
-                                    actionDelay = 0;
+                                    actionDelay = 0f;
                                     // 캐릭터 속도 관련 셋팅
                                     saveSpeed = speed;
                                     speed = 0.5f;
@@ -463,7 +463,7 @@ public class PlayerMovement : MonoBehaviour
                                     // 애니메이션 점프
                                     animeSwitch = AnimationSwitch.UP;
                                     // 점프 애니메이션은 약간의 딜레이가 필요합니다
-                                    actionDelay = 0;
+                                    actionDelay = 0f;
                                     // 캐릭터 속도 관련 셋팅
                                     saveSpeed = speed;
                                     speed = 0.5f;
@@ -542,7 +542,7 @@ public class PlayerMovement : MonoBehaviour
                                     // 애니메이션 점프
                                     animeSwitch = AnimationSwitch.UP;
                                     // 점프 애니메이션은 약간의 딜레이가 필요합니다
-                                    actionDelay = 0;
+                                    actionDelay = 0f;
                                     // 캐릭터 속도 관련 셋팅
                                     saveSpeed = speed;
                                     speed = 0.5f;
@@ -579,6 +579,9 @@ public class PlayerMovement : MonoBehaviour
                                     playerState = PlayerState.R_SLIDE;
                                     // 애니메이션 미끄러짐
                                     animeSwitch = AnimationSwitch.SLIDE;
+                                    // 속도 변화
+                                    saveSpeed = speed;
+                                    speed = speed * 1.5f;
                                 }
                                 else
                                 {
@@ -610,7 +613,7 @@ public class PlayerMovement : MonoBehaviour
                                     // 애니메이션 점프
                                     animeSwitch = AnimationSwitch.UP;
                                     // 점프 애니메이션은 약간의 딜레이가 필요합니다
-                                    actionDelay = 0;
+                                    actionDelay = 0f;
                                     // 캐릭터 속도 관련 셋팅
                                     saveSpeed = speed;
                                     speed = 0.5f;
@@ -693,7 +696,7 @@ public class PlayerMovement : MonoBehaviour
                                     // 애니메이션 점프
                                     animeSwitch = AnimationSwitch.UP;
                                     // 점프 애니메이션은 약간의 딜레이가 필요합니다
-                                    actionDelay = 0;
+                                    actionDelay = 0f;
                                     // 캐릭터 속도 관련 셋팅
                                     saveSpeed = speed;
                                     speed = 0.5f;
@@ -717,8 +720,8 @@ public class PlayerMovement : MonoBehaviour
                             {
                                 //--------------------------------
                                 // 빙판 검사
-                                // ★
-                                // □■
+                                //   ★
+                                // ■□
                                 //--------------------------------
                                 // 미끄러짐 검사
                                 if (CheckSlide())
@@ -761,7 +764,7 @@ public class PlayerMovement : MonoBehaviour
                                     // 애니메이션 점프
                                     animeSwitch = AnimationSwitch.UP;
                                     // 점프 애니메이션은 약간의 딜레이가 필요합니다
-                                    actionDelay = 0;
+                                    actionDelay = 0f;
                                     // 캐릭터 속도 관련 셋팅
                                     saveSpeed = speed;
                                     speed = 0.5f;
@@ -821,7 +824,7 @@ public class PlayerMovement : MonoBehaviour
                             //--------------------------------
                             // 앞쪽 위 검사
                             check.x = destPos.x;
-                            check.y = destPos.y + 1;
+                            check.y = destPos.y + 1f;
                             check.z = destPos.z;
                             // 없다
                             if (!Physics.CheckBox(check, box, Quaternion.identity, layerMaskCube))
@@ -845,7 +848,7 @@ public class PlayerMovement : MonoBehaviour
                                     // 애니메이션 점프
                                     animeSwitch = AnimationSwitch.UP;
                                     // 점프 애니메이션은 약간의 딜레이가 필요합니다
-                                    actionDelay = 0;
+                                    actionDelay = 0f;
                                     // 캐릭터 속도 관련 셋팅
                                     saveSpeed = speed;
                                     speed = 0.5f;
@@ -913,7 +916,7 @@ public class PlayerMovement : MonoBehaviour
                                     // 애니메이션 점프
                                     animeSwitch = AnimationSwitch.UP;
                                     // 점프 애니메이션은 약간의 딜레이가 필요합니다
-                                    actionDelay = 0;
+                                    actionDelay = 0f;
                                     // 캐릭터 속도 관련 셋팅
                                     saveSpeed = speed;
                                     speed = 0.5f;
@@ -979,7 +982,7 @@ public class PlayerMovement : MonoBehaviour
                         // ？←
                         //--------------------------------
                         // 앞쪽 검사
-                        check.x = destPos.x - 1;
+                        check.x = destPos.x - 1f;
                         check.y = destPos.y;
                         check.z = destPos.z;
 
@@ -995,7 +998,7 @@ public class PlayerMovement : MonoBehaviour
                         else
                         {
                             // ← 방향 이동
-                            destPos.x = destPos.x - 1;
+                            destPos.x = destPos.x - 1f;
                             // Move 함수에서 처리할 키 값
                             moveKeyValue = Vector2.down;
                             // 왼쪽 이동 매달림
@@ -1048,7 +1051,7 @@ public class PlayerMovement : MonoBehaviour
                         // ■★
                         //--------------------------------
                         // 앞쪽 검사
-                        check.x = destPos.x - 1;
+                        check.x = destPos.x - 1f;
                         check.y = destPos.y;
                         check.z = destPos.z;
 
@@ -1064,7 +1067,7 @@ public class PlayerMovement : MonoBehaviour
                         else
                         {
                             // ← 방향 이동
-                            destPos.x = destPos.x - 1;
+                            destPos.x = destPos.x - 1f;
                             // Move 함수에서 처리할 키 값
                             moveKeyValue = Vector2.up;
                             // 왼쪽 이동 매달림
@@ -1116,7 +1119,7 @@ public class PlayerMovement : MonoBehaviour
                         // 애니메이션 점프
                         animeSwitch = AnimationSwitch.UP;
                         // 점프 애니메이션은 약간의 딜레이가 필요합니다
-                        actionDelay = 0;
+                        actionDelay = 0f;
                         // 캐릭터 속도 관련 셋팅
                         saveSpeed = speed;
                         speed = 0.5f;
@@ -1169,7 +1172,7 @@ public class PlayerMovement : MonoBehaviour
                         // ★■
                         //--------------------------------
                         // 앞쪽 검사
-                        check.x = destPos.x + 1;
+                        check.x = destPos.x + 1f;
                         check.y = destPos.y;
                         check.z = destPos.z;
 
@@ -1185,7 +1188,7 @@ public class PlayerMovement : MonoBehaviour
                         else
                         {
                             // → 방향 이동
-                            destPos.x = destPos.x + 1;
+                            destPos.x = destPos.x + 1f;
                             // Move 함수에서 처리할 키 값
                             moveKeyValue = Vector2.up;
                             // 왼쪽 이동 매달림
@@ -1238,7 +1241,7 @@ public class PlayerMovement : MonoBehaviour
                         // →？
                         //--------------------------------
                         // 앞쪽 검사
-                        check.x = destPos.x + 1;
+                        check.x = destPos.x + 1f;
                         check.y = destPos.y;
                         check.z = destPos.z;
 
@@ -1254,7 +1257,7 @@ public class PlayerMovement : MonoBehaviour
                         else
                         {
                             // → 방향 이동
-                            destPos.x = destPos.x + 1;
+                            destPos.x = destPos.x + 1f;
                             // Move 함수에서 처리할 키 값
                             moveKeyValue = Vector2.down;
                             // 왼쪽 이동 매달림
@@ -1306,7 +1309,7 @@ public class PlayerMovement : MonoBehaviour
                         // 애니메이션 점프
                         animeSwitch = AnimationSwitch.UP;
                         // 점프 애니메이션은 약간의 딜레이가 필요합니다
-                        actionDelay = 0;
+                        actionDelay = 0f;
                         // 캐릭터 속도 관련 셋팅
                         saveSpeed = speed;
                         speed = 0.5f;
@@ -1494,7 +1497,7 @@ public class PlayerMovement : MonoBehaviour
                         // 애니메이션 점프
                         animeSwitch = AnimationSwitch.UP;
                         // 점프 애니메이션은 약간의 딜레이가 필요합니다
-                        actionDelay = 0;
+                        actionDelay = 0f;
                         // 캐릭터 속도 관련 셋팅
                         saveSpeed = speed;
                         speed = 0.5f;
@@ -1681,7 +1684,7 @@ public class PlayerMovement : MonoBehaviour
                         // 애니메이션 점프
                         animeSwitch = AnimationSwitch.UP;
                         // 점프 애니메이션은 약간의 딜레이가 필요합니다
-                        actionDelay = 0;
+                        actionDelay = 0f;
                         // 캐릭터 속도 관련 셋팅
                         saveSpeed = speed;
                         speed = 0.5f;
@@ -2114,18 +2117,22 @@ public class PlayerMovement : MonoBehaviour
                 }
                 break;
             case PlayerState.R_MOVE:
+
+                // 미끄러짐 검사
+                if (CheckSlide())
+                {
+                    // 오른쪽 미끄러짐 상태
+                    playerState = PlayerState.R_SLIDE;
+                    // 애니메이션 미끄러짐
+                    animeSwitch = AnimationSwitch.SLIDE;
+                    break;
+                }
+
                 // 이동 거리만큼 이동 했는가
                 if (destPos.x <= centerTrans.position.x)
                 {
-                    // 미끄러짐 검사
-                    if (CheckSlide(Vector3.right))
-                    {
-                        // 오른쪽 미끄러짐 상태
-                        playerState = PlayerState.R_SLIDE;
-                        // 애니메이션 미끄러짐
-                        animeSwitch = AnimationSwitch.SLIDE;
-                    }
-                    else
+                    
+                    //else
                     {
                         // 멈춤
                         moveKeyValue = Vector2.zero;
@@ -2200,10 +2207,19 @@ public class PlayerMovement : MonoBehaviour
             case PlayerState.R_SLIDE:
                 // 오른쪽 미끄러짐
 
+                // 이동중에 미끄러짐 경계선 검사
+                if (!CheckSlide())
+                {
+                    // 미끄러지지 않음 오른쪽 이동
+                    playerState = PlayerState.R_MOVE;
+                    // 애니메이션 미끄러짐 끝
+                    animeSwitch = AnimationSwitch.SLIDE_END;
+                }
+
                 // 이동 거리만큼 이동 했는가
                 if (destPos.x <= centerTrans.position.x)
                 {
-                    // 미끄러짐 검사
+                    // 연속적인 미끄러짐 검사
                     if (!CheckSlide(Vector3.right))
                     {
                         // 멈춤
@@ -2218,10 +2234,19 @@ public class PlayerMovement : MonoBehaviour
             case PlayerState.L_SLIDE:
                 // 왼쪽 미끄러짐
 
+                // 이동중에 미끄러짐 경계선 검사
+                if (!CheckSlide())
+                {
+                    // 미끄러지지 않음 왼쪽 이동
+                    playerState = PlayerState.L_MOVE;
+                    // 애니메이션 미끄러짐 끝
+                    animeSwitch = AnimationSwitch.SLIDE_END;
+                }
+
                 // 이동 거리만큼 이동 했는가
                 if (destPos.x >= centerTrans.position.x)
                 {
-                    // 미끄러짐 검사
+                    // 연속적인 미끄러짐 검사
                     if (!CheckSlide(Vector3.left))
                     {
                         // 멈춤
@@ -2236,10 +2261,19 @@ public class PlayerMovement : MonoBehaviour
             case PlayerState.F_SLIDE:
                 // 앞쪽 미끄러짐
 
+                // 이동중에 미끄러짐 경계선 검사
+                if (!CheckSlide())
+                {
+                    // 미끄러지지 않음 앞쪽 이동
+                    playerState = PlayerState.F_MOVE;
+                    // 애니메이션 미끄러짐 끝
+                    animeSwitch = AnimationSwitch.SLIDE_END;
+                }
+
                 // 이동 거리만큼 이동 했는가
                 if (destPos.z <= centerTrans.position.z)
                 {
-                    // 미끄러짐 검사
+                    // 연속적인 미끄러짐 검사
                     if (!CheckSlide(Vector3.up))
                     {
                         // 멈춤
@@ -2254,10 +2288,19 @@ public class PlayerMovement : MonoBehaviour
             case PlayerState.B_SLIDE:
                 // 뒤쪽 미끄러짐
 
+                // 이동중에 미끄러짐 경계선 검사
+                if (!CheckSlide())
+                {
+                    // 미끄러지지 않음 뒤쪽 이동
+                    playerState = PlayerState.B_MOVE;
+                    // 애니메이션 미끄러짐 끝
+                    animeSwitch = AnimationSwitch.SLIDE_END;
+                }
+
                 // 이동 거리만큼 이동 했는가
                 if (destPos.z >= centerTrans.position.z)
                 {
-                    // 미끄러짐 검사
+                    // 연속적인 미끄러짐 검사
                     if (!CheckSlide(Vector3.down))
                     {
                         // 멈춤
@@ -2543,7 +2586,7 @@ public class PlayerMovement : MonoBehaviour
                 // 애니메이션 밀기
                 animeSwitch = AnimationSwitch.PUSH;
                 // 밀기 애니메이션은 약간의 딜레이가 필요합니다
-                actionDelay = 0;
+                actionDelay = 0f;
                 break;
             case PlayerState.L_INTERACTION_PUSH_READY:
                 // 왼쪽 밀기 준비
@@ -2553,7 +2596,7 @@ public class PlayerMovement : MonoBehaviour
                 // 애니메이션 밀기
                 animeSwitch = AnimationSwitch.PUSH;
                 // 밀기 애니메이션은 약간의 딜레이가 필요합니다
-                actionDelay = 0;
+                actionDelay = 0f;
                 break;
             case PlayerState.F_INTERACTION_PUSH_READY:
                 // 앞쪽 밀기 준비
@@ -2563,7 +2606,7 @@ public class PlayerMovement : MonoBehaviour
                 // 애니메이션 밀기
                 animeSwitch = AnimationSwitch.PUSH;
                 // 밀기 애니메이션은 약간의 딜레이가 필요합니다
-                actionDelay = 0;
+                actionDelay = 0f;
                 break;
             case PlayerState.B_INTERACTION_PUSH_READY:
                 // 뒤쪽 밀기 준비
@@ -2573,7 +2616,7 @@ public class PlayerMovement : MonoBehaviour
                 // 애니메이션 밀기
                 animeSwitch = AnimationSwitch.PUSH;
                 // 밀기 애니메이션은 약간의 딜레이가 필요합니다
-                actionDelay = 0;
+                actionDelay = 0f;
                 break;
             case PlayerState.R_INTERACTION_PUSH:
                 // 오른쪽 밀기
@@ -2591,7 +2634,7 @@ public class PlayerMovement : MonoBehaviour
                     // 큐브 오른쪽 이동 처리
                     cubeObject.GetComponent<CubeMovement>().MoveRight();
                     // 밀기 애니메이션은 약간의 딜레이가 필요합니다
-                    actionDelay = 0;
+                    actionDelay = 0f;
                 }
                 break;
             case PlayerState.L_INTERACTION_PUSH:
@@ -2610,7 +2653,7 @@ public class PlayerMovement : MonoBehaviour
                     // 큐브 오른쪽 이동 처리
                     cubeObject.GetComponent<CubeMovement>().MoveLeft();
                     // 밀기 애니메이션은 약간의 딜레이가 필요합니다
-                    actionDelay = 0;
+                    actionDelay = 0f;
                 }
                 break;
             case PlayerState.F_INTERACTION_PUSH:
@@ -2629,7 +2672,7 @@ public class PlayerMovement : MonoBehaviour
                     // 큐브 오른쪽 이동 처리
                     cubeObject.GetComponent<CubeMovement>().MoveForward();
                     // 밀기 애니메이션은 약간의 딜레이가 필요합니다
-                    actionDelay = 0;
+                    actionDelay = 0f;
                 }
                 break;
             case PlayerState.B_INTERACTION_PUSH:
@@ -2648,7 +2691,7 @@ public class PlayerMovement : MonoBehaviour
                     // 큐브 오른쪽 이동 처리
                     cubeObject.GetComponent<CubeMovement>().MoveBack();
                     // 밀기 애니메이션은 약간의 딜레이가 필요합니다
-                    actionDelay = 0;
+                    actionDelay = 0f;
                 }
                 break;
             case PlayerState.R_INTERACTION_PUSH_END:
@@ -3761,20 +3804,20 @@ public class PlayerMovement : MonoBehaviour
         switch (playerState)
         {
             case PlayerState.L_MOVE:
-                move.x = -1;
-                move.y = 0;
+                move.x = -1f;
+                move.y = 0f;
                 break;
             case PlayerState.R_MOVE:
-                move.x = 1;
-                move.y = 0;
+                move.x = 1f;
+                move.y = 0f;
                 break;
             case PlayerState.B_MOVE:
-                move.x = 0;
-                move.y = -1;
+                move.x = 0f;
+                move.y = -1f;
                 break;
             case PlayerState.F_MOVE:
-                move.x = 0;
-                move.y = 1;
+                move.x = 0f;
+                move.y = 1f;
                 break;
             case PlayerState.R_INTERACTION_PULL:
             case PlayerState.R_INTERACTION_PULL_CLIMBING:
@@ -3792,8 +3835,8 @@ public class PlayerMovement : MonoBehaviour
             case PlayerState.LL_FR_CHANGE_CLIMBING:
             case PlayerState.FR_RL_CHANGE_CLIMBING:
             case PlayerState.BL_LL_CHANGE_CLIMBING:
-                move.x = -1;
-                move.y = 0;
+                move.x = -1f;
+                move.y = 0f;
                 break;
             case PlayerState.RR_CLIMBING_MOVE:
             case PlayerState.LR_CLIMBING_MOVE:
@@ -3803,12 +3846,12 @@ public class PlayerMovement : MonoBehaviour
             case PlayerState.LR_BR_CHANGE_CLIMBING:
             case PlayerState.FL_LR_CHANGE_CLIMBING:
             case PlayerState.BR_RR_CHANGE_CLIMBING:
-                move.x = 1;
-                move.y = 0;
+                move.x = 1f;
+                move.y = 0f;
                 break;
             default:
-                move.x = 0;
-                move.y = 0;
+                move.x = 0f;
+                move.y = 0f;
                 break;
         }
 
@@ -3822,12 +3865,9 @@ public class PlayerMovement : MonoBehaviour
         playerState = PlayerState.IDLE;
     }
 
-    //-------------------------------------
-    // 두가지 경우가있음
-    // 처음부터 밟고있는 발판이 빙판이거나
-    // 이동 후 빙판이거나
-    // 이 함수는 전자의 경우 호출
-    //-------------------------------------
+    //-----------------------------------------------
+    // 빙판 체크 true, false 값만 반환
+    //-----------------------------------------------
     // 미끄러짐 체크
     private bool CheckSlide()
     {
@@ -3852,12 +3892,12 @@ public class PlayerMovement : MonoBehaviour
         return false;
     }
 
-    //-------------------------------------
-    // 두가지 경우가있음
-    // 처음부터 밟고있는 발판이 빙판이거나
-    // 이동 후 빙판이거나
-    // 이 함수는 후자의 경우 호출
-    //-------------------------------------
+    //-----------------------------------------------
+    // 빙판 체크 외에
+    // 연속적인 미끄러짐으로
+    // 다음 목표 좌표를 갱신을 합니다
+    // destPos : 이동 좌표
+    //-----------------------------------------------
     // 미끄러짐 체크
     private bool CheckSlide(Vector3 direction)
     {
