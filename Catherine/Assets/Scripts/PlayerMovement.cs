@@ -432,6 +432,9 @@ public class PlayerMovement : MonoBehaviour
                                     playerState = PlayerState.L_SLIDE;
                                     // 애니메이션 미끄러짐
                                     animeSwitch = AnimationSwitch.SLIDE;
+                                    // 속도 변화
+                                    saveSpeed = speed;
+                                    speed = speed * 1.5f;
                                 }
                                 else
                                 {
@@ -733,6 +736,9 @@ public class PlayerMovement : MonoBehaviour
                                     playerState = PlayerState.B_SLIDE;
                                     // 애니메이션 미끄러짐
                                     animeSwitch = AnimationSwitch.SLIDE;
+                                    // 속도 변화
+                                    saveSpeed = speed;
+                                    speed = speed * 1.5f;
                                 }
                                 else
                                 {
@@ -885,6 +891,9 @@ public class PlayerMovement : MonoBehaviour
                                     playerState = PlayerState.F_SLIDE;
                                     // 애니메이션 미끄러짐
                                     animeSwitch = AnimationSwitch.SLIDE;
+                                    // 속도 변화
+                                    saveSpeed = speed;
+                                    speed = speed * 1.5f;
                                 }
                                 else
                                 {
@@ -2117,6 +2126,7 @@ public class PlayerMovement : MonoBehaviour
                 }
                 break;
             case PlayerState.R_MOVE:
+                // 오른쪽 이동
 
                 // 미끄러짐 검사
                 if (CheckSlide())
@@ -2125,83 +2135,91 @@ public class PlayerMovement : MonoBehaviour
                     playerState = PlayerState.R_SLIDE;
                     // 애니메이션 미끄러짐
                     animeSwitch = AnimationSwitch.SLIDE;
+                    // 속도 변화
+                    saveSpeed = speed;
+                    speed = speed * 1.5f;
                     break;
                 }
 
                 // 이동 거리만큼 이동 했는가
                 if (destPos.x <= centerTrans.position.x)
                 {
-                    
-                    //else
-                    {
-                        // 멈춤
-                        moveKeyValue = Vector2.zero;
-                        // 이동을 끝마쳤으니 상태를 대기로 변경
-                        playerState = PlayerState.IDLE;
-                    }
+                    // 멈춤
+                    moveKeyValue = Vector2.zero;
+                    // 이동을 끝마쳤으니 상태를 대기로 변경
+                    playerState = PlayerState.IDLE;
                 }
                 break;
             case PlayerState.L_MOVE:
+                // 왼쪽 이동
+
+                // 미끄러짐 검사
+                if (CheckSlide(Vector3.left))
+                {
+                    // 왼쪽 미끄러짐 상태
+                    playerState = PlayerState.L_SLIDE;
+                    // 애니메이션 미끄러짐
+                    animeSwitch = AnimationSwitch.SLIDE;
+                    // 속도 변화
+                    saveSpeed = speed;
+                    speed = speed * 1.5f;
+                }
+
                 // 이동 거리만큼 이동 했는가
                 if (destPos.x >= centerTrans.position.x)
                 {
-                    // 미끄러짐 검사
-                    if (CheckSlide(Vector3.left))
-                    {
-                        // 왼쪽 미끄러짐 상태
-                        playerState = PlayerState.L_SLIDE;
-                        // 애니메이션 미끄러짐
-                        animeSwitch = AnimationSwitch.SLIDE;
-                    }
-                    else
-                    {
-                        // 멈춤
-                        moveKeyValue = Vector2.zero;
-                        // 이동을 끝마쳤으니 상태를 대기로 변경
-                        playerState = PlayerState.IDLE;
-                    }
+                    // 멈춤
+                    moveKeyValue = Vector2.zero;
+                    // 이동을 끝마쳤으니 상태를 대기로 변경
+                    playerState = PlayerState.IDLE;
                 }
                 break;
             case PlayerState.F_MOVE:
+                // 앞쪽 이동
+
+                // 미끄러짐 검사
+                if (CheckSlide(Vector3.forward))
+                {
+                    // 앞쪽 미끄러짐 상태
+                    playerState = PlayerState.F_SLIDE;
+                    // 애니메이션 미끄러짐
+                    animeSwitch = AnimationSwitch.SLIDE;
+                    // 속도 변화
+                    saveSpeed = speed;
+                    speed = speed * 1.5f;
+                }
+
                 // 이동 거리만큼 이동 했는가
                 if (destPos.z <= centerTrans.position.z)
                 {
-                    // 미끄러짐 검사
-                    if (CheckSlide(Vector3.forward))
-                    {
-                        // 앞쪽 미끄러짐 상태
-                        playerState = PlayerState.F_SLIDE;
-                        // 애니메이션 미끄러짐
-                        animeSwitch = AnimationSwitch.SLIDE;
-                    }
-                    else
-                    {
-                        // 멈춤
-                        moveKeyValue = Vector2.zero;
-                        // 이동을 끝마쳤으니 상태를 대기로 변경
-                        playerState = PlayerState.IDLE;
-                    }
+                    // 멈춤
+                    moveKeyValue = Vector2.zero;
+                    // 이동을 끝마쳤으니 상태를 대기로 변경
+                    playerState = PlayerState.IDLE;
                 }
                 break;
             case PlayerState.B_MOVE:
+                // 뒤쪽 이동
+
+                // 미끄러짐 검사
+                if (CheckSlide(Vector3.back))
+                {
+                    // 뒤쪽 미끄러짐 상태
+                    playerState = PlayerState.B_SLIDE;
+                    // 애니메이션 미끄러짐
+                    animeSwitch = AnimationSwitch.SLIDE;
+                    // 속도 변화
+                    saveSpeed = speed;
+                    speed = speed * 1.5f;
+                }
+
                 // 이동 거리만큼 이동 했는가
                 if (destPos.z >= centerTrans.position.z)
                 {
-                    // 미끄러짐 검사
-                    if (CheckSlide(Vector3.back))
-                    {
-                        // 뒤쪽 미끄러짐 상태
-                        playerState = PlayerState.B_SLIDE;
-                        // 애니메이션 미끄러짐
-                        animeSwitch = AnimationSwitch.SLIDE;
-                    }
-                    else
-                    {
-                        // 멈춤
-                        moveKeyValue = Vector2.zero;
-                        // 이동을 끝마쳤으니 상태를 대기로 변경
-                        playerState = PlayerState.IDLE;
-                    }
+                    // 멈춤
+                    moveKeyValue = Vector2.zero;
+                    // 이동을 끝마쳤으니 상태를 대기로 변경
+                    playerState = PlayerState.IDLE;
                 }
                 break;
             case PlayerState.R_SLIDE:
@@ -2214,6 +2232,8 @@ public class PlayerMovement : MonoBehaviour
                     playerState = PlayerState.R_MOVE;
                     // 애니메이션 미끄러짐 끝
                     animeSwitch = AnimationSwitch.SLIDE_END;
+                    // 속도 복구
+                    speed = saveSpeed;
                 }
 
                 // 이동 거리만큼 이동 했는가
@@ -2228,6 +2248,8 @@ public class PlayerMovement : MonoBehaviour
                         playerState = PlayerState.IDLE;
                         // 애니메이션 미끄러짐 끝
                         animeSwitch = AnimationSwitch.SLIDE_END;
+                        // 속도 복구
+                        speed = saveSpeed;
                     }
                 }
                 break;
@@ -2241,6 +2263,8 @@ public class PlayerMovement : MonoBehaviour
                     playerState = PlayerState.L_MOVE;
                     // 애니메이션 미끄러짐 끝
                     animeSwitch = AnimationSwitch.SLIDE_END;
+                    // 속도 복구
+                    speed = saveSpeed;
                 }
 
                 // 이동 거리만큼 이동 했는가
@@ -2255,6 +2279,8 @@ public class PlayerMovement : MonoBehaviour
                         playerState = PlayerState.IDLE;
                         // 애니메이션 미끄러짐 끝
                         animeSwitch = AnimationSwitch.SLIDE_END;
+                        // 속도 복구
+                        speed = saveSpeed;
                     }
                 }
                 break;
@@ -2268,6 +2294,8 @@ public class PlayerMovement : MonoBehaviour
                     playerState = PlayerState.F_MOVE;
                     // 애니메이션 미끄러짐 끝
                     animeSwitch = AnimationSwitch.SLIDE_END;
+                    // 속도 복구
+                    speed = saveSpeed;
                 }
 
                 // 이동 거리만큼 이동 했는가
@@ -2282,6 +2310,8 @@ public class PlayerMovement : MonoBehaviour
                         playerState = PlayerState.IDLE;
                         // 애니메이션 미끄러짐 끝
                         animeSwitch = AnimationSwitch.SLIDE_END;
+                        // 속도 복구
+                        speed = saveSpeed;
                     }
                 }
                 break;
@@ -2295,6 +2325,8 @@ public class PlayerMovement : MonoBehaviour
                     playerState = PlayerState.B_MOVE;
                     // 애니메이션 미끄러짐 끝
                     animeSwitch = AnimationSwitch.SLIDE_END;
+                    // 속도 복구
+                    speed = saveSpeed;
                 }
 
                 // 이동 거리만큼 이동 했는가
@@ -2309,6 +2341,8 @@ public class PlayerMovement : MonoBehaviour
                         playerState = PlayerState.IDLE;
                         // 애니메이션 미끄러짐 끝
                         animeSwitch = AnimationSwitch.SLIDE_END;
+                        // 속도 복구
+                        speed = saveSpeed;
                     }
                 }
                 break;
@@ -3880,12 +3914,8 @@ public class PlayerMovement : MonoBehaviour
             // 바닥이 아이스 큐브
             if (rayHit.transform.gameObject.CompareTag("IceCube"))
             {
-                // 캐릭터 정면 검사
-                if (!Physics.Raycast(transform.position, transform.forward, out rayHit, 1f, layerMaskCube))
-                {
-                    // 미끄러짐
-                    return true;
-                }
+                // 미끄러짐
+                return true;
             }
         }
 
