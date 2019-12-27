@@ -1764,8 +1764,14 @@ public class PlayerMovement : MonoBehaviour
                         // 당김
                         if (Physics.CheckBox(check, box, Quaternion.identity, layerMaskCube))
                         {
-                            // 오른쪽 상호작용 당김
-                            playerState = PlayerState.R_INTERACTION_PULL;
+                            // 이동할 큐브 왼쪽 이동
+                            if (rayHit.transform.gameObject.GetComponent<CubeMovement>().MoveLeft())
+                            {
+                                // 오른쪽 상호작용 당김
+                                playerState = PlayerState.R_INTERACTION_PULL;
+                                // Move 함수에서 처리할 키 값
+                                moveKeyValue = Vector2.left;
+                            }
                         }
                         // 없다
                         // 당기고 매달림
@@ -1775,11 +1781,9 @@ public class PlayerMovement : MonoBehaviour
                             playerState = PlayerState.R_INTERACTION_PULL_CLIMBING;
                             // 아래쪽에 매달림
                             destPos.y = destPos.y - 1f;
+                            // Move 함수에서 처리할 키 값
+                            moveKeyValue = Vector2.left;
                         }
-
-                        // Move 함수에서 처리할 키 값
-                        moveKeyValue = Vector2.left;
-                        
                     }
                 }
                 // 입력 키 값 →
@@ -2811,13 +2815,19 @@ public class PlayerMovement : MonoBehaviour
             case PlayerState.R_INTERACTION_PULL:
                 // 오른쪽 당김
                 // 큐브 이동
-                cubeObject.transform.position = cubeObject.transform.position + (Vector3.left * speed) * Time.deltaTime;
+                //cubeObject.transform.position = cubeObject.transform.position + (Vector3.left * speed) * Time.deltaTime;
+
+                Debug.Log("playerState : " + playerState);
+                Debug.Log("cubeObject : " + cubeObject.transform.position);
+                Debug.Log("cubeDestPos : " + cubeDestPos);
+                Debug.Log("--------------------------------");
+
                 // 큐브가 이동 거리만큼 이동 했는가
                 if (cubeDestPos.x >= cubeObject.transform.position.x)
                 {
                     // 이동 완료
                     moveKeyValue = Vector2.zero;
-                    cubeObject.transform.position = cubeDestPos;
+                    //cubeObject.transform.position = cubeDestPos;
 
                     // 마우스를 계속 클릭 중이라면
                     if (mouseClick)
@@ -3733,12 +3743,12 @@ public class PlayerMovement : MonoBehaviour
                 break;
         }// switch(playerState)
 
-        Debug.Log("playerState : " + playerState);
-        Debug.Log("destPos : " + destPos);
+        //Debug.Log("playerState : " + playerState);
+        //Debug.Log("destPos : " + destPos);
         //Debug.Log("moveKeyValue : " + moveKeyValue);
         //Debug.Log(mouseClick);
         //Debug.Log(followCam.transform.eulerAngles);
-        Debug.Log("--------------------------------");
+        //Debug.Log("--------------------------------");
         Move(moveKeyValue);
     }
 

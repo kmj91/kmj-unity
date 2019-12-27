@@ -99,7 +99,7 @@ public class CubeMovement : MonoBehaviour
 
             // 이동 좌표
             destPos = transform.position;
-            destPos.x = destPos.x + 1;
+            destPos.x = destPos.x + 1f;
         }
         else
         {
@@ -132,7 +132,7 @@ public class CubeMovement : MonoBehaviour
 
             // 이동 좌표
             destPos = transform.position;
-            destPos.x = destPos.x + 1;
+            destPos.x = destPos.x + 1f;
             // 오른쪽 이동
             cubeMoveState = CubeMoveState.RIGHT;
         }
@@ -201,7 +201,7 @@ public class CubeMovement : MonoBehaviour
 
             // 이동 좌표
             destPos = transform.position;
-            destPos.x = destPos.x - 1;
+            destPos.x = destPos.x - 1f;
         }
         else
         {
@@ -234,7 +234,7 @@ public class CubeMovement : MonoBehaviour
 
             // 이동 좌표
             destPos = transform.position;
-            destPos.x = destPos.x - 1;
+            destPos.x = destPos.x - 1f;
             // 왼쪽 이동
             cubeMoveState = CubeMoveState.LEFT;
         }
@@ -302,7 +302,7 @@ public class CubeMovement : MonoBehaviour
 
             // 이동 좌표
             destPos = transform.position;
-            destPos.z = destPos.z + 1;
+            destPos.z = destPos.z + 1f;
         }
         else
         {
@@ -335,7 +335,7 @@ public class CubeMovement : MonoBehaviour
 
             // 이동 좌표
             destPos = transform.position;
-            destPos.z = destPos.z + 1;
+            destPos.z = destPos.z + 1f;
             // 앞쪽 이동
             cubeMoveState = CubeMoveState.FORWARD;
         }
@@ -403,7 +403,7 @@ public class CubeMovement : MonoBehaviour
 
             // 이동 좌표
             destPos = transform.position;
-            destPos.z = destPos.z - 1;
+            destPos.z = destPos.z - 1f;
         }
         else
         {
@@ -436,7 +436,7 @@ public class CubeMovement : MonoBehaviour
 
             // 이동 좌표
             destPos = transform.position;
-            destPos.z = destPos.z - 1;
+            destPos.z = destPos.z - 1f;
             // 뒤쪽 이동
             cubeMoveState = CubeMoveState.BACK;
         }
@@ -477,7 +477,7 @@ public class CubeMovement : MonoBehaviour
         // ？□□
         //   □  
         // 왼쪽 밑
-        check.x = check.x - 1;
+        check.x = check.x - 1f;
         // 밑에 발판이 있나?
         if (Physics.CheckBox(check, box, Quaternion.identity, layerMaskCube))
         {
@@ -490,7 +490,7 @@ public class CubeMovement : MonoBehaviour
         // □□？
         //   □  
         // 오른쪽 밑
-        check.x = check.x + 2;
+        check.x = check.x + 2f;
         // 밑에 발판이 있나?
         if (Physics.CheckBox(check, box, Quaternion.identity, layerMaskCube))
         {
@@ -503,8 +503,8 @@ public class CubeMovement : MonoBehaviour
         // □□□
         //   □  
         // 위쪽 밑
-        check.x = check.x - 1;
-        check.z = check.z + 1;
+        check.x = check.x - 1f;
+        check.z = check.z + 1f;
         // 밑에 발판이 있나?
         if (Physics.CheckBox(check, box, Quaternion.identity, layerMaskCube))
         {
@@ -517,7 +517,7 @@ public class CubeMovement : MonoBehaviour
         // □□□
         //   ？  
         // 아래쪽 밑
-        check.z = check.z - 2;
+        check.z = check.z - 2f;
         // 밑에 발판이 있나?
         if (Physics.CheckBox(check, box, Quaternion.identity, layerMaskCube))
         {
