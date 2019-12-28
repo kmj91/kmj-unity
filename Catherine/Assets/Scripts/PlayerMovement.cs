@@ -196,7 +196,7 @@ public class PlayerMovement : MonoBehaviour
         Vector3 rayDir;         // 레이 방향
         Vector3 check;          // 체크할 위치
         Vector3 box;            // 박스 크기
-        Vector3 moveValue;      // 위치
+        Vector3 moveValue;      // 이동 값
         RaycastHit rayHit;      // 레이 충돌한 물체
         float followCamAngleY;  // 카메라 방향
 
@@ -1764,14 +1764,10 @@ public class PlayerMovement : MonoBehaviour
                         // 당김
                         if (Physics.CheckBox(check, box, Quaternion.identity, layerMaskCube))
                         {
-                            // 이동할 큐브 왼쪽 이동
-                            if (rayHit.transform.gameObject.GetComponent<CubeMovement>().MoveLeft())
-                            {
-                                // 오른쪽 상호작용 당김
-                                playerState = PlayerState.R_INTERACTION_PULL;
-                                // Move 함수에서 처리할 키 값
-                                moveKeyValue = Vector2.left;
-                            }
+                            // 오른쪽 상호작용 당김
+                            playerState = PlayerState.R_INTERACTION_PULL;
+                            // Move 함수에서 처리할 키 값
+                            moveKeyValue = Vector2.left;
                         }
                         // 없다
                         // 당기고 매달림
@@ -2152,6 +2148,9 @@ public class PlayerMovement : MonoBehaviour
                     moveKeyValue = Vector2.zero;
                     // 이동을 끝마쳤으니 상태를 대기로 변경
                     playerState = PlayerState.IDLE;
+                    // 플레이어 위치 맞추기
+                    moveValue.x = destPos.x - transform.position.x;
+                    characterController.Move(moveValue);
                 }
                 break;
             case PlayerState.L_MOVE:
@@ -2176,6 +2175,9 @@ public class PlayerMovement : MonoBehaviour
                     moveKeyValue = Vector2.zero;
                     // 이동을 끝마쳤으니 상태를 대기로 변경
                     playerState = PlayerState.IDLE;
+                    // 플레이어 위치 맞추기
+                    moveValue.x = destPos.x - transform.position.x;
+                    characterController.Move(moveValue);
                 }
                 break;
             case PlayerState.F_MOVE:
@@ -2200,6 +2202,9 @@ public class PlayerMovement : MonoBehaviour
                     moveKeyValue = Vector2.zero;
                     // 이동을 끝마쳤으니 상태를 대기로 변경
                     playerState = PlayerState.IDLE;
+                    // 플레이어 위치 맞추기
+                    moveValue.z = destPos.z - transform.position.z;
+                    characterController.Move(moveValue);
                 }
                 break;
             case PlayerState.B_MOVE:
@@ -2224,6 +2229,8 @@ public class PlayerMovement : MonoBehaviour
                     moveKeyValue = Vector2.zero;
                     // 이동을 끝마쳤으니 상태를 대기로 변경
                     playerState = PlayerState.IDLE;
+                    moveValue.z = destPos.z - transform.position.z;
+                    characterController.Move(moveValue);
                 }
                 break;
             case PlayerState.R_SLIDE:
@@ -2254,6 +2261,9 @@ public class PlayerMovement : MonoBehaviour
                         animeSwitch = AnimationSwitch.SLIDE_END;
                         // 속도 복구
                         speed = saveSpeed;
+                        // 플레이어 위치 맞추기
+                        moveValue.x = destPos.x - transform.position.x;
+                        characterController.Move(moveValue);
                     }
                 }
                 break;
@@ -2285,6 +2295,9 @@ public class PlayerMovement : MonoBehaviour
                         animeSwitch = AnimationSwitch.SLIDE_END;
                         // 속도 복구
                         speed = saveSpeed;
+                        // 플레이어 위치 맞추기
+                        moveValue.x = destPos.x - transform.position.x;
+                        characterController.Move(moveValue);
                     }
                 }
                 break;
@@ -2316,6 +2329,9 @@ public class PlayerMovement : MonoBehaviour
                         animeSwitch = AnimationSwitch.SLIDE_END;
                         // 속도 복구
                         speed = saveSpeed;
+                        // 플레이어 위치 맞추기
+                        moveValue.z = destPos.z - transform.position.z;
+                        characterController.Move(moveValue);
                     }
                 }
                 break;
@@ -2347,6 +2363,9 @@ public class PlayerMovement : MonoBehaviour
                         animeSwitch = AnimationSwitch.SLIDE_END;
                         // 속도 복구
                         speed = saveSpeed;
+                        // 플레이어 위치 맞추기
+                        moveValue.z = destPos.z - transform.position.z;
+                        characterController.Move(moveValue);
                     }
                 }
                 break;
@@ -2815,19 +2834,16 @@ public class PlayerMovement : MonoBehaviour
             case PlayerState.R_INTERACTION_PULL:
                 // 오른쪽 당김
                 // 큐브 이동
-                //cubeObject.transform.position = cubeObject.transform.position + (Vector3.left * speed) * Time.deltaTime;
-
-                Debug.Log("playerState : " + playerState);
-                Debug.Log("cubeObject : " + cubeObject.transform.position);
-                Debug.Log("cubeDestPos : " + cubeDestPos);
-                Debug.Log("--------------------------------");
-
+                cubeObject.transform.position = cubeObject.transform.position + (Vector3.left * speed) * Time.deltaTime;
                 // 큐브가 이동 거리만큼 이동 했는가
                 if (cubeDestPos.x >= cubeObject.transform.position.x)
                 {
                     // 이동 완료
                     moveKeyValue = Vector2.zero;
-                    //cubeObject.transform.position = cubeDestPos;
+                    // 큐브 위치 맞추기
+                    cubeObject.transform.position = cubeDestPos;
+                    // 플레이어 위치 맞추기
+                    moveValue.x = destPos.x - transform.position.x;
 
                     // 마우스를 계속 클릭 중이라면
                     if (mouseClick)
@@ -2835,6 +2851,9 @@ public class PlayerMovement : MonoBehaviour
                         // 마우스 클릭 중
                         // 상호작용 대기 상태
                         playerState = PlayerState.R_IDLE_INTERACTION;
+                        // 플레이어 위치 맞추기
+                        moveValue.x = moveValue.x + INTERACTION_MOVE_VALUE;
+                        characterController.Move(moveValue);
                     }
                     else
                     {
@@ -2844,7 +2863,6 @@ public class PlayerMovement : MonoBehaviour
                         // 애니메이션 종료
                         animeSwitch = AnimationSwitch.INTERACTION_END;
                         // 원 위치로 돌아감
-                        moveValue.x = -INTERACTION_MOVE_VALUE;
                         characterController.Move(moveValue);
                     }
                 }
@@ -2879,7 +2897,10 @@ public class PlayerMovement : MonoBehaviour
                 {
                     // 이동 완료
                     moveKeyValue = Vector2.zero;
+                    // 큐브 위치 맞추기
                     cubeObject.transform.position = cubeDestPos;
+                    // 플레이어 위치 맞추기
+                    moveValue.x = destPos.x - transform.position.x;
 
                     // 마우스를 계속 클릭 중이라면
                     if (mouseClick)
@@ -2887,6 +2908,9 @@ public class PlayerMovement : MonoBehaviour
                         // 마우스 클릭 중
                         // 상호작용 대기 상태
                         playerState = PlayerState.L_IDLE_INTERACTION;
+                        // 플레이어 위치 맞추기
+                        moveValue.x = moveValue.x - INTERACTION_MOVE_VALUE;
+                        characterController.Move(moveValue);
                     }
                     else
                     {
@@ -2896,7 +2920,6 @@ public class PlayerMovement : MonoBehaviour
                         // 애니메이션 종료
                         animeSwitch = AnimationSwitch.INTERACTION_END;
                         // 원 위치로 돌아감
-                        moveValue.x = INTERACTION_MOVE_VALUE;
                         characterController.Move(moveValue);
                     }
                 }
@@ -2931,7 +2954,10 @@ public class PlayerMovement : MonoBehaviour
                 {
                     // 이동 완료
                     moveKeyValue = Vector2.zero;
+                    // 큐브 위치 맞추기
                     cubeObject.transform.position = cubeDestPos;
+                    // 플레이어 위치 맞추기
+                    moveValue.z = destPos.z - transform.position.z;
 
                     // 마우스를 계속 클릭 중이라면
                     if (mouseClick)
@@ -2939,6 +2965,9 @@ public class PlayerMovement : MonoBehaviour
                         // 마우스 클릭 중
                         // 상호작용 대기 상태
                         playerState = PlayerState.F_IDLE_INTERACTION;
+                        // 플레이어 위치 맞추기
+                        moveValue.z = moveValue.z + INTERACTION_MOVE_VALUE;
+                        characterController.Move(moveValue);
                     }
                     else
                     {
@@ -2948,7 +2977,6 @@ public class PlayerMovement : MonoBehaviour
                         // 애니메이션 종료
                         animeSwitch = AnimationSwitch.INTERACTION_END;
                         // 원 위치로 돌아감
-                        moveValue.z = -INTERACTION_MOVE_VALUE;
                         characterController.Move(moveValue);
                     }
                 }
@@ -2983,7 +3011,10 @@ public class PlayerMovement : MonoBehaviour
                 {
                     // 이동 완료
                     moveKeyValue = Vector2.zero;
+                    // 큐브 위치 맞추기
                     cubeObject.transform.position = cubeDestPos;
+                    // 플레이어 위치 맞추기
+                    moveValue.z = destPos.z - transform.position.z;
 
                     // 마우스를 계속 클릭 중이라면
                     if (mouseClick)
@@ -2991,6 +3022,9 @@ public class PlayerMovement : MonoBehaviour
                         // 마우스 클릭 중
                         // 상호작용 대기 상태
                         playerState = PlayerState.B_IDLE_INTERACTION;
+                        // 플레이어 위치 맞추기
+                        moveValue.z = moveValue.z - INTERACTION_MOVE_VALUE;
+                        characterController.Move(moveValue);
                     }
                     else
                     {
@@ -3000,7 +3034,6 @@ public class PlayerMovement : MonoBehaviour
                         // 애니메이션 종료
                         animeSwitch = AnimationSwitch.INTERACTION_END;
                         // 원 위치로 돌아감
-                        moveValue.z = INTERACTION_MOVE_VALUE;
                         characterController.Move(moveValue);
                     }
                 }
@@ -3743,12 +3776,13 @@ public class PlayerMovement : MonoBehaviour
                 break;
         }// switch(playerState)
 
-        //Debug.Log("playerState : " + playerState);
+        Debug.Log("playerState : " + playerState);
+        //Debug.Log("playerPos : " + transform.position);
         //Debug.Log("destPos : " + destPos);
         //Debug.Log("moveKeyValue : " + moveKeyValue);
         //Debug.Log(mouseClick);
         //Debug.Log(followCam.transform.eulerAngles);
-        //Debug.Log("--------------------------------");
+        Debug.Log("--------------------------------");
         Move(moveKeyValue);
     }
 
@@ -3905,7 +3939,60 @@ public class PlayerMovement : MonoBehaviour
     }
 
     // 캐릭터 상태를 대기 상태로 변경
-    public void UpdateStateToIdle() {
+    public void UpdateStateToIdle()
+    {
+        Vector3 moveValue;      // 이동 값
+        moveValue.x = 0f;
+        moveValue.y = 0f;
+        moveValue.z = 0f;
+
+        switch (playerState)
+        {
+            case PlayerState.R_UP:
+                // 플레이어 위치 맞추기
+                moveValue.x = destPos.x - transform.position.x;
+                characterController.Move(moveValue);
+                break;
+            case PlayerState.L_UP:
+                // 플레이어 위치 맞추기
+                moveValue.x = destPos.x - transform.position.x;
+                characterController.Move(moveValue);
+                break;
+            case PlayerState.F_UP:
+                // 플레이어 위치 맞추기
+                moveValue.z = destPos.z - transform.position.z;
+                characterController.Move(moveValue);
+                break;
+            case PlayerState.B_UP:
+                // 플레이어 위치 맞추기
+                moveValue.z = destPos.z - transform.position.z;
+                characterController.Move(moveValue);
+                break;
+            case PlayerState.R_DOWN:
+                // 플레이어 위치 맞추기
+                moveValue.x = destPos.x - transform.position.x;
+                characterController.Move(moveValue);
+                break;
+            case PlayerState.L_DOWN:
+                // 플레이어 위치 맞추기
+                moveValue.x = destPos.x - transform.position.x;
+                characterController.Move(moveValue);
+                break;
+            case PlayerState.F_DOWN:
+                // 플레이어 위치 맞추기
+                moveValue.z = destPos.z - transform.position.z;
+                characterController.Move(moveValue);
+                break;
+            case PlayerState.B_DOWN:
+                // 플레이어 위치 맞추기
+                moveValue.z = destPos.z - transform.position.z;
+                characterController.Move(moveValue);
+                break;
+            default:
+                break;
+        }
+
+
         playerState = PlayerState.IDLE;
     }
 

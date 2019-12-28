@@ -10,7 +10,7 @@ public class CubeMovement : MonoBehaviour
     public Vector3 destPos;
     // 큐브 이동 속도
     public float speed = 4f;
-    //
+    // 미끄러짐
     private bool slideEvent = false;
 
     // 상태
