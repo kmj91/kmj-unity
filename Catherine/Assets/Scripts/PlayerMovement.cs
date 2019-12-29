@@ -126,7 +126,8 @@ public class PlayerMovement : MonoBehaviour
         FR_RL_CHANGE_CLIMBING,      // 앞쪽에서 오른쪽으로 방향 전환
         FL_LR_CHANGE_CLIMBING,      // 앞쪽에서 왼쪽으로 방향 전환
         BR_RR_CHANGE_CLIMBING,      // 뒤쪽에서 오른쪽으로 방향 전환
-        BL_LL_CHANGE_CLIMBING       // 뒤쪽에서 왼쪽으로 방향 전환
+        BL_LL_CHANGE_CLIMBING,      // 뒤쪽에서 왼쪽으로 방향 전환
+        EMPTY
     }
 
     // 애니메이션 스위치
@@ -2400,8 +2401,13 @@ public class PlayerMovement : MonoBehaviour
                     // 캐릭터의 상태 변화는 애니메이션 클립에서 이벤트를 통해 함수를 호출해서 변경함
                     // 이동 정지
                     moveKeyValue = Vector2.zero;
+                    // 애니메이션이 끝날 때까지 기다림
+                    playerState = PlayerState.EMPTY;
                     // 이동 속도 원상 복구
                     speed = saveSpeed;
+                    // 플레이어 위치 맞추기
+                    moveValue.x = destPos.x - transform.position.x;
+                    characterController.Move(moveValue);
                 }
                 break;
             case PlayerState.L_UP:
@@ -2437,8 +2443,13 @@ public class PlayerMovement : MonoBehaviour
                     // 캐릭터의 상태 변화는 애니메이션 클립에서 이벤트를 통해 함수를 호출해서 변경함
                     // 이동 정지
                     moveKeyValue = Vector2.zero;
+                    // 애니메이션이 끝날 때까지 기다림
+                    playerState = PlayerState.EMPTY;
                     // 이동 속도 원상 복구
                     speed = saveSpeed;
+                    // 플레이어 위치 맞추기
+                    moveValue.x = destPos.x - transform.position.x;
+                    characterController.Move(moveValue);
                 }
                 break;
             case PlayerState.F_UP:
@@ -2474,8 +2485,13 @@ public class PlayerMovement : MonoBehaviour
                     // 캐릭터의 상태 변화는 애니메이션 클립에서 이벤트를 통해 함수를 호출해서 변경함
                     // 이동 정지
                     moveKeyValue = Vector2.zero;
+                    // 애니메이션이 끝날 때까지 기다림
+                    playerState = PlayerState.EMPTY;
                     // 이동 속도 원상 복구
                     speed = saveSpeed;
+                    // 플레이어 위치 맞추기
+                    moveValue.z = destPos.z - transform.position.z;
+                    characterController.Move(moveValue);
                 }
                 break;
             case PlayerState.B_UP:
@@ -2511,8 +2527,13 @@ public class PlayerMovement : MonoBehaviour
                     // 캐릭터의 상태 변화는 애니메이션 클립에서 이벤트를 통해 함수를 호출해서 변경함
                     // 이동 정지
                     moveKeyValue = Vector2.zero;
+                    // 애니메이션이 끝날 때까지 기다림
+                    playerState = PlayerState.EMPTY;
                     // 이동 속도 원상 복구
                     speed = saveSpeed;
+                    // 플레이어 위치 맞추기
+                    moveValue.z = destPos.z - transform.position.z;
+                    characterController.Move(moveValue);
                 }
                 break;
             case PlayerState.R_DOWN:
@@ -2535,8 +2556,13 @@ public class PlayerMovement : MonoBehaviour
                     // 캐릭터의 상태 변화는 애니메이션 클립에서 이벤트를 통해 함수를 호출해서 변경함
                     // 이동 정지
                     moveKeyValue = Vector2.zero;
+                    // 애니메이션이 끝날 때까지 기다림
+                    playerState = PlayerState.EMPTY;
                     // 이동 속도 원상 복구
                     speed = saveSpeed;
+                    // 플레이어 위치 맞추기
+                    moveValue.x = destPos.x - transform.position.x;
+                    characterController.Move(moveValue);
                 }
                 // 처음에는 느리게, 서서히 원래의 이동속도로 수평 이동함
                 else
@@ -2565,8 +2591,13 @@ public class PlayerMovement : MonoBehaviour
                     // 캐릭터의 상태 변화는 애니메이션 클립에서 이벤트를 통해 함수를 호출해서 변경함
                     // 이동 정지
                     moveKeyValue = Vector2.zero;
+                    // 애니메이션이 끝날 때까지 기다림
+                    playerState = PlayerState.EMPTY;
                     // 이동 속도 원상 복구
                     speed = saveSpeed;
+                    // 플레이어 위치 맞추기
+                    moveValue.x = destPos.x - transform.position.x;
+                    characterController.Move(moveValue);
                 }
                 // 처음에는 느리게, 서서히 원래의 이동속도로 수평 이동함
                 else
@@ -2595,8 +2626,13 @@ public class PlayerMovement : MonoBehaviour
                     // 캐릭터의 상태 변화는 애니메이션 클립에서 이벤트를 통해 함수를 호출해서 변경함
                     // 이동 정지
                     moveKeyValue = Vector2.zero;
+                    // 애니메이션이 끝날 때까지 기다림
+                    playerState = PlayerState.EMPTY;
                     // 이동 속도 원상 복구
                     speed = saveSpeed;
+                    // 플레이어 위치 맞추기
+                    moveValue.z = destPos.z - transform.position.z;
+                    characterController.Move(moveValue);
                 }
                 // 처음에는 느리게, 서서히 원래의 이동속도로 수평 이동함
                 else
@@ -2625,8 +2661,13 @@ public class PlayerMovement : MonoBehaviour
                     // 캐릭터의 상태 변화는 애니메이션 클립에서 이벤트를 통해 함수를 호출해서 변경함
                     // 이동 정지
                     moveKeyValue = Vector2.zero;
+                    // 애니메이션이 끝날 때까지 기다림
+                    playerState = PlayerState.EMPTY;
                     // 이동 속도 원상 복구
                     speed = saveSpeed;
+                    // 플레이어 위치 맞추기
+                    moveValue.z = destPos.z - transform.position.z;
+                    characterController.Move(moveValue);
                 }
                 // 처음에는 느리게, 서서히 원래의 이동속도로 수평 이동함
                 else
@@ -3774,6 +3815,11 @@ public class PlayerMovement : MonoBehaviour
                     moveKeyValue = Vector2.zero;
                 }
                 break;
+            case PlayerState.EMPTY:
+                // 의도적으로 아무것도 하지않음
+                break;
+            default:
+                break;
         }// switch(playerState)
 
         Debug.Log("playerState : " + playerState);
@@ -3941,58 +3987,6 @@ public class PlayerMovement : MonoBehaviour
     // 캐릭터 상태를 대기 상태로 변경
     public void UpdateStateToIdle()
     {
-        Vector3 moveValue;      // 이동 값
-        moveValue.x = 0f;
-        moveValue.y = 0f;
-        moveValue.z = 0f;
-
-        switch (playerState)
-        {
-            case PlayerState.R_UP:
-                // 플레이어 위치 맞추기
-                moveValue.x = destPos.x - transform.position.x;
-                characterController.Move(moveValue);
-                break;
-            case PlayerState.L_UP:
-                // 플레이어 위치 맞추기
-                moveValue.x = destPos.x - transform.position.x;
-                characterController.Move(moveValue);
-                break;
-            case PlayerState.F_UP:
-                // 플레이어 위치 맞추기
-                moveValue.z = destPos.z - transform.position.z;
-                characterController.Move(moveValue);
-                break;
-            case PlayerState.B_UP:
-                // 플레이어 위치 맞추기
-                moveValue.z = destPos.z - transform.position.z;
-                characterController.Move(moveValue);
-                break;
-            case PlayerState.R_DOWN:
-                // 플레이어 위치 맞추기
-                moveValue.x = destPos.x - transform.position.x;
-                characterController.Move(moveValue);
-                break;
-            case PlayerState.L_DOWN:
-                // 플레이어 위치 맞추기
-                moveValue.x = destPos.x - transform.position.x;
-                characterController.Move(moveValue);
-                break;
-            case PlayerState.F_DOWN:
-                // 플레이어 위치 맞추기
-                moveValue.z = destPos.z - transform.position.z;
-                characterController.Move(moveValue);
-                break;
-            case PlayerState.B_DOWN:
-                // 플레이어 위치 맞추기
-                moveValue.z = destPos.z - transform.position.z;
-                characterController.Move(moveValue);
-                break;
-            default:
-                break;
-        }
-
-
         playerState = PlayerState.IDLE;
     }
 

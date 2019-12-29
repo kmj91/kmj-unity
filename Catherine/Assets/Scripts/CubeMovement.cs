@@ -531,6 +531,8 @@ public class CubeMovement : MonoBehaviour
 
     private void MoveProcess()
     {
+        RaycastHit rayHit;      // 레이 충돌한 물체
+
         switch (cubeMoveState) {
             case CubeMoveState.DOWN:
                 // 큐브 떨어짐
@@ -560,6 +562,21 @@ public class CubeMovement : MonoBehaviour
                     }
                     else
                     {
+                        // 미끄러지는 중이 아니지만 밀려난 곳의 발판이 빙판이면 미끄러져야함
+                        // 바닥 검사
+                        // 있다
+                        if (Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskCube))
+                        {
+                            // 바닥이 아이스 큐브
+                            if (rayHit.transform.gameObject.CompareTag("IceCube"))
+                            {
+                                // 미끄러짐
+                                slideEvent = true;
+                                MoveRight();
+                                break;
+                            }
+                        }
+
                         // 큐브 정지
                         cubeMoveState = CubeMoveState.IDLE;
                     }
@@ -581,6 +598,21 @@ public class CubeMovement : MonoBehaviour
                     }
                     else
                     {
+                        // 미끄러지는 중이 아니지만 밀려난 곳의 발판이 빙판이면 미끄러져야함
+                        // 바닥 검사
+                        // 있다
+                        if (Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskCube))
+                        {
+                            // 바닥이 아이스 큐브
+                            if (rayHit.transform.gameObject.CompareTag("IceCube"))
+                            {
+                                // 미끄러짐
+                                slideEvent = true;
+                                MoveLeft();
+                                break;
+                            }
+                        }
+
                         // 큐브 정지
                         cubeMoveState = CubeMoveState.IDLE;
                     }
@@ -602,6 +634,21 @@ public class CubeMovement : MonoBehaviour
                     }
                     else
                     {
+                        // 미끄러지는 중이 아니지만 밀려난 곳의 발판이 빙판이면 미끄러져야함
+                        // 바닥 검사
+                        // 있다
+                        if (Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskCube))
+                        {
+                            // 바닥이 아이스 큐브
+                            if (rayHit.transform.gameObject.CompareTag("IceCube"))
+                            {
+                                // 미끄러짐
+                                slideEvent = true;
+                                MoveForward();
+                                break;
+                            }
+                        }
+
                         // 큐브 정지
                         cubeMoveState = CubeMoveState.IDLE;
                     }
@@ -623,6 +670,21 @@ public class CubeMovement : MonoBehaviour
                     }
                     else
                     {
+                        // 미끄러지는 중이 아니지만 밀려난 곳의 발판이 빙판이면 미끄러져야함
+                        // 바닥 검사
+                        // 있다
+                        if (Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskCube))
+                        {
+                            // 바닥이 아이스 큐브
+                            if (rayHit.transform.gameObject.CompareTag("IceCube"))
+                            {
+                                // 미끄러짐
+                                slideEvent = true;
+                                MoveBack();
+                                break;
+                            }
+                        }
+
                         // 큐브 정지
                         cubeMoveState = CubeMoveState.IDLE;
                     }
