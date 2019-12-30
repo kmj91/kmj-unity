@@ -2158,7 +2158,7 @@ public class PlayerMovement : MonoBehaviour
                 // 왼쪽 이동
 
                 // 미끄러짐 검사
-                if (CheckSlide(Vector3.left))
+                if (CheckSlide())
                 {
                     // 왼쪽 미끄러짐 상태
                     playerState = PlayerState.L_SLIDE;
@@ -2185,7 +2185,7 @@ public class PlayerMovement : MonoBehaviour
                 // 앞쪽 이동
 
                 // 미끄러짐 검사
-                if (CheckSlide(Vector3.forward))
+                if (CheckSlide())
                 {
                     // 앞쪽 미끄러짐 상태
                     playerState = PlayerState.F_SLIDE;
@@ -2212,7 +2212,7 @@ public class PlayerMovement : MonoBehaviour
                 // 뒤쪽 이동
 
                 // 미끄러짐 검사
-                if (CheckSlide(Vector3.back))
+                if (CheckSlide())
                 {
                     // 뒤쪽 미끄러짐 상태
                     playerState = PlayerState.B_SLIDE;
