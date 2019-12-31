@@ -1135,6 +1135,20 @@ public class PlayerMovement : MonoBehaviour
                         speed = 0.5f;
                     }
                 }
+                //------------------------------------------------
+                // 오른쪽 매달림 대기 상태 키처리
+                //------------------------------------------------
+                // 입력 키 값 마우스 클릭
+                else if (mouseClick)
+                {
+                    // Move 함수에서 처리할 키 값
+                    moveKeyValue = Vector2.zero;
+                    // 대기 상태
+                    playerState = PlayerState.IDLE;
+                    // 매달림 상태 해제
+                    climbingFlag = false;
+                    
+                }
                 break;
             case PlayerState.L_IDLE_CLIMBING:
                 //------------------------------------------------
@@ -2320,7 +2334,7 @@ public class PlayerMovement : MonoBehaviour
                 if (destPos.z <= centerTrans.position.z)
                 {
                     // 연속적인 미끄러짐 검사
-                    if (!CheckSlide(Vector3.up))
+                    if (!CheckSlide(Vector3.forward))
                     {
                         // 멈춤
                         moveKeyValue = Vector2.zero;
@@ -2354,7 +2368,7 @@ public class PlayerMovement : MonoBehaviour
                 if (destPos.z >= centerTrans.position.z)
                 {
                     // 연속적인 미끄러짐 검사
-                    if (!CheckSlide(Vector3.down))
+                    if (!CheckSlide(Vector3.back))
                     {
                         // 멈춤
                         moveKeyValue = Vector2.zero;
