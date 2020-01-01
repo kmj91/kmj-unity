@@ -63,6 +63,7 @@ public class PlayerMovement : MonoBehaviour
 
     private enum PlayerState {
         IDLE,                       // 대기
+        FALL,                       // 떨어짐
         R_IDLE_CLIMBING,            // 오른쪽 매달림 대기
         L_IDLE_CLIMBING,            // 왼쪽 매달림 대기
         F_IDLE_CLIMBING,            // 앞쪽 매달림 대기
@@ -134,15 +135,18 @@ public class PlayerMovement : MonoBehaviour
     private enum AnimationSwitch
     {
         IDLE,
-        UP,
-        DOWN,
+        JUMP,
+        CLIMBING,
+        CLIMBING_END,
         INTERACTION_START,
         INTERACTION_END,
         PUSH_IDLE,
         PUSH,
         PUSH_END,
         SLIDE,
-        SLIDE_END
+        SLIDE_END,
+        FALL,
+        FALL_END
     }
 
     private const float INTERACTION_MOVE_VALUE = 0.25f;
@@ -394,7 +398,7 @@ public class PlayerMovement : MonoBehaviour
                                     // 왼쪽 이동 등반 상태
                                     playerState = PlayerState.L_UP;
                                     // 애니메이션 점프
-                                    animeSwitch = AnimationSwitch.UP;
+                                    animeSwitch = AnimationSwitch.JUMP;
                                     // 점프 애니메이션은 약간의 딜레이가 필요합니다
                                     actionDelay = 0f;
                                     // 캐릭터 속도 관련 셋팅
@@ -465,7 +469,7 @@ public class PlayerMovement : MonoBehaviour
                                     // 왼쪽 이동 상태
                                     playerState = PlayerState.L_DOWN;
                                     // 애니메이션 점프
-                                    animeSwitch = AnimationSwitch.UP;
+                                    animeSwitch = AnimationSwitch.JUMP;
                                     // 점프 애니메이션은 약간의 딜레이가 필요합니다
                                     actionDelay = 0f;
                                     // 캐릭터 속도 관련 셋팅
@@ -480,7 +484,7 @@ public class PlayerMovement : MonoBehaviour
                                     // 왼쪽 이동 매달림
                                     playerState = PlayerState.L_CLIMBING;
                                     // 애니메이션 아래 점프
-                                    animeSwitch = AnimationSwitch.DOWN;
+                                    animeSwitch = AnimationSwitch.CLIMBING;
                                 }
                             }
                         }
@@ -544,7 +548,7 @@ public class PlayerMovement : MonoBehaviour
                                     // 오른쪽 이동 등반 상태
                                     playerState = PlayerState.R_UP;
                                     // 애니메이션 점프
-                                    animeSwitch = AnimationSwitch.UP;
+                                    animeSwitch = AnimationSwitch.JUMP;
                                     // 점프 애니메이션은 약간의 딜레이가 필요합니다
                                     actionDelay = 0f;
                                     // 캐릭터 속도 관련 셋팅
@@ -615,7 +619,7 @@ public class PlayerMovement : MonoBehaviour
                                     // 오른쪽 아래로 이동 상태
                                     playerState = PlayerState.R_DOWN;
                                     // 애니메이션 점프
-                                    animeSwitch = AnimationSwitch.UP;
+                                    animeSwitch = AnimationSwitch.JUMP;
                                     // 점프 애니메이션은 약간의 딜레이가 필요합니다
                                     actionDelay = 0f;
                                     // 캐릭터 속도 관련 셋팅
@@ -630,7 +634,7 @@ public class PlayerMovement : MonoBehaviour
                                     // 오른쪽 이동 매달림
                                     playerState = PlayerState.R_CLIMBING;
                                     // 애니메이션 아래 점프
-                                    animeSwitch = AnimationSwitch.DOWN;
+                                    animeSwitch = AnimationSwitch.CLIMBING;
                                 }
                             }
                         }
@@ -698,7 +702,7 @@ public class PlayerMovement : MonoBehaviour
                                     // 뒤쪽 이동 등반 상태
                                     playerState = PlayerState.B_UP;
                                     // 애니메이션 점프
-                                    animeSwitch = AnimationSwitch.UP;
+                                    animeSwitch = AnimationSwitch.JUMP;
                                     // 점프 애니메이션은 약간의 딜레이가 필요합니다
                                     actionDelay = 0f;
                                     // 캐릭터 속도 관련 셋팅
@@ -769,7 +773,7 @@ public class PlayerMovement : MonoBehaviour
                                     // 뒤쪽 이동 상태
                                     playerState = PlayerState.B_DOWN;
                                     // 애니메이션 점프
-                                    animeSwitch = AnimationSwitch.UP;
+                                    animeSwitch = AnimationSwitch.JUMP;
                                     // 점프 애니메이션은 약간의 딜레이가 필요합니다
                                     actionDelay = 0f;
                                     // 캐릭터 속도 관련 셋팅
@@ -784,7 +788,7 @@ public class PlayerMovement : MonoBehaviour
                                     // 뒤쪽 이동 매달림
                                     playerState = PlayerState.B_CLIMBING;
                                     // 애니메이션 아래 점프
-                                    animeSwitch = AnimationSwitch.DOWN;
+                                    animeSwitch = AnimationSwitch.CLIMBING;
                                 }
                             }
                         }
@@ -853,7 +857,7 @@ public class PlayerMovement : MonoBehaviour
                                     // 앞쪽 이동 등반 상태
                                     playerState = PlayerState.F_UP;
                                     // 애니메이션 점프
-                                    animeSwitch = AnimationSwitch.UP;
+                                    animeSwitch = AnimationSwitch.JUMP;
                                     // 점프 애니메이션은 약간의 딜레이가 필요합니다
                                     actionDelay = 0f;
                                     // 캐릭터 속도 관련 셋팅
@@ -924,7 +928,7 @@ public class PlayerMovement : MonoBehaviour
                                     // 앞쪽 이동 상태
                                     playerState = PlayerState.F_DOWN;
                                     // 애니메이션 점프
-                                    animeSwitch = AnimationSwitch.UP;
+                                    animeSwitch = AnimationSwitch.JUMP;
                                     // 점프 애니메이션은 약간의 딜레이가 필요합니다
                                     actionDelay = 0f;
                                     // 캐릭터 속도 관련 셋팅
@@ -939,12 +943,27 @@ public class PlayerMovement : MonoBehaviour
                                     // 앞쪽 이동 매달림
                                     playerState = PlayerState.F_CLIMBING;
                                     // 애니메이션 아래 점프
-                                    animeSwitch = AnimationSwitch.DOWN;
+                                    animeSwitch = AnimationSwitch.CLIMBING;
                                 }
                             }
                         }
                     }
                 }
+                break;
+            case PlayerState.FALL:
+                //------------------------------------------------
+                // 떨어짐 상태 키처리
+                //------------------------------------------------
+
+                // 바닥에 닿아있다면
+                if (characterController.isGrounded)
+                {
+                    // 대기
+                    playerState = PlayerState.IDLE;
+                    // 애니메이션 떨어짐 종료
+                    animeSwitch = AnimationSwitch.FALL_END;
+                }
+
                 break;
             case PlayerState.R_IDLE_CLIMBING:
                 //------------------------------------------------
@@ -1127,7 +1146,7 @@ public class PlayerMovement : MonoBehaviour
                         // 앞쪽 이동 등반 상태
                         playerState = PlayerState.L_UP;
                         // 애니메이션 점프
-                        animeSwitch = AnimationSwitch.UP;
+                        animeSwitch = AnimationSwitch.CLIMBING_END;
                         // 점프 애니메이션은 약간의 딜레이가 필요합니다
                         actionDelay = 0f;
                         // 캐릭터 속도 관련 셋팅
@@ -1144,7 +1163,9 @@ public class PlayerMovement : MonoBehaviour
                     // Move 함수에서 처리할 키 값
                     moveKeyValue = Vector2.zero;
                     // 대기 상태
-                    playerState = PlayerState.IDLE;
+                    playerState = PlayerState.FALL;
+                    // 애니메이션 떨어짐
+                    animeSwitch = AnimationSwitch.FALL;
                     // 매달림 상태 해제
                     climbingFlag = false;
                     
@@ -1331,7 +1352,7 @@ public class PlayerMovement : MonoBehaviour
                         // 앞쪽 이동 등반 상태
                         playerState = PlayerState.R_UP;
                         // 애니메이션 점프
-                        animeSwitch = AnimationSwitch.UP;
+                        animeSwitch = AnimationSwitch.CLIMBING_END;
                         // 점프 애니메이션은 약간의 딜레이가 필요합니다
                         actionDelay = 0f;
                         // 캐릭터 속도 관련 셋팅
@@ -1519,7 +1540,7 @@ public class PlayerMovement : MonoBehaviour
                         // 앞쪽 이동 등반 상태
                         playerState = PlayerState.B_UP;
                         // 애니메이션 점프
-                        animeSwitch = AnimationSwitch.UP;
+                        animeSwitch = AnimationSwitch.CLIMBING_END;
                         // 점프 애니메이션은 약간의 딜레이가 필요합니다
                         actionDelay = 0f;
                         // 캐릭터 속도 관련 셋팅
@@ -1706,7 +1727,7 @@ public class PlayerMovement : MonoBehaviour
                         // 앞쪽 이동 등반 상태
                         playerState = PlayerState.F_UP;
                         // 애니메이션 점프
-                        animeSwitch = AnimationSwitch.UP;
+                        animeSwitch = AnimationSwitch.CLIMBING_END;
                         // 점프 애니메이션은 약간의 딜레이가 필요합니다
                         actionDelay = 0f;
                         // 캐릭터 속도 관련 셋팅
@@ -2937,7 +2958,7 @@ public class PlayerMovement : MonoBehaviour
                         // x,z 이동 멈춤
                         moveKeyValue = Vector2.zero;
                         // 애니메이션
-                        animeSwitch = AnimationSwitch.DOWN;
+                        animeSwitch = AnimationSwitch.CLIMBING;
                         // 상태 변경
                         playerState = PlayerState.L_CLIMBING;
                     }
@@ -2994,7 +3015,7 @@ public class PlayerMovement : MonoBehaviour
                         // x,z 이동 멈춤
                         moveKeyValue = Vector2.zero;
                         // 애니메이션
-                        animeSwitch = AnimationSwitch.DOWN;
+                        animeSwitch = AnimationSwitch.CLIMBING;
                         // 상태 변경
                         playerState = PlayerState.R_CLIMBING;
                     }
@@ -3051,7 +3072,7 @@ public class PlayerMovement : MonoBehaviour
                         // x,z 이동 멈춤
                         moveKeyValue = Vector2.zero;
                         // 애니메이션
-                        animeSwitch = AnimationSwitch.DOWN;
+                        animeSwitch = AnimationSwitch.CLIMBING;
                         // 상태 변경
                         playerState = PlayerState.B_CLIMBING;
                     }
@@ -3108,7 +3129,7 @@ public class PlayerMovement : MonoBehaviour
                         // x,z 이동 멈춤
                         moveKeyValue = Vector2.zero;
                         // 애니메이션
-                        animeSwitch = AnimationSwitch.DOWN;
+                        animeSwitch = AnimationSwitch.CLIMBING;
                         // 상태 변경
                         playerState = PlayerState.F_CLIMBING;
                     }
@@ -3899,12 +3920,16 @@ public class PlayerMovement : MonoBehaviour
 
         switch (animeSwitch)
         {
-            case AnimationSwitch.UP:
-                animator.SetTrigger("Climbing Up");
+            case AnimationSwitch.JUMP:
+                animator.SetTrigger("Jump");
                 animeSwitch = AnimationSwitch.IDLE;
                 break;
-            case AnimationSwitch.DOWN:
-                animator.SetTrigger("Climbing Down");
+            case AnimationSwitch.CLIMBING:
+                animator.SetTrigger("Climbing");
+                animeSwitch = AnimationSwitch.IDLE;
+                break;
+            case AnimationSwitch.CLIMBING_END:
+                animator.SetTrigger("Climbing End");
                 animeSwitch = AnimationSwitch.IDLE;
                 break;
             case AnimationSwitch.INTERACTION_START:
@@ -3933,6 +3958,14 @@ public class PlayerMovement : MonoBehaviour
                 break;
             case AnimationSwitch.SLIDE_END:
                 animator.SetTrigger("Slide End");
+                animeSwitch = AnimationSwitch.IDLE;
+                break;
+            case AnimationSwitch.FALL:
+                animator.SetTrigger("Fall");
+                animeSwitch = AnimationSwitch.IDLE;
+                break;
+            case AnimationSwitch.FALL_END:
+                animator.SetTrigger("Fall End");
                 animeSwitch = AnimationSwitch.IDLE;
                 break;
             default:
