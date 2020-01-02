@@ -23,6 +23,8 @@ public class PlayerMovement : MonoBehaviour
     public float upSmoothTime;
     // 아래로 점프할 때 속도 지연시간 값
     public float downSmoothTime;
+    // 기상할 때 속도 지연시간 값
+    public float standSmoothTime;
     // 방향을 바꾸는 스무스 지연시간 값
     public float turnSmoothTime;
     // magnitude 벡터의 길이를 반환
@@ -63,7 +65,6 @@ public class PlayerMovement : MonoBehaviour
 
     private enum PlayerState {
         IDLE,                       // 대기
-        FALL,                       // 떨어짐
         R_IDLE_CLIMBING,            // 오른쪽 매달림 대기
         L_IDLE_CLIMBING,            // 왼쪽 매달림 대기
         F_IDLE_CLIMBING,            // 앞쪽 매달림 대기
@@ -128,6 +129,14 @@ public class PlayerMovement : MonoBehaviour
         FL_LR_CHANGE_CLIMBING,      // 앞쪽에서 왼쪽으로 방향 전환
         BR_RR_CHANGE_CLIMBING,      // 뒤쪽에서 오른쪽으로 방향 전환
         BL_LL_CHANGE_CLIMBING,      // 뒤쪽에서 왼쪽으로 방향 전환
+        R_FALL,                     // 오른쪽 떨어짐
+        L_FALL,                     // 왼쪽 떨어짐
+        F_FALL,                     // 앞쪽 떨어짐
+        B_FALL,                     // 뒤쪽 떨어짐
+        R_FALL_END,                 // 오른쪽 떨어짐 종료
+        L_FALL_END,                 // 왼쪽 떨어짐 종료
+        F_FALL_END,                 // 앞쪽 떨어짐 종료
+        B_FALL_END,                 // 뒤쪽 떨어짐 종료
         EMPTY
     }
 
@@ -352,7 +361,7 @@ public class PlayerMovement : MonoBehaviour
                         ray = centerTrans.position;
                         rayDir = Vector3.down;
                         // 정면 큐브 정보
-                        if (!Physics.Raycast(ray, rayDir, out rayHit, 1f))
+                        if (!Physics.Raycast(ray, rayDir, out rayHit, 1f, layerMaskCube))
                         {
                             // 에러
                             break;
@@ -950,21 +959,6 @@ public class PlayerMovement : MonoBehaviour
                     }
                 }
                 break;
-            case PlayerState.FALL:
-                //------------------------------------------------
-                // 떨어짐 상태 키처리
-                //------------------------------------------------
-
-                // 바닥에 닿아있다면
-                if (characterController.isGrounded)
-                {
-                    // 대기
-                    playerState = PlayerState.IDLE;
-                    // 애니메이션 떨어짐 종료
-                    animeSwitch = AnimationSwitch.FALL_END;
-                }
-
-                break;
             case PlayerState.R_IDLE_CLIMBING:
                 //------------------------------------------------
                 // 오른쪽 매달림 대기 상태 키처리
@@ -1107,14 +1101,6 @@ public class PlayerMovement : MonoBehaviour
                 //------------------------------------------------
                 // 오른쪽 매달림 대기 상태 키처리
                 //------------------------------------------------
-                // 입력 키 값 ↓
-                else if (moveInput.y < 0)
-                {
-
-                }
-                //------------------------------------------------
-                // 오른쪽 매달림 대기 상태 키처리
-                //------------------------------------------------
                 // 입력 키 값 ↑
                 else if (moveInput.y > 0)
                 {
@@ -1163,7 +1149,7 @@ public class PlayerMovement : MonoBehaviour
                     // Move 함수에서 처리할 키 값
                     moveKeyValue = Vector2.zero;
                     // 대기 상태
-                    playerState = PlayerState.FALL;
+                    playerState = PlayerState.R_FALL;
                     // 애니메이션 떨어짐
                     animeSwitch = AnimationSwitch.FALL;
                     // 매달림 상태 해제
@@ -1313,14 +1299,6 @@ public class PlayerMovement : MonoBehaviour
                 //------------------------------------------------
                 // 왼쪽 매달림 대기 상태 키처리
                 //------------------------------------------------
-                // 입력 키 값 ↓
-                else if (moveInput.y < 0)
-                {
-
-                }
-                //------------------------------------------------
-                // 왼쪽 매달림 대기 상태 키처리
-                //------------------------------------------------
                 // 입력 키 값 ↑
                 else if (moveInput.y > 0)
                 {
@@ -1359,6 +1337,22 @@ public class PlayerMovement : MonoBehaviour
                         saveSpeed = speed;
                         speed = 0.5f;
                     }
+                }
+                //------------------------------------------------
+                // 왼쪽 매달림 대기 상태 키처리
+                //------------------------------------------------
+                // 입력 키 값 마우스 클릭
+                else if (mouseClick)
+                {
+                    // Move 함수에서 처리할 키 값
+                    moveKeyValue = Vector2.zero;
+                    // 대기 상태
+                    playerState = PlayerState.L_FALL;
+                    // 애니메이션 떨어짐
+                    animeSwitch = AnimationSwitch.FALL;
+                    // 매달림 상태 해제
+                    climbingFlag = false;
+
                 }
                 break;
             case PlayerState.F_IDLE_CLIMBING:
@@ -1501,14 +1495,6 @@ public class PlayerMovement : MonoBehaviour
                 //------------------------------------------------
                 // 앞쪽 매달림 대기 상태 키처리
                 //------------------------------------------------
-                // 입력 키 값 ↓
-                else if (moveInput.y < 0)
-                {
-
-                }
-                //------------------------------------------------
-                // 앞쪽 매달림 대기 상태 키처리
-                //------------------------------------------------
                 // 입력 키 값 ↑
                 else if (moveInput.y > 0)
                 {
@@ -1547,6 +1533,22 @@ public class PlayerMovement : MonoBehaviour
                         saveSpeed = speed;
                         speed = 0.5f;
                     }
+                }
+                //------------------------------------------------
+                // 앞쪽 매달림 대기 상태 키처리
+                //------------------------------------------------
+                // 입력 키 값 마우스 클릭
+                else if (mouseClick)
+                {
+                    // Move 함수에서 처리할 키 값
+                    moveKeyValue = Vector2.zero;
+                    // 대기 상태
+                    playerState = PlayerState.F_FALL;
+                    // 애니메이션 떨어짐
+                    animeSwitch = AnimationSwitch.FALL;
+                    // 매달림 상태 해제
+                    climbingFlag = false;
+
                 }
                 break;
             case PlayerState.B_IDLE_CLIMBING:
@@ -1689,14 +1691,6 @@ public class PlayerMovement : MonoBehaviour
                 //------------------------------------------------
                 // 뒤쪽 매달림 대기 상태 키처리
                 //------------------------------------------------
-                // 입력 키 값 ↓
-                else if (moveInput.y < 0)
-                {
-
-                }
-                //------------------------------------------------
-                // 뒤쪽 매달림 대기 상태 키처리
-                //------------------------------------------------
                 // 입력 키 값 ↑
                 else if (moveInput.y > 0)
                 {
@@ -1734,6 +1728,22 @@ public class PlayerMovement : MonoBehaviour
                         saveSpeed = speed;
                         speed = 0.5f;
                     }
+                }
+                //------------------------------------------------
+                // 뒤쪽 매달림 대기 상태 키처리
+                //------------------------------------------------
+                // 입력 키 값 마우스 클릭
+                else if (mouseClick)
+                {
+                    // Move 함수에서 처리할 키 값
+                    moveKeyValue = Vector2.zero;
+                    // 대기 상태
+                    playerState = PlayerState.B_FALL;
+                    // 애니메이션 떨어짐
+                    animeSwitch = AnimationSwitch.FALL;
+                    // 매달림 상태 해제
+                    climbingFlag = false;
+
                 }
                 break;
             case PlayerState.R_IDLE_INTERACTION:
@@ -3848,6 +3858,306 @@ public class PlayerMovement : MonoBehaviour
                     // 이동을 끝마쳤으니 상태를 대기로 변경
                     playerState = PlayerState.L_IDLE_CLIMBING;
                     moveKeyValue = Vector2.zero;
+                }
+                break;
+            case PlayerState.R_FALL:
+                //------------------------------------------------
+                // 오른쪽 떨어짐 상태 키처리
+                //------------------------------------------------
+
+                // 바닥에 닿아있다면
+                if (characterController.isGrounded)
+                {
+                    ray = centerTrans.position;
+                    rayDir = Vector3.down;
+                    // 바닥 큐브 정보
+                    if (!Physics.Raycast(ray, rayDir, out rayHit, 1f, layerMaskCube))
+                    {
+                        // 에러
+                        break;
+                    }
+
+                    // 목표 이동 위치
+                    destPos = rayHit.transform.position;
+
+                    // 떨어짐 종료
+                    playerState = PlayerState.R_FALL_END;
+                    // 애니메이션 떨어짐 종료
+                    animeSwitch = AnimationSwitch.FALL_END;
+                    // 약간의 딜레이가 필요합니다
+                    actionDelay = 0f;
+                    // 캐릭터 속도 관련 셋팅
+                    saveSpeed = speed;
+                    speed = 0.5f;
+                    break;
+                }
+
+
+                // 입력 키 값 ←
+                if (moveInput.x <= -0.3)
+                {
+                    //--------------------------------
+                    // 왼쪽 검사
+                    // ？★
+                    //--------------------------------
+                    check = centerTrans.position;
+                    check.x = check.x - 1f;
+
+                    // 없다
+                    if (!Physics.CheckBox(check, box, Quaternion.identity, layerMaskCube))
+                    {
+                        //--------------------------------
+                        // 아래쪽 검사
+                        //   ★
+                        // ？
+                        //--------------------------------
+                        check.y = check.y - 1f;
+
+                        // 있다
+                        if (Physics.CheckBox(check, box, Quaternion.identity, layerMaskCube))
+                        {
+                            // 이동 좌표
+                            destPos = check;
+                            destPos.x = destPos.x + 1f;
+                            // 오른쪽 이동 매달림
+                            playerState = PlayerState.R_CLIMBING;
+                            // 애니메이션 아래 점프
+                            animeSwitch = AnimationSwitch.CLIMBING;
+                        }
+                    }
+                }
+                break;
+            case PlayerState.L_FALL:
+                //------------------------------------------------
+                // 왼쪽 떨어짐 상태 키처리
+                //------------------------------------------------
+
+                // 바닥에 닿아있다면
+                if (characterController.isGrounded)
+                {
+                    ray = centerTrans.position;
+                    rayDir = Vector3.down;
+                    // 바닥 큐브 정보
+                    if (!Physics.Raycast(ray, rayDir, out rayHit, 1f, layerMaskCube))
+                    {
+                        // 에러
+                        break;
+                    }
+
+                    // 목표 이동 위치
+                    destPos = rayHit.transform.position;
+
+                    // 떨어짐 종료
+                    playerState = PlayerState.L_FALL_END;
+                    // 애니메이션 떨어짐 종료
+                    animeSwitch = AnimationSwitch.FALL_END;
+                    // 약간의 딜레이가 필요합니다
+                    actionDelay = 0f;
+                    // 캐릭터 속도 관련 셋팅
+                    saveSpeed = speed;
+                    speed = 0.5f;
+                }
+                break;
+            case PlayerState.F_FALL:
+                //------------------------------------------------
+                // 앞쪽 떨어짐 상태 키처리
+                //------------------------------------------------
+
+                // 바닥에 닿아있다면
+                if (characterController.isGrounded)
+                {
+                    ray = centerTrans.position;
+                    rayDir = Vector3.down;
+                    // 바닥 큐브 정보
+                    if (!Physics.Raycast(ray, rayDir, out rayHit, 1f, layerMaskCube))
+                    {
+                        // 에러
+                        break;
+                    }
+
+                    // 목표 이동 위치
+                    destPos = rayHit.transform.position;
+
+                    // 떨어짐 종료
+                    playerState = PlayerState.F_FALL_END;
+                    // 애니메이션 떨어짐 종료
+                    animeSwitch = AnimationSwitch.FALL_END;
+                    // 약간의 딜레이가 필요합니다
+                    actionDelay = 0f;
+                    // 캐릭터 속도 관련 셋팅
+                    saveSpeed = speed;
+                    speed = 0.5f;
+                }
+                break;
+            case PlayerState.B_FALL:
+                //------------------------------------------------
+                // 뒤쪽 떨어짐 상태 키처리
+                //------------------------------------------------
+
+                // 바닥에 닿아있다면
+                if (characterController.isGrounded)
+                {
+                    ray = centerTrans.position;
+                    rayDir = Vector3.down;
+                    // 바닥 큐브 정보
+                    if (!Physics.Raycast(ray, rayDir, out rayHit, 1f, layerMaskCube))
+                    {
+                        // 에러
+                        break;
+                    }
+
+                    // 목표 이동 위치
+                    destPos = rayHit.transform.position;
+
+                    // 떨어짐 종료
+                    playerState = PlayerState.B_FALL_END;
+                    // 애니메이션 떨어짐 종료
+                    animeSwitch = AnimationSwitch.FALL_END;
+                    // 약간의 딜레이가 필요합니다
+                    actionDelay = 0f;
+                    // 캐릭터 속도 관련 셋팅
+                    saveSpeed = speed;
+                    speed = 0.5f;
+                }
+                break;
+            case PlayerState.R_FALL_END:
+                //------------------------------------------------
+                // 오른쪽 떨어짐 종료
+                //------------------------------------------------
+                actionDelay = actionDelay + Time.deltaTime;
+
+                // 준비 동작때문에 약 2.5 대기합니다
+                if (actionDelay < 2.5f)
+                {
+                    break;
+                }
+                else
+                {
+                    // Move 함수에서 처리할 키 값
+                    moveKeyValue = Vector2.right;
+                }
+
+                // 캐릭터 이동 속도를 빠르게
+                speed = Mathf.SmoothDamp(currentSpeed, saveSpeed, ref jumpSmoothHorizontal, standSmoothTime);
+
+                // 수평 이동 거리만큼 이동 했는가
+                if (destPos.x <= centerTrans.position.x)
+                {
+                    // 캐릭터의 상태 변화는 애니메이션 클립에서 이벤트를 통해 함수를 호출해서 변경함
+                    // 이동 정지
+                    moveKeyValue = Vector2.zero;
+                    // 애니메이션이 끝날 때까지 기다림
+                    playerState = PlayerState.EMPTY;
+                    // 이동 속도 원상 복구
+                    speed = saveSpeed;
+                    // 플레이어 위치 맞추기
+                    moveValue.x = destPos.x - transform.position.x;
+                    characterController.Move(moveValue);
+                }
+                break;
+            case PlayerState.L_FALL_END:
+                //------------------------------------------------
+                // 왼쪽 떨어짐 종료
+                //------------------------------------------------
+                actionDelay = actionDelay + Time.deltaTime;
+
+                // 준비 동작때문에 약 2.5 대기합니다
+                if (actionDelay < 2.5f)
+                {
+                    break;
+                }
+                else
+                {
+                    // Move 함수에서 처리할 키 값
+                    moveKeyValue = Vector2.left;
+                }
+
+                // 캐릭터 이동 속도를 빠르게
+                speed = Mathf.SmoothDamp(currentSpeed, saveSpeed, ref jumpSmoothHorizontal, standSmoothTime);
+
+                // 수평 이동 거리만큼 이동 했는가
+                if (destPos.x >= centerTrans.position.x)
+                {
+                    // 캐릭터의 상태 변화는 애니메이션 클립에서 이벤트를 통해 함수를 호출해서 변경함
+                    // 이동 정지
+                    moveKeyValue = Vector2.zero;
+                    // 애니메이션이 끝날 때까지 기다림
+                    playerState = PlayerState.EMPTY;
+                    // 이동 속도 원상 복구
+                    speed = saveSpeed;
+                    // 플레이어 위치 맞추기
+                    moveValue.x = destPos.x - transform.position.x;
+                    characterController.Move(moveValue);
+                }
+                break;
+            case PlayerState.F_FALL_END:
+                //------------------------------------------------
+                // 앞쪽 떨어짐 종료
+                //------------------------------------------------
+                actionDelay = actionDelay + Time.deltaTime;
+
+                // 준비 동작때문에 약 2.5 대기합니다
+                if (actionDelay < 2.5f)
+                {
+                    break;
+                }
+                else
+                {
+                    // Move 함수에서 처리할 키 값
+                    moveKeyValue = Vector2.up;
+                }
+
+                // 캐릭터 이동 속도를 빠르게
+                speed = Mathf.SmoothDamp(currentSpeed, saveSpeed, ref jumpSmoothHorizontal, standSmoothTime);
+
+                // 수평 이동 거리만큼 이동 했는가
+                if (destPos.z <= centerTrans.position.z)
+                {
+                    // 캐릭터의 상태 변화는 애니메이션 클립에서 이벤트를 통해 함수를 호출해서 변경함
+                    // 이동 정지
+                    moveKeyValue = Vector2.zero;
+                    // 애니메이션이 끝날 때까지 기다림
+                    playerState = PlayerState.EMPTY;
+                    // 이동 속도 원상 복구
+                    speed = saveSpeed;
+                    // 플레이어 위치 맞추기
+                    moveValue.z = destPos.z - transform.position.z;
+                    characterController.Move(moveValue);
+                }
+                break;
+            case PlayerState.B_FALL_END:
+                //------------------------------------------------
+                // 뒤쪽 떨어짐 종료
+                //------------------------------------------------
+                actionDelay = actionDelay + Time.deltaTime;
+
+                // 준비 동작때문에 약 2.5 대기합니다
+                if (actionDelay < 2.5f)
+                {
+                    break;
+                }
+                else
+                {
+                    // Move 함수에서 처리할 키 값
+                    moveKeyValue = Vector2.down;
+                }
+
+                // 캐릭터 이동 속도를 빠르게
+                speed = Mathf.SmoothDamp(currentSpeed, saveSpeed, ref jumpSmoothHorizontal, standSmoothTime);
+
+                // 수평 이동 거리만큼 이동 했는가
+                if (destPos.z >= centerTrans.position.z)
+                {
+                    // 캐릭터의 상태 변화는 애니메이션 클립에서 이벤트를 통해 함수를 호출해서 변경함
+                    // 이동 정지
+                    moveKeyValue = Vector2.zero;
+                    // 애니메이션이 끝날 때까지 기다림
+                    playerState = PlayerState.EMPTY;
+                    // 이동 속도 원상 복구
+                    speed = saveSpeed;
+                    // 플레이어 위치 맞추기
+                    moveValue.z = destPos.z - transform.position.z;
+                    characterController.Move(moveValue);
                 }
                 break;
             case PlayerState.EMPTY:
