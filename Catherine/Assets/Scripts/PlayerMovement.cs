@@ -12,6 +12,7 @@ public class PlayerMovement : MonoBehaviour
     private Camera followCam;
     private GameManager gameManager;
     private Transform centerTrans;
+    private Transform footTrans;
     private LayerMask layerMaskCube;
     private GameObject cubeObject;            // 이동할 큐브 오브젝트
 
@@ -179,6 +180,7 @@ public class PlayerMovement : MonoBehaviour
         gameManager = gameobject.GetComponent<GameManager>();
 
         centerTrans = transform.Find("Center");
+        footTrans = transform.Find("Foot");
         // 레이어 마스크
         layerMaskCube = 1 << LayerMask.NameToLayer("Cube");
     }
@@ -3896,34 +3898,34 @@ public class PlayerMovement : MonoBehaviour
                 // 입력 키 값 ←
                 if (moveInput.x <= -0.3)
                 {
+                    ray = footTrans.position;
+                    rayDir = Vector3.left;
+                    // 발 기준 왼쪽
+                    if (!Physics.Raycast(ray, rayDir, out rayHit, 1f, layerMaskCube))
+                    {
+                        //없다
+                        break;
+                    }
+
                     //--------------------------------
-                    // 왼쪽 검사
-                    // ？★
+                    // 위쪽 검사
+                    // ？
+                    // ■★
                     //--------------------------------
-                    check = centerTrans.position;
-                    check.x = check.x - 1f;
+                    check = rayHit.transform.position;
+                    check.y = check.y + 1f;
 
                     // 없다
                     if (!Physics.CheckBox(check, box, Quaternion.identity, layerMaskCube))
                     {
-                        //--------------------------------
-                        // 아래쪽 검사
-                        //   ★
-                        // ？
-                        //--------------------------------
-                        check.y = check.y - 1f;
-
-                        // 있다
-                        if (Physics.CheckBox(check, box, Quaternion.identity, layerMaskCube))
-                        {
-                            // 이동 좌표
-                            destPos = check;
-                            destPos.x = destPos.x + 1f;
-                            // 오른쪽 이동 매달림
-                            playerState = PlayerState.R_CLIMBING;
-                            // 애니메이션 아래 점프
-                            animeSwitch = AnimationSwitch.CLIMBING;
-                        }
+                        // 이동 좌표
+                        destPos.x = check.x + 1f;
+                        destPos.y = check.y - 1f;
+                        destPos.z = check.z;
+                        // 오른쪽 매달림
+                        playerState = PlayerState.R_CLIMBING;
+                        // 애니메이션 매달림
+                        animeSwitch = AnimationSwitch.CLIMBING;
                     }
                 }
                 break;
@@ -3957,6 +3959,40 @@ public class PlayerMovement : MonoBehaviour
                     saveSpeed = speed;
                     speed = 0.5f;
                 }
+
+                // 입력 키 값 →
+                if (moveInput.x >= 0.3)
+                {
+                    ray = footTrans.position;
+                    rayDir = Vector3.right;
+                    // 발 기준 왼쪽
+                    if (!Physics.Raycast(ray, rayDir, out rayHit, 1f, layerMaskCube))
+                    {
+                        //없다
+                        break;
+                    }
+
+                    //--------------------------------
+                    // 위쪽 검사
+                    // ？
+                    // ■★
+                    //--------------------------------
+                    check = rayHit.transform.position;
+                    check.y = check.y + 1f;
+
+                    // 없다
+                    if (!Physics.CheckBox(check, box, Quaternion.identity, layerMaskCube))
+                    {
+                        // 이동 좌표
+                        destPos.x = check.x - 1f;
+                        destPos.y = check.y - 1f;
+                        destPos.z = check.z;
+                        // 왼쪽 매달림
+                        playerState = PlayerState.L_CLIMBING;
+                        // 애니메이션 매달림
+                        animeSwitch = AnimationSwitch.CLIMBING;
+                    }
+                }
                 break;
             case PlayerState.F_FALL:
                 //------------------------------------------------
@@ -3988,6 +4024,40 @@ public class PlayerMovement : MonoBehaviour
                     saveSpeed = speed;
                     speed = 0.5f;
                 }
+
+                // 입력 키 값 ↓
+                if (moveInput.y <= -0.3)
+                {
+                    ray = footTrans.position;
+                    rayDir = Vector3.back;
+                    // 발 기준 왼쪽
+                    if (!Physics.Raycast(ray, rayDir, out rayHit, 1f, layerMaskCube))
+                    {
+                        //없다
+                        break;
+                    }
+
+                    //--------------------------------
+                    // 위쪽 검사
+                    // ？
+                    // ■★
+                    //--------------------------------
+                    check = rayHit.transform.position;
+                    check.y = check.y + 1f;
+
+                    // 없다
+                    if (!Physics.CheckBox(check, box, Quaternion.identity, layerMaskCube))
+                    {
+                        // 이동 좌표
+                        destPos.x = check.x;
+                        destPos.y = check.y - 1f;
+                        destPos.z = check.z + 1f;
+                        // 앞쪽 매달림
+                        playerState = PlayerState.F_CLIMBING;
+                        // 애니메이션 매달림
+                        animeSwitch = AnimationSwitch.CLIMBING;
+                    }
+                }
                 break;
             case PlayerState.B_FALL:
                 //------------------------------------------------
@@ -4018,6 +4088,40 @@ public class PlayerMovement : MonoBehaviour
                     // 캐릭터 속도 관련 셋팅
                     saveSpeed = speed;
                     speed = 0.5f;
+                }
+
+                // 입력 키 값 ↑
+                if (moveInput.y >= 0.3)
+                {
+                    ray = footTrans.position;
+                    rayDir = Vector3.back;
+                    // 발 기준 왼쪽
+                    if (!Physics.Raycast(ray, rayDir, out rayHit, 1f, layerMaskCube))
+                    {
+                        //없다
+                        break;
+                    }
+
+                    //--------------------------------
+                    // 위쪽 검사
+                    // ？
+                    // ■★
+                    //--------------------------------
+                    check = rayHit.transform.position;
+                    check.y = check.y + 1f;
+
+                    // 없다
+                    if (!Physics.CheckBox(check, box, Quaternion.identity, layerMaskCube))
+                    {
+                        // 이동 좌표
+                        destPos.x = check.x;
+                        destPos.y = check.y - 1f;
+                        destPos.z = check.z - 1f;
+                        // 뒤쪽 매달림
+                        playerState = PlayerState.B_CLIMBING;
+                        // 애니메이션 매달림
+                        animeSwitch = AnimationSwitch.CLIMBING;
+                    }
                 }
                 break;
             case PlayerState.R_FALL_END:
