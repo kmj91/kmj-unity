@@ -130,14 +130,15 @@ public class PlayerMovement : MonoBehaviour
         FL_LR_CHANGE_CLIMBING,      // 앞쪽에서 왼쪽으로 방향 전환
         BR_RR_CHANGE_CLIMBING,      // 뒤쪽에서 오른쪽으로 방향 전환
         BL_LL_CHANGE_CLIMBING,      // 뒤쪽에서 왼쪽으로 방향 전환
-        R_FALL,                     // 오른쪽 떨어짐
-        L_FALL,                     // 왼쪽 떨어짐
-        F_FALL,                     // 앞쪽 떨어짐
-        B_FALL,                     // 뒤쪽 떨어짐
-        R_FALL_END,                 // 오른쪽 떨어짐 종료
-        L_FALL_END,                 // 왼쪽 떨어짐 종료
-        F_FALL_END,                 // 앞쪽 떨어짐 종료
-        B_FALL_END,                 // 뒤쪽 떨어짐 종료
+        R_DROP,                     // 오른쪽 떨어짐
+        L_DROP,                     // 왼쪽 떨어짐
+        F_DROP,                     // 앞쪽 떨어짐
+        B_DROP,                     // 뒤쪽 떨어짐
+        R_DROP_END,                 // 오른쪽 떨어짐 종료
+        L_DROP_END,                 // 왼쪽 떨어짐 종료
+        F_DROP_END,                 // 앞쪽 떨어짐 종료
+        B_DROP_END,                 // 뒤쪽 떨어짐 종료
+        R_DROP_CLIMBING,            // 오른쪽 떨어짐 등반
         EMPTY
     }
 
@@ -155,8 +156,8 @@ public class PlayerMovement : MonoBehaviour
         PUSH_END,
         SLIDE,
         SLIDE_END,
-        FALL,
-        FALL_END
+        DROP,
+        DROP_END
     }
 
     private const float INTERACTION_MOVE_VALUE = 0.25f;
@@ -1151,9 +1152,9 @@ public class PlayerMovement : MonoBehaviour
                     // Move 함수에서 처리할 키 값
                     moveKeyValue = Vector2.zero;
                     // 대기 상태
-                    playerState = PlayerState.R_FALL;
+                    playerState = PlayerState.R_DROP;
                     // 애니메이션 떨어짐
-                    animeSwitch = AnimationSwitch.FALL;
+                    animeSwitch = AnimationSwitch.DROP;
                     // 매달림 상태 해제
                     climbingFlag = false;
                     
@@ -1349,9 +1350,9 @@ public class PlayerMovement : MonoBehaviour
                     // Move 함수에서 처리할 키 값
                     moveKeyValue = Vector2.zero;
                     // 대기 상태
-                    playerState = PlayerState.L_FALL;
+                    playerState = PlayerState.L_DROP;
                     // 애니메이션 떨어짐
-                    animeSwitch = AnimationSwitch.FALL;
+                    animeSwitch = AnimationSwitch.DROP;
                     // 매달림 상태 해제
                     climbingFlag = false;
 
@@ -1545,9 +1546,9 @@ public class PlayerMovement : MonoBehaviour
                     // Move 함수에서 처리할 키 값
                     moveKeyValue = Vector2.zero;
                     // 대기 상태
-                    playerState = PlayerState.F_FALL;
+                    playerState = PlayerState.F_DROP;
                     // 애니메이션 떨어짐
-                    animeSwitch = AnimationSwitch.FALL;
+                    animeSwitch = AnimationSwitch.DROP;
                     // 매달림 상태 해제
                     climbingFlag = false;
 
@@ -1740,9 +1741,9 @@ public class PlayerMovement : MonoBehaviour
                     // Move 함수에서 처리할 키 값
                     moveKeyValue = Vector2.zero;
                     // 대기 상태
-                    playerState = PlayerState.B_FALL;
+                    playerState = PlayerState.B_DROP;
                     // 애니메이션 떨어짐
-                    animeSwitch = AnimationSwitch.FALL;
+                    animeSwitch = AnimationSwitch.DROP;
                     // 매달림 상태 해제
                     climbingFlag = false;
 
@@ -3862,7 +3863,7 @@ public class PlayerMovement : MonoBehaviour
                     moveKeyValue = Vector2.zero;
                 }
                 break;
-            case PlayerState.R_FALL:
+            case PlayerState.R_DROP:
                 //------------------------------------------------
                 // 오른쪽 떨어짐 상태 키처리
                 //------------------------------------------------
@@ -3883,9 +3884,9 @@ public class PlayerMovement : MonoBehaviour
                     destPos = rayHit.transform.position;
 
                     // 떨어짐 종료
-                    playerState = PlayerState.R_FALL_END;
+                    playerState = PlayerState.R_DROP_END;
                     // 애니메이션 떨어짐 종료
-                    animeSwitch = AnimationSwitch.FALL_END;
+                    animeSwitch = AnimationSwitch.DROP_END;
                     // 약간의 딜레이가 필요합니다
                     actionDelay = 0f;
                     // 캐릭터 속도 관련 셋팅
@@ -3929,7 +3930,7 @@ public class PlayerMovement : MonoBehaviour
                     }
                 }
                 break;
-            case PlayerState.L_FALL:
+            case PlayerState.L_DROP:
                 //------------------------------------------------
                 // 왼쪽 떨어짐 상태 키처리
                 //------------------------------------------------
@@ -3950,9 +3951,9 @@ public class PlayerMovement : MonoBehaviour
                     destPos = rayHit.transform.position;
 
                     // 떨어짐 종료
-                    playerState = PlayerState.L_FALL_END;
+                    playerState = PlayerState.L_DROP_END;
                     // 애니메이션 떨어짐 종료
-                    animeSwitch = AnimationSwitch.FALL_END;
+                    animeSwitch = AnimationSwitch.DROP_END;
                     // 약간의 딜레이가 필요합니다
                     actionDelay = 0f;
                     // 캐릭터 속도 관련 셋팅
@@ -3994,7 +3995,7 @@ public class PlayerMovement : MonoBehaviour
                     }
                 }
                 break;
-            case PlayerState.F_FALL:
+            case PlayerState.F_DROP:
                 //------------------------------------------------
                 // 앞쪽 떨어짐 상태 키처리
                 //------------------------------------------------
@@ -4015,9 +4016,9 @@ public class PlayerMovement : MonoBehaviour
                     destPos = rayHit.transform.position;
 
                     // 떨어짐 종료
-                    playerState = PlayerState.F_FALL_END;
+                    playerState = PlayerState.F_DROP_END;
                     // 애니메이션 떨어짐 종료
-                    animeSwitch = AnimationSwitch.FALL_END;
+                    animeSwitch = AnimationSwitch.DROP_END;
                     // 약간의 딜레이가 필요합니다
                     actionDelay = 0f;
                     // 캐릭터 속도 관련 셋팅
@@ -4059,7 +4060,7 @@ public class PlayerMovement : MonoBehaviour
                     }
                 }
                 break;
-            case PlayerState.B_FALL:
+            case PlayerState.B_DROP:
                 //------------------------------------------------
                 // 뒤쪽 떨어짐 상태 키처리
                 //------------------------------------------------
@@ -4080,9 +4081,9 @@ public class PlayerMovement : MonoBehaviour
                     destPos = rayHit.transform.position;
 
                     // 떨어짐 종료
-                    playerState = PlayerState.B_FALL_END;
+                    playerState = PlayerState.B_DROP_END;
                     // 애니메이션 떨어짐 종료
-                    animeSwitch = AnimationSwitch.FALL_END;
+                    animeSwitch = AnimationSwitch.DROP_END;
                     // 약간의 딜레이가 필요합니다
                     actionDelay = 0f;
                     // 캐릭터 속도 관련 셋팅
@@ -4094,7 +4095,7 @@ public class PlayerMovement : MonoBehaviour
                 if (moveInput.y >= 0.3)
                 {
                     ray = footTrans.position;
-                    rayDir = Vector3.back;
+                    rayDir = Vector3.forward;
                     // 발 기준 왼쪽
                     if (!Physics.Raycast(ray, rayDir, out rayHit, 1f, layerMaskCube))
                     {
@@ -4124,7 +4125,7 @@ public class PlayerMovement : MonoBehaviour
                     }
                 }
                 break;
-            case PlayerState.R_FALL_END:
+            case PlayerState.R_DROP_END:
                 //------------------------------------------------
                 // 오른쪽 떨어짐 종료
                 //------------------------------------------------
@@ -4159,7 +4160,7 @@ public class PlayerMovement : MonoBehaviour
                     characterController.Move(moveValue);
                 }
                 break;
-            case PlayerState.L_FALL_END:
+            case PlayerState.L_DROP_END:
                 //------------------------------------------------
                 // 왼쪽 떨어짐 종료
                 //------------------------------------------------
@@ -4194,7 +4195,7 @@ public class PlayerMovement : MonoBehaviour
                     characterController.Move(moveValue);
                 }
                 break;
-            case PlayerState.F_FALL_END:
+            case PlayerState.F_DROP_END:
                 //------------------------------------------------
                 // 앞쪽 떨어짐 종료
                 //------------------------------------------------
@@ -4229,7 +4230,7 @@ public class PlayerMovement : MonoBehaviour
                     characterController.Move(moveValue);
                 }
                 break;
-            case PlayerState.B_FALL_END:
+            case PlayerState.B_DROP_END:
                 //------------------------------------------------
                 // 뒤쪽 떨어짐 종료
                 //------------------------------------------------
@@ -4374,12 +4375,12 @@ public class PlayerMovement : MonoBehaviour
                 animator.SetTrigger("Slide End");
                 animeSwitch = AnimationSwitch.IDLE;
                 break;
-            case AnimationSwitch.FALL:
-                animator.SetTrigger("Fall");
+            case AnimationSwitch.DROP:
+                animator.SetTrigger("Drop");
                 animeSwitch = AnimationSwitch.IDLE;
                 break;
-            case AnimationSwitch.FALL_END:
-                animator.SetTrigger("Fall End");
+            case AnimationSwitch.DROP_END:
+                animator.SetTrigger("Drop End");
                 animeSwitch = AnimationSwitch.IDLE;
                 break;
             default:
