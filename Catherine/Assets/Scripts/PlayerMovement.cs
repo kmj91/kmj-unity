@@ -20,6 +20,8 @@ public class PlayerMovement : MonoBehaviour
     public float speed;
     // 수직 이동
     public float jumpVelocity;
+    // 수직 등반 이동
+    public float climbVelocity;
     // 위로 점프할 때 속도 지연시간 값
     public float upSmoothTime;
     // 아래로 점프할 때 속도 지연시간 값
@@ -49,6 +51,8 @@ public class PlayerMovement : MonoBehaviour
     private float actionDelay = 0f;
     // 캐릭터 스피드 저장
     private float saveSpeed;
+    // 떨어졌을 때의 캐릭터 높이
+    private float dropPlayerY;
     // 등반 플래그
     private bool climbingFlag;
     // 마우스 클릭
@@ -138,7 +142,14 @@ public class PlayerMovement : MonoBehaviour
         L_DROP_END,                 // 왼쪽 떨어짐 종료
         F_DROP_END,                 // 앞쪽 떨어짐 종료
         B_DROP_END,                 // 뒤쪽 떨어짐 종료
+        R_DROP_CLING,               // 오른쪽 떨어짐 매달림
+        L_DROP_CLING,               // 왼쪽 떨어짐 매달림
+        F_DROP_CLING,               // 앞쪽 떨어짐 매달림
+        B_DROP_CLING,               // 뒤쪽 떨어짐 매달림
         R_DROP_CLIMBING,            // 오른쪽 떨어짐 등반
+        L_DROP_CLIMBING,            // 왼쪽 떨어짐 등반
+        F_DROP_CLIMBING,            // 앞쪽 떨어짐 등반
+        B_DROP_CLIMBING,            // 뒤쪽 떨어짐 등반
         EMPTY
     }
 
@@ -157,7 +168,9 @@ public class PlayerMovement : MonoBehaviour
         SLIDE,
         SLIDE_END,
         DROP,
-        DROP_END
+        DROP_END,
+        DROP_LANDING,
+        DROP_CLIMBING
     }
 
     private const float INTERACTION_MOVE_VALUE = 0.25f;
@@ -1157,7 +1170,8 @@ public class PlayerMovement : MonoBehaviour
                     animeSwitch = AnimationSwitch.DROP;
                     // 매달림 상태 해제
                     climbingFlag = false;
-                    
+                    // 떨어질 때의 플레이어 높이
+                    dropPlayerY = centerTrans.position.y;
                 }
                 break;
             case PlayerState.L_IDLE_CLIMBING:
@@ -1355,7 +1369,8 @@ public class PlayerMovement : MonoBehaviour
                     animeSwitch = AnimationSwitch.DROP;
                     // 매달림 상태 해제
                     climbingFlag = false;
-
+                    // 떨어질 때의 플레이어 높이
+                    dropPlayerY = centerTrans.position.y;
                 }
                 break;
             case PlayerState.F_IDLE_CLIMBING:
@@ -1551,7 +1566,8 @@ public class PlayerMovement : MonoBehaviour
                     animeSwitch = AnimationSwitch.DROP;
                     // 매달림 상태 해제
                     climbingFlag = false;
-
+                    // 떨어질 때의 플레이어 높이
+                    dropPlayerY = centerTrans.position.y;
                 }
                 break;
             case PlayerState.B_IDLE_CLIMBING:
@@ -1746,7 +1762,8 @@ public class PlayerMovement : MonoBehaviour
                     animeSwitch = AnimationSwitch.DROP;
                     // 매달림 상태 해제
                     climbingFlag = false;
-
+                    // 떨어질 때의 플레이어 높이
+                    dropPlayerY = centerTrans.position.y;
                 }
                 break;
             case PlayerState.R_IDLE_INTERACTION:
@@ -3880,18 +3897,33 @@ public class PlayerMovement : MonoBehaviour
                         break;
                     }
 
-                    // 목표 이동 위치
-                    destPos = rayHit.transform.position;
+                    // 높은 높이에서 떨어짐
+                    if (dropPlayerY - centerTrans.position.y > 2f)
+                    {
+                        // 목표 이동 위치
+                        destPos = rayHit.transform.position;
 
-                    // 떨어짐 종료
-                    playerState = PlayerState.R_DROP_END;
-                    // 애니메이션 떨어짐 종료
-                    animeSwitch = AnimationSwitch.DROP_END;
-                    // 약간의 딜레이가 필요합니다
-                    actionDelay = 0f;
-                    // 캐릭터 속도 관련 셋팅
-                    saveSpeed = speed;
-                    speed = 0.5f;
+                        // 떨어짐 종료
+                        playerState = PlayerState.R_DROP_END;
+                        // 애니메이션 떨어짐 종료
+                        animeSwitch = AnimationSwitch.DROP_END;
+                        // 약간의 딜레이가 필요합니다
+                        actionDelay = 0f;
+                        // 캐릭터 속도 관련 셋팅
+                        saveSpeed = speed;
+                        speed = 0.5f;
+                    }
+                    // 낮은 높이에서 떨어짐
+                    else
+                    {
+                        // 목표 이동 위치
+                        destPos = rayHit.transform.position;
+
+                        // 착지
+                        playerState = PlayerState.IDLE;
+                        // 애니메이션 떨어짐 종료
+                        animeSwitch = AnimationSwitch.DROP_LANDING;
+                    }
                     break;
                 }
 
@@ -3916,18 +3948,34 @@ public class PlayerMovement : MonoBehaviour
                     check = rayHit.transform.position;
                     check.y = check.y + 1f;
 
-                    // 없다
-                    if (!Physics.CheckBox(check, box, Quaternion.identity, layerMaskCube))
+                    // 있다
+                    if (Physics.CheckBox(check, box, Quaternion.identity, layerMaskCube))
                     {
-                        // 이동 좌표
-                        destPos.x = check.x + 1f;
-                        destPos.y = check.y - 1f;
-                        destPos.z = check.z;
-                        // 오른쪽 매달림
-                        playerState = PlayerState.R_CLIMBING;
-                        // 애니메이션 매달림
-                        animeSwitch = AnimationSwitch.CLIMBING;
+                        break;
                     }
+
+                    //--------------------------------
+                    // 아래쪽 검사
+                    // ■★
+                    //   ？
+                    //--------------------------------
+                    check.x = check.x + 1f;
+                    check.y = check.y - 2f;
+
+                    // 있다
+                    if (Physics.CheckBox(check, box, Quaternion.identity, layerMaskCube))
+                    {
+                        break;
+                    }
+
+                    // 이동 좌표
+                    destPos.x = check.x;
+                    destPos.y = check.y + 1f;
+                    destPos.z = check.z;
+                    // 오른쪽 매달림
+                    playerState = PlayerState.R_DROP_CLING;
+                    // 애니메이션 매달림
+                    animeSwitch = AnimationSwitch.DROP_CLIMBING;
                 }
                 break;
             case PlayerState.L_DROP:
@@ -3947,18 +3995,34 @@ public class PlayerMovement : MonoBehaviour
                         break;
                     }
 
-                    // 목표 이동 위치
-                    destPos = rayHit.transform.position;
+                    // 높은 높이에서 떨어짐
+                    if (dropPlayerY - centerTrans.position.y > 2f)
+                    {
+                        // 목표 이동 위치
+                        destPos = rayHit.transform.position;
 
-                    // 떨어짐 종료
-                    playerState = PlayerState.L_DROP_END;
-                    // 애니메이션 떨어짐 종료
-                    animeSwitch = AnimationSwitch.DROP_END;
-                    // 약간의 딜레이가 필요합니다
-                    actionDelay = 0f;
-                    // 캐릭터 속도 관련 셋팅
-                    saveSpeed = speed;
-                    speed = 0.5f;
+                        // 떨어짐 종료
+                        playerState = PlayerState.L_DROP_END;
+                        // 애니메이션 떨어짐 종료
+                        animeSwitch = AnimationSwitch.DROP_END;
+                        // 약간의 딜레이가 필요합니다
+                        actionDelay = 0f;
+                        // 캐릭터 속도 관련 셋팅
+                        saveSpeed = speed;
+                        speed = 0.5f;
+                    }
+                    // 낮은 높이에서 떨어짐
+                    else
+                    {
+                        // 목표 이동 위치
+                        destPos = rayHit.transform.position;
+
+                        // 착지
+                        playerState = PlayerState.IDLE;
+                        // 애니메이션 떨어짐 종료
+                        animeSwitch = AnimationSwitch.DROP_LANDING;
+                    }
+                    break;
                 }
 
                 // 입력 키 값 →
@@ -3975,24 +4039,40 @@ public class PlayerMovement : MonoBehaviour
 
                     //--------------------------------
                     // 위쪽 검사
-                    // ？
-                    // ■★
+                    //   ？
+                    // ★■
                     //--------------------------------
                     check = rayHit.transform.position;
                     check.y = check.y + 1f;
 
-                    // 없다
-                    if (!Physics.CheckBox(check, box, Quaternion.identity, layerMaskCube))
+                    // 있다
+                    if (Physics.CheckBox(check, box, Quaternion.identity, layerMaskCube))
                     {
-                        // 이동 좌표
-                        destPos.x = check.x - 1f;
-                        destPos.y = check.y - 1f;
-                        destPos.z = check.z;
-                        // 왼쪽 매달림
-                        playerState = PlayerState.L_CLIMBING;
-                        // 애니메이션 매달림
-                        animeSwitch = AnimationSwitch.CLIMBING;
+                        break;
                     }
+
+                    //--------------------------------
+                    // 아래쪽 검사
+                    // ★■
+                    // ？
+                    //--------------------------------
+                    check.x = check.x - 1f;
+                    check.y = check.y - 2f;
+
+                    // 있다
+                    if (Physics.CheckBox(check, box, Quaternion.identity, layerMaskCube))
+                    {
+                        break;
+                    }
+
+                    // 이동 좌표
+                    destPos.x = check.x;
+                    destPos.y = check.y + 1f;
+                    destPos.z = check.z;
+                    // 왼쪽 매달림
+                    playerState = PlayerState.L_DROP_CLING;
+                    // 애니메이션 매달림
+                    animeSwitch = AnimationSwitch.DROP_CLIMBING;
                 }
                 break;
             case PlayerState.F_DROP:
@@ -4012,18 +4092,34 @@ public class PlayerMovement : MonoBehaviour
                         break;
                     }
 
-                    // 목표 이동 위치
-                    destPos = rayHit.transform.position;
+                    // 높은 높이에서 떨어짐
+                    if (dropPlayerY - centerTrans.position.y > 2f)
+                    {
+                        // 목표 이동 위치
+                        destPos = rayHit.transform.position;
 
-                    // 떨어짐 종료
-                    playerState = PlayerState.F_DROP_END;
-                    // 애니메이션 떨어짐 종료
-                    animeSwitch = AnimationSwitch.DROP_END;
-                    // 약간의 딜레이가 필요합니다
-                    actionDelay = 0f;
-                    // 캐릭터 속도 관련 셋팅
-                    saveSpeed = speed;
-                    speed = 0.5f;
+                        // 떨어짐 종료
+                        playerState = PlayerState.F_DROP_END;
+                        // 애니메이션 떨어짐 종료
+                        animeSwitch = AnimationSwitch.DROP_END;
+                        // 약간의 딜레이가 필요합니다
+                        actionDelay = 0f;
+                        // 캐릭터 속도 관련 셋팅
+                        saveSpeed = speed;
+                        speed = 0.5f;
+                    }
+                    // 낮은 높이에서 떨어짐
+                    else
+                    {
+                        // 목표 이동 위치
+                        destPos = rayHit.transform.position;
+
+                        // 착지
+                        playerState = PlayerState.IDLE;
+                        // 애니메이션 떨어짐 종료
+                        animeSwitch = AnimationSwitch.DROP_LANDING;
+                    }
+                    break;
                 }
 
                 // 입력 키 값 ↓
@@ -4046,18 +4142,34 @@ public class PlayerMovement : MonoBehaviour
                     check = rayHit.transform.position;
                     check.y = check.y + 1f;
 
-                    // 없다
-                    if (!Physics.CheckBox(check, box, Quaternion.identity, layerMaskCube))
+                    // 있다
+                    if (Physics.CheckBox(check, box, Quaternion.identity, layerMaskCube))
                     {
-                        // 이동 좌표
-                        destPos.x = check.x;
-                        destPos.y = check.y - 1f;
-                        destPos.z = check.z + 1f;
-                        // 앞쪽 매달림
-                        playerState = PlayerState.F_CLIMBING;
-                        // 애니메이션 매달림
-                        animeSwitch = AnimationSwitch.CLIMBING;
+                        break;
                     }
+
+                    //--------------------------------
+                    // 아래쪽 검사
+                    // ■★
+                    //   ？
+                    //--------------------------------
+                    check.z = check.z + 1f;
+                    check.y = check.y - 2f;
+
+                    // 있다
+                    if (Physics.CheckBox(check, box, Quaternion.identity, layerMaskCube))
+                    {
+                        break;
+                    }
+
+                    // 이동 좌표
+                    destPos.x = check.x;
+                    destPos.y = check.y + 1f;
+                    destPos.z = check.z;
+                    // 앞쪽 매달림
+                    playerState = PlayerState.F_DROP_CLING;
+                    // 애니메이션 매달림
+                    animeSwitch = AnimationSwitch.DROP_CLIMBING;
                 }
                 break;
             case PlayerState.B_DROP:
@@ -4077,18 +4189,34 @@ public class PlayerMovement : MonoBehaviour
                         break;
                     }
 
-                    // 목표 이동 위치
-                    destPos = rayHit.transform.position;
+                    // 높은 높이에서 떨어짐
+                    if (dropPlayerY - centerTrans.position.y > 2f)
+                    {
+                        // 목표 이동 위치
+                        destPos = rayHit.transform.position;
 
-                    // 떨어짐 종료
-                    playerState = PlayerState.B_DROP_END;
-                    // 애니메이션 떨어짐 종료
-                    animeSwitch = AnimationSwitch.DROP_END;
-                    // 약간의 딜레이가 필요합니다
-                    actionDelay = 0f;
-                    // 캐릭터 속도 관련 셋팅
-                    saveSpeed = speed;
-                    speed = 0.5f;
+                        // 떨어짐 종료
+                        playerState = PlayerState.B_DROP_END;
+                        // 애니메이션 떨어짐 종료
+                        animeSwitch = AnimationSwitch.DROP_END;
+                        // 약간의 딜레이가 필요합니다
+                        actionDelay = 0f;
+                        // 캐릭터 속도 관련 셋팅
+                        saveSpeed = speed;
+                        speed = 0.5f;
+                    }
+                    // 낮은 높이에서 떨어짐
+                    else
+                    {
+                        // 목표 이동 위치
+                        destPos = rayHit.transform.position;
+
+                        // 착지
+                        playerState = PlayerState.IDLE;
+                        // 애니메이션 떨어짐 종료
+                        animeSwitch = AnimationSwitch.DROP_LANDING;
+                    }
+                    break;
                 }
 
                 // 입력 키 값 ↑
@@ -4105,24 +4233,40 @@ public class PlayerMovement : MonoBehaviour
 
                     //--------------------------------
                     // 위쪽 검사
-                    // ？
-                    // ■★
+                    //   ？
+                    // ★■
                     //--------------------------------
                     check = rayHit.transform.position;
                     check.y = check.y + 1f;
 
-                    // 없다
-                    if (!Physics.CheckBox(check, box, Quaternion.identity, layerMaskCube))
+                    // 있다
+                    if (Physics.CheckBox(check, box, Quaternion.identity, layerMaskCube))
                     {
-                        // 이동 좌표
-                        destPos.x = check.x;
-                        destPos.y = check.y - 1f;
-                        destPos.z = check.z - 1f;
-                        // 뒤쪽 매달림
-                        playerState = PlayerState.B_CLIMBING;
-                        // 애니메이션 매달림
-                        animeSwitch = AnimationSwitch.CLIMBING;
+                        break;
                     }
+
+                    //--------------------------------
+                    // 아래쪽 검사
+                    // ★■
+                    // ？
+                    //--------------------------------
+                    check.z = check.z - 1f;
+                    check.y = check.y - 2f;
+
+                    // 있다
+                    if (Physics.CheckBox(check, box, Quaternion.identity, layerMaskCube))
+                    {
+                        break;
+                    }
+
+                    // 이동 좌표
+                    destPos.x = check.x;
+                    destPos.y = check.y + 1f;
+                    destPos.z = check.z;
+                    // 뒤쪽 매달림
+                    playerState = PlayerState.B_DROP_CLING;
+                    // 애니메이션 매달림
+                    animeSwitch = AnimationSwitch.DROP_CLIMBING;
                 }
                 break;
             case PlayerState.R_DROP_END:
@@ -4265,6 +4409,158 @@ public class PlayerMovement : MonoBehaviour
                     characterController.Move(moveValue);
                 }
                 break;
+            case PlayerState.R_DROP_CLING:
+                //------------------------------------------------
+                // 오른쪽 떨어짐 매달림
+                //------------------------------------------------
+
+                // 수직 이동 거리만큼 이동 했는가
+                if ((destPos.y - 0.3f) >= centerTrans.position.y)
+                {
+                    // 오른쪽 떨어짐 등반 상태
+                    playerState = PlayerState.R_DROP_CLIMBING;
+                    moveKeyValue = Vector2.zero;
+                }
+                break;
+            case PlayerState.L_DROP_CLING:
+                //------------------------------------------------
+                // 왼쪽 떨어짐 매달림
+                //------------------------------------------------
+
+                // 수직 이동 거리만큼 이동 했는가
+                if ((destPos.y - 0.3f) >= centerTrans.position.y)
+                {
+                    // 오른쪽 떨어짐 등반 상태
+                    playerState = PlayerState.L_DROP_CLIMBING;
+                    moveKeyValue = Vector2.zero;
+                }
+                break;
+            case PlayerState.F_DROP_CLING:
+                //------------------------------------------------
+                // 앞쪽 떨어짐 매달림
+                //------------------------------------------------
+
+                // 수직 이동 거리만큼 이동 했는가
+                if ((destPos.y - 0.3f) >= centerTrans.position.y)
+                {
+                    // 오른쪽 떨어짐 등반 상태
+                    playerState = PlayerState.F_DROP_CLIMBING;
+                    moveKeyValue = Vector2.zero;
+                }
+                break;
+            case PlayerState.B_DROP_CLING:
+                //------------------------------------------------
+                // 뒤쪽 떨어짐 매달림
+                //------------------------------------------------
+
+                // 수직 이동 거리만큼 이동 했는가
+                if ((destPos.y - 0.3f) >= centerTrans.position.y)
+                {
+                    // 오른쪽 떨어짐 등반 상태
+                    playerState = PlayerState.B_DROP_CLIMBING;
+                    moveKeyValue = Vector2.zero;
+                }
+                break;
+            case PlayerState.R_DROP_CLIMBING:
+                //------------------------------------------------
+                // 오른쪽 떨어짐 등반
+                //------------------------------------------------
+
+                // 수직 이동 거리만큼 이동 하지 못했나
+                if (destPos.y > centerTrans.position.y)
+                {
+                    // 위로 이동함
+                    currentVelocityY = Mathf.SmoothDamp(currentSpeed, climbVelocity, ref jumpSmoothVertical, 0.001f);
+                }
+                // 수직 이동 거리만큼 이동 함
+                else
+                {
+                    // 매달림
+                    climbingFlag = true;
+                    // 오른쪽 매달림 대기 상태
+                    playerState = PlayerState.R_IDLE_CLIMBING;
+                    // 애니메이션 매달림
+                    animeSwitch = AnimationSwitch.CLIMBING;
+                    // 플레이어 위치 맞추기
+                    moveValue.y = destPos.y - centerTrans.position.y;
+                    characterController.Move(moveValue);
+                }
+                break;
+            case PlayerState.L_DROP_CLIMBING:
+                //------------------------------------------------
+                // 왼쪽 떨어짐 등반
+                //------------------------------------------------
+
+                // 수직 이동 거리만큼 이동 하지 못했나
+                if (destPos.y > centerTrans.position.y)
+                {
+                    // 위로 이동함
+                    currentVelocityY = Mathf.SmoothDamp(currentSpeed, climbVelocity, ref jumpSmoothVertical, 0.001f);
+                }
+                // 수직 이동 거리만큼 이동 함
+                else
+                {
+                    // 매달림
+                    climbingFlag = true;
+                    // 왼쪽 매달림 대기 상태
+                    playerState = PlayerState.L_IDLE_CLIMBING;
+                    // 애니메이션 매달림
+                    animeSwitch = AnimationSwitch.CLIMBING;
+                    // 플레이어 위치 맞추기
+                    moveValue.y = destPos.y - centerTrans.position.y;
+                    characterController.Move(moveValue);
+                }
+                break;
+            case PlayerState.F_DROP_CLIMBING:
+                //------------------------------------------------
+                // 앞쪽 떨어짐 등반
+                //------------------------------------------------
+
+                // 수직 이동 거리만큼 이동 하지 못했나
+                if (destPos.y > centerTrans.position.y)
+                {
+                    // 위로 이동함
+                    currentVelocityY = Mathf.SmoothDamp(currentSpeed, climbVelocity, ref jumpSmoothVertical, 0.001f);
+                }
+                // 수직 이동 거리만큼 이동 함
+                else
+                {
+                    // 매달림
+                    climbingFlag = true;
+                    // 앞쪽 매달림 대기 상태
+                    playerState = PlayerState.F_IDLE_CLIMBING;
+                    // 애니메이션 매달림
+                    animeSwitch = AnimationSwitch.CLIMBING;
+                    // 플레이어 위치 맞추기
+                    moveValue.y = destPos.y - centerTrans.position.y;
+                    characterController.Move(moveValue);
+                }
+                break;
+            case PlayerState.B_DROP_CLIMBING:
+                //------------------------------------------------
+                // 뒤쪽 떨어짐 등반
+                //------------------------------------------------
+
+                // 수직 이동 거리만큼 이동 하지 못했나
+                if (destPos.y > centerTrans.position.y)
+                {
+                    // 위로 이동함
+                    currentVelocityY = Mathf.SmoothDamp(currentSpeed, climbVelocity, ref jumpSmoothVertical, 0.001f);
+                }
+                // 수직 이동 거리만큼 이동 함
+                else
+                {
+                    // 매달림
+                    climbingFlag = true;
+                    // 뒤쪽 매달림 대기 상태
+                    playerState = PlayerState.B_IDLE_CLIMBING;
+                    // 애니메이션 매달림
+                    animeSwitch = AnimationSwitch.CLIMBING;
+                    // 플레이어 위치 맞추기
+                    moveValue.y = destPos.y - centerTrans.position.y;
+                    characterController.Move(moveValue);
+                }
+                break;
             case PlayerState.EMPTY:
                 // 의도적으로 아무것도 하지않음
                 break;
@@ -4381,6 +4677,14 @@ public class PlayerMovement : MonoBehaviour
                 break;
             case AnimationSwitch.DROP_END:
                 animator.SetTrigger("Drop End");
+                animeSwitch = AnimationSwitch.IDLE;
+                break;
+            case AnimationSwitch.DROP_LANDING:
+                animator.SetTrigger("Drop Landing");
+                animeSwitch = AnimationSwitch.IDLE;
+                break;
+            case AnimationSwitch.DROP_CLIMBING:
+                animator.SetTrigger("Drop Climbing");
                 animeSwitch = AnimationSwitch.IDLE;
                 break;
             default:
