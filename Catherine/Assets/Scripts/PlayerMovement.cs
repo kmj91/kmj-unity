@@ -138,10 +138,14 @@ public class PlayerMovement : MonoBehaviour
         L_DROP,                     // 왼쪽 떨어짐
         F_DROP,                     // 앞쪽 떨어짐
         B_DROP,                     // 뒤쪽 떨어짐
-        R_DROP_END,                 // 오른쪽 떨어짐 종료
-        L_DROP_END,                 // 왼쪽 떨어짐 종료
-        F_DROP_END,                 // 앞쪽 떨어짐 종료
-        B_DROP_END,                 // 뒤쪽 떨어짐 종료
+        R_DROP_HIGH,                // 오른쪽 높은 떨어짐
+        L_DROP_HIGH,                // 왼쪽 높은 떨어짐
+        F_DROP_HIGH,                // 앞쪽 높은 떨어짐
+        B_DROP_HIGH,                // 뒤쪽 높은 떨어짐
+        R_DROP_LOW,                 // 오른쪽 낮은 떨어짐
+        L_DROP_LOW,                 // 왼쪽 낮은 떨어짐
+        F_DROP_LOW,                 // 앞쪽 낮은 떨어짐
+        B_DROP_LOW,                 // 뒤;쪽 낮은 떨어짐
         R_DROP_CLING,               // 오른쪽 떨어짐 매달림
         L_DROP_CLING,               // 왼쪽 떨어짐 매달림
         F_DROP_CLING,               // 앞쪽 떨어짐 매달림
@@ -168,8 +172,9 @@ public class PlayerMovement : MonoBehaviour
         SLIDE,
         SLIDE_END,
         DROP,
-        DROP_END,
-        DROP_LANDING,
+        DROP_HIGH,
+        DROP_LOW,
+        DROP_LOW_END,
         DROP_CLIMBING
     }
 
@@ -3902,11 +3907,10 @@ public class PlayerMovement : MonoBehaviour
                     {
                         // 목표 이동 위치
                         destPos = rayHit.transform.position;
-
-                        // 떨어짐 종료
-                        playerState = PlayerState.R_DROP_END;
-                        // 애니메이션 떨어짐 종료
-                        animeSwitch = AnimationSwitch.DROP_END;
+                        // 높은 곳에서 떨어짐
+                        playerState = PlayerState.R_DROP_HIGH;
+                        // 애니메이션 높은 떨어짐
+                        animeSwitch = AnimationSwitch.DROP_HIGH;
                         // 약간의 딜레이가 필요합니다
                         actionDelay = 0f;
                         // 캐릭터 속도 관련 셋팅
@@ -3916,13 +3920,17 @@ public class PlayerMovement : MonoBehaviour
                     // 낮은 높이에서 떨어짐
                     else
                     {
+                        // Move 함수에서 처리할 키 값
+                        moveKeyValue = Vector2.right;
                         // 목표 이동 위치
                         destPos = rayHit.transform.position;
-
-                        // 착지
-                        playerState = PlayerState.IDLE;
-                        // 애니메이션 떨어짐 종료
-                        animeSwitch = AnimationSwitch.DROP_LANDING;
+                        // 낮은 곳에서 떨어짐
+                        playerState = PlayerState.R_DROP_LOW;
+                        // 애니메이션 낮은 떨어짐
+                        animeSwitch = AnimationSwitch.DROP_LOW;
+                        // 캐릭터 속도 관련 셋팅
+                        saveSpeed = speed;
+                        speed = 0.5f;
                     }
                     break;
                 }
@@ -4000,11 +4008,10 @@ public class PlayerMovement : MonoBehaviour
                     {
                         // 목표 이동 위치
                         destPos = rayHit.transform.position;
-
-                        // 떨어짐 종료
-                        playerState = PlayerState.L_DROP_END;
-                        // 애니메이션 떨어짐 종료
-                        animeSwitch = AnimationSwitch.DROP_END;
+                        // 높은 곳에서 떨어짐
+                        playerState = PlayerState.L_DROP_HIGH;
+                        // 애니메이션 높은 떨어짐
+                        animeSwitch = AnimationSwitch.DROP_HIGH;
                         // 약간의 딜레이가 필요합니다
                         actionDelay = 0f;
                         // 캐릭터 속도 관련 셋팅
@@ -4014,13 +4021,17 @@ public class PlayerMovement : MonoBehaviour
                     // 낮은 높이에서 떨어짐
                     else
                     {
+                        // Move 함수에서 처리할 키 값
+                        moveKeyValue = Vector2.left;
                         // 목표 이동 위치
                         destPos = rayHit.transform.position;
-
-                        // 착지
-                        playerState = PlayerState.IDLE;
-                        // 애니메이션 떨어짐 종료
-                        animeSwitch = AnimationSwitch.DROP_LANDING;
+                        // 낮은 곳에서 떨어짐
+                        playerState = PlayerState.L_DROP_LOW;
+                        // 애니메이션 낮은 떨어짐
+                        animeSwitch = AnimationSwitch.DROP_LOW;
+                        // 캐릭터 속도 관련 셋팅
+                        saveSpeed = speed;
+                        speed = 0.5f;
                     }
                     break;
                 }
@@ -4097,11 +4108,10 @@ public class PlayerMovement : MonoBehaviour
                     {
                         // 목표 이동 위치
                         destPos = rayHit.transform.position;
-
-                        // 떨어짐 종료
-                        playerState = PlayerState.F_DROP_END;
-                        // 애니메이션 떨어짐 종료
-                        animeSwitch = AnimationSwitch.DROP_END;
+                        // 높은 곳에서 떨어짐
+                        playerState = PlayerState.F_DROP_HIGH;
+                        // 애니메이션 높은 떨어짐
+                        animeSwitch = AnimationSwitch.DROP_HIGH;
                         // 약간의 딜레이가 필요합니다
                         actionDelay = 0f;
                         // 캐릭터 속도 관련 셋팅
@@ -4111,13 +4121,17 @@ public class PlayerMovement : MonoBehaviour
                     // 낮은 높이에서 떨어짐
                     else
                     {
+                        // Move 함수에서 처리할 키 값
+                        moveKeyValue = Vector2.up;
                         // 목표 이동 위치
                         destPos = rayHit.transform.position;
-
-                        // 착지
-                        playerState = PlayerState.IDLE;
-                        // 애니메이션 떨어짐 종료
-                        animeSwitch = AnimationSwitch.DROP_LANDING;
+                        // 낮은 곳에서 떨어짐
+                        playerState = PlayerState.F_DROP_LOW;
+                        // 애니메이션 낮은 떨어짐
+                        animeSwitch = AnimationSwitch.DROP_LOW;
+                        // 캐릭터 속도 관련 셋팅
+                        saveSpeed = speed;
+                        speed = 0.5f;
                     }
                     break;
                 }
@@ -4194,11 +4208,10 @@ public class PlayerMovement : MonoBehaviour
                     {
                         // 목표 이동 위치
                         destPos = rayHit.transform.position;
-
-                        // 떨어짐 종료
-                        playerState = PlayerState.B_DROP_END;
-                        // 애니메이션 떨어짐 종료
-                        animeSwitch = AnimationSwitch.DROP_END;
+                        // 높은 곳에서 떨어짐
+                        playerState = PlayerState.B_DROP_HIGH;
+                        // 애니메이션 높은 떨어짐
+                        animeSwitch = AnimationSwitch.DROP_HIGH;
                         // 약간의 딜레이가 필요합니다
                         actionDelay = 0f;
                         // 캐릭터 속도 관련 셋팅
@@ -4208,13 +4221,17 @@ public class PlayerMovement : MonoBehaviour
                     // 낮은 높이에서 떨어짐
                     else
                     {
+                        // Move 함수에서 처리할 키 값
+                        moveKeyValue = Vector2.down;
                         // 목표 이동 위치
                         destPos = rayHit.transform.position;
-
-                        // 착지
-                        playerState = PlayerState.IDLE;
-                        // 애니메이션 떨어짐 종료
-                        animeSwitch = AnimationSwitch.DROP_LANDING;
+                        // 낮은 곳에서 떨어짐
+                        playerState = PlayerState.B_DROP_LOW;
+                        // 애니메이션 낮은 떨어짐
+                        animeSwitch = AnimationSwitch.DROP_LOW;
+                        // 캐릭터 속도 관련 셋팅
+                        saveSpeed = speed;
+                        speed = 0.5f;
                     }
                     break;
                 }
@@ -4269,9 +4286,9 @@ public class PlayerMovement : MonoBehaviour
                     animeSwitch = AnimationSwitch.DROP_CLIMBING;
                 }
                 break;
-            case PlayerState.R_DROP_END:
+            case PlayerState.R_DROP_HIGH:
                 //------------------------------------------------
-                // 오른쪽 떨어짐 종료
+                // 오른쪽 높은 떨어짐
                 //------------------------------------------------
                 actionDelay = actionDelay + Time.deltaTime;
 
@@ -4304,9 +4321,9 @@ public class PlayerMovement : MonoBehaviour
                     characterController.Move(moveValue);
                 }
                 break;
-            case PlayerState.L_DROP_END:
+            case PlayerState.L_DROP_HIGH:
                 //------------------------------------------------
-                // 왼쪽 떨어짐 종료
+                // 왼쪽 높은 떨어짐
                 //------------------------------------------------
                 actionDelay = actionDelay + Time.deltaTime;
 
@@ -4339,9 +4356,9 @@ public class PlayerMovement : MonoBehaviour
                     characterController.Move(moveValue);
                 }
                 break;
-            case PlayerState.F_DROP_END:
+            case PlayerState.F_DROP_HIGH:
                 //------------------------------------------------
-                // 앞쪽 떨어짐 종료
+                // 앞쪽 높은 떨어짐
                 //------------------------------------------------
                 actionDelay = actionDelay + Time.deltaTime;
 
@@ -4374,9 +4391,9 @@ public class PlayerMovement : MonoBehaviour
                     characterController.Move(moveValue);
                 }
                 break;
-            case PlayerState.B_DROP_END:
+            case PlayerState.B_DROP_HIGH:
                 //------------------------------------------------
-                // 뒤쪽 떨어짐 종료
+                // 뒤쪽 높은 떨어짐
                 //------------------------------------------------
                 actionDelay = actionDelay + Time.deltaTime;
 
@@ -4402,6 +4419,90 @@ public class PlayerMovement : MonoBehaviour
                     moveKeyValue = Vector2.zero;
                     // 애니메이션이 끝날 때까지 기다림
                     playerState = PlayerState.EMPTY;
+                    // 이동 속도 원상 복구
+                    speed = saveSpeed;
+                    // 플레이어 위치 맞추기
+                    moveValue.z = destPos.z - transform.position.z;
+                    characterController.Move(moveValue);
+                }
+                break;
+            case PlayerState.R_DROP_LOW:
+                //------------------------------------------------
+                // 오른쪽 낮은 떨어짐
+                //------------------------------------------------
+
+                // 수평 이동 거리만큼 이동 했는가
+                if (destPos.x <= centerTrans.position.x)
+                {
+                    // 이동 정지
+                    moveKeyValue = Vector2.zero;
+                    // 대기 상태
+                    playerState = PlayerState.IDLE;
+                    // 애니메이션 낮은 떨어짐 종료
+                    animeSwitch = AnimationSwitch.DROP_LOW_END;
+                    // 이동 속도 원상 복구
+                    speed = saveSpeed;
+                    // 플레이어 위치 맞추기
+                    moveValue.x = destPos.x - transform.position.x;
+                    characterController.Move(moveValue);
+                }
+                break;
+            case PlayerState.L_DROP_LOW:
+                //------------------------------------------------
+                // 왼쪽 낮은 떨어짐
+                //------------------------------------------------
+
+                // 수평 이동 거리만큼 이동 했는가
+                if (destPos.x >= centerTrans.position.x)
+                {
+                    // 이동 정지
+                    moveKeyValue = Vector2.zero;
+                    // 대기 상태
+                    playerState = PlayerState.IDLE;
+                    // 애니메이션 낮은 떨어짐 종료
+                    animeSwitch = AnimationSwitch.DROP_LOW_END;
+                    // 이동 속도 원상 복구
+                    speed = saveSpeed;
+                    // 플레이어 위치 맞추기
+                    moveValue.x = destPos.x - transform.position.x;
+                    characterController.Move(moveValue);
+                }
+                break;
+            case PlayerState.F_DROP_LOW:
+                //------------------------------------------------
+                // 앞쪽 낮은 떨어짐
+                //------------------------------------------------
+
+                // 수평 이동 거리만큼 이동 했는가
+                if (destPos.z <= centerTrans.position.z)
+                {
+                    // 이동 정지
+                    moveKeyValue = Vector2.zero;
+                    // 대기 상태
+                    playerState = PlayerState.IDLE;
+                    // 애니메이션 낮은 떨어짐 종료
+                    animeSwitch = AnimationSwitch.DROP_LOW_END;
+                    // 이동 속도 원상 복구
+                    speed = saveSpeed;
+                    // 플레이어 위치 맞추기
+                    moveValue.z = destPos.z - transform.position.z;
+                    characterController.Move(moveValue);
+                }
+                break;
+            case PlayerState.B_DROP_LOW:
+                //------------------------------------------------
+                // 뒤쪽 낮은 떨어짐
+                //------------------------------------------------
+
+                // 수평 이동 거리만큼 이동 했는가
+                if (destPos.z >= centerTrans.position.z)
+                {
+                    // 이동 정지
+                    moveKeyValue = Vector2.zero;
+                    // 대기 상태
+                    playerState = PlayerState.IDLE;
+                    // 애니메이션 낮은 떨어짐 종료
+                    animeSwitch = AnimationSwitch.DROP_LOW_END;
                     // 이동 속도 원상 복구
                     speed = saveSpeed;
                     // 플레이어 위치 맞추기
@@ -4675,12 +4776,16 @@ public class PlayerMovement : MonoBehaviour
                 animator.SetTrigger("Drop");
                 animeSwitch = AnimationSwitch.IDLE;
                 break;
-            case AnimationSwitch.DROP_END:
-                animator.SetTrigger("Drop End");
+            case AnimationSwitch.DROP_HIGH:
+                animator.SetTrigger("Drop High");
                 animeSwitch = AnimationSwitch.IDLE;
                 break;
-            case AnimationSwitch.DROP_LANDING:
-                animator.SetTrigger("Drop Landing");
+            case AnimationSwitch.DROP_LOW:
+                animator.SetTrigger("Drop Low");
+                animeSwitch = AnimationSwitch.IDLE;
+                break;
+            case AnimationSwitch.DROP_LOW_END:
+                animator.SetTrigger("Drop Low End");
                 animeSwitch = AnimationSwitch.IDLE;
                 break;
             case AnimationSwitch.DROP_CLIMBING:
