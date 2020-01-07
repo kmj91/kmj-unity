@@ -48,7 +48,7 @@ public class PlayerMovement : MonoBehaviour
     // 캐릭터 컬라이더의 이동 속도
     private float animationSpeedPercent;
     // 딜레이
-    private float actionDelay = 0f;
+    private float actionDelay;
     // 캐릭터 스피드 저장
     private float saveSpeed;
     // 떨어졌을 때의 캐릭터 높이
@@ -64,9 +64,9 @@ public class PlayerMovement : MonoBehaviour
     // 상하좌우 이동 값
     private Vector2 moveKeyValue;
     // 플레이어 상태
-    private PlayerState playerState = PlayerState.IDLE;
+    private PlayerState playerState;
     // 애니메이션
-    private AnimationSwitch animeSwitch = AnimationSwitch.IDLE;
+    private AnimationSwitch animeSwitch;
 
     private enum PlayerState {
         IDLE,                       // 대기
@@ -202,6 +202,13 @@ public class PlayerMovement : MonoBehaviour
         footTrans = transform.Find("Foot");
         // 레이어 마스크
         layerMaskCube = 1 << LayerMask.NameToLayer("Cube");
+        // 딜레이
+        actionDelay = 0f;
+        // 플레이어 상태
+        playerState = PlayerState.IDLE;
+        // 애니메이션
+        animeSwitch = AnimationSwitch.IDLE;
+
     }
 
     private void FixedUpdate()
