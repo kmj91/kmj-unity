@@ -30,6 +30,7 @@ public class CubeMovement : MonoBehaviour
     private enum CubeMoveState
     {
         IDLE,                       // 대기
+        DOWN_READY,                 // 아래 준비
         DOWN,                       // 아래
         RIGHT,                      // 오른쪽
         LEFT,                       // 왼쪽
@@ -807,6 +808,12 @@ public class CubeMovement : MonoBehaviour
         check.y = transform.position.y - 1f;
         check.z = transform.position.z;
 
+        // 기본 플래그
+        // 만약 밑에 큐브가 아래로 떨어지는 중이라면 false 로
+        isFirstMoveDown = true;
+        // 초기화
+        actionDelay = 0f;
+
         // 이동 좌표
         destPos = check;
 
@@ -839,6 +846,13 @@ public class CubeMovement : MonoBehaviour
                 cubeMoveState = CubeMoveState.IDLE;
                 return false;
             }
+
+            // 처음 떨어지는 큐브가 아님
+            isFirstMoveDown = false;
+            // 큐브 아래로
+            isMoveDown = true;
+            cubeMoveState = CubeMoveState.DOWN;
+            return true;
         }
 
         //   □
@@ -869,6 +883,13 @@ public class CubeMovement : MonoBehaviour
                 cubeMoveState = CubeMoveState.IDLE;
                 return false;
             }
+
+            // 처음 떨어지는 큐브가 아님
+            isFirstMoveDown = false;
+            // 큐브 아래로
+            isMoveDown = true;
+            cubeMoveState = CubeMoveState.DOWN;
+            return true;
         }
 
         //   □
@@ -891,16 +912,6 @@ public class CubeMovement : MonoBehaviour
                 return false;
             }
 
-            // 큐브인가?
-            if (rayHit.transform.gameObject.layer != layerCubeNumber)
-            {
-                // 큐브 아님
-                // 이동하지 않음
-                isMoveDown = false;
-                cubeMoveState = CubeMoveState.IDLE;
-                return false;
-            }
-
             // 큐브가 아래로 이동하는 중인지 아닌지?
             if (!rayHit.transform.gameObject.GetComponent<CubeMovement>().isMoveDown)
             {
@@ -909,6 +920,13 @@ public class CubeMovement : MonoBehaviour
                 cubeMoveState = CubeMoveState.IDLE;
                 return false;
             }
+
+            // 처음 떨어지는 큐브가 아님
+            isFirstMoveDown = false;
+            // 큐브 아래로
+            isMoveDown = true;
+            cubeMoveState = CubeMoveState.DOWN;
+            return true;
         }
 
         //   ？
@@ -939,6 +957,13 @@ public class CubeMovement : MonoBehaviour
                 cubeMoveState = CubeMoveState.IDLE;
                 return false;
             }
+
+            // 처음 떨어지는 큐브가 아님
+            isFirstMoveDown = false;
+            // 큐브 아래로
+            isMoveDown = true;
+            cubeMoveState = CubeMoveState.DOWN;
+            return true;
         }
 
         //   □
@@ -969,11 +994,18 @@ public class CubeMovement : MonoBehaviour
                 cubeMoveState = CubeMoveState.IDLE;
                 return false;
             }
+
+            // 처음 떨어지는 큐브가 아님
+            isFirstMoveDown = false;
+            // 큐브 아래로
+            isMoveDown = true;
+            cubeMoveState = CubeMoveState.DOWN;
+            return true;
         }
 
         // 아래로 이동
-        isMoveDown = true;
-        cubeMoveState = CubeMoveState.DOWN;
+        //isMoveDown = true;
+        cubeMoveState = CubeMoveState.DOWN_READY;
         return true;
     }
 
@@ -982,21 +1014,26 @@ public class CubeMovement : MonoBehaviour
         RaycastHit rayHit;      // 레이 충돌한 물체
 
         switch (cubeMoveState) {
-            case CubeMoveState.DOWN:
-                // 큐브 떨어짐
+            case CubeMoveState.DOWN_READY:
+                // 큐브 떨어짐 준비
 
                 if (isFirstMoveDown)
                 {
                     actionDelay = actionDelay + Time.deltaTime;
 
                     // 대기
-                    if (actionDelay < 10f)
+                    if (actionDelay < DOWN_DELAY)
                     {
                         break;
                     }
-                    isFirstMoveDown = true;
+                    isMoveDown = true;
+                    isFirstMoveDown = false;
+                    cubeMoveState = CubeMoveState.DOWN;
                 }
-                
+
+                break;
+            case CubeMoveState.DOWN:
+                // 큐브 떨어짐
                 transform.position = transform.position + (Vector3.down * speed) * Time.deltaTime;
 
                 // 수직 이동 거리만큼 이동 했는가
