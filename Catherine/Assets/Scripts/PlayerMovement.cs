@@ -4676,13 +4676,13 @@ public class PlayerMovement : MonoBehaviour
                 break;
         }// switch(playerState)
 
-        Debug.Log("playerState : " + playerState);
+        //Debug.Log("playerState : " + playerState);
         //Debug.Log("playerPos : " + transform.position);
         //Debug.Log("destPos : " + destPos);
         //Debug.Log("moveKeyValue : " + moveKeyValue);
         //Debug.Log(mouseClick);
         //Debug.Log(followCam.transform.eulerAngles);
-        Debug.Log("--------------------------------");
+        //Debug.Log("--------------------------------");
         Move(moveKeyValue);
     }
 
