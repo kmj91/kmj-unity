@@ -63,12 +63,14 @@ public class PlayerMovement : MonoBehaviour
     private Vector3 cubeDestPos;
     // 상하좌우 이동 값
     private Vector2 moveKeyValue;
+
+
     // 플레이어 상태
-    private PlayerState playerState;
+    public PlayerState playerState { get; private set; }
     // 애니메이션
     private AnimationSwitch animeSwitch;
 
-    private enum PlayerState {
+    public enum PlayerState {
         IDLE,                       // 대기
         R_IDLE_CLIMBING,            // 오른쪽 매달림 대기
         L_IDLE_CLIMBING,            // 왼쪽 매달림 대기
