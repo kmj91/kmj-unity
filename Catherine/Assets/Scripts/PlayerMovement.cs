@@ -6,15 +6,9 @@ using Cinemachine;
 
 public class PlayerMovement : MonoBehaviour
 {
-    private CharacterController characterController;
-    private PlayerInput playerInput;
-    private Animator animator;
-    private Camera followCam;
-    private GameManager gameManager;
-    private Transform centerTrans;
-    private Transform footTrans;
-    private LayerMask layerMaskCube;
-    private GameObject cubeObject;            // 이동할 큐브 오브젝트
+    //--------------------------------
+    // public 변수
+    //--------------------------------
 
     // 캐릭터 스피드
     public float speed;
@@ -34,8 +28,25 @@ public class PlayerMovement : MonoBehaviour
     // 지면상에서의 현제 속도
     public float currentSpeed =>
         new Vector2(characterController.velocity.x, characterController.velocity.z).magnitude * 3;
-    // 현제 y축 속도
-    //public float currentY
+    // 플레이어 상태
+    public PlayerState playerState { get; private set; }
+    // 플레이어 사망 플래그
+    public bool isDeath { get; private set; }
+
+    //--------------------------------
+    // private 변수
+    //--------------------------------
+
+    private AnimationSwitch animeSwitch;                // 애니메이션
+    private CharacterController characterController;    // 캐릭터 컨트롤러
+    private PlayerInput playerInput;                    // 플레이어 입력 스크립트
+    private Animator animator;                          // 애니메이터
+    private Camera followCam;                           // 카메라
+    private GameManager gameManager;                    // 게임 매니저 스크립트
+    private Transform centerTrans;                      // 캐릭터 중심 트랜스폼
+    private Transform footTrans;                        // 캐릭터 발 트랜스폼
+    private LayerMask layerMaskCube;                    // 큐브 레이어 마스크
+    private GameObject cubeObject;                      // 이동할 큐브 오브젝트
 
 
     // 값의 연속적인 변화량을 기록하기 위한 변수
@@ -65,10 +76,9 @@ public class PlayerMovement : MonoBehaviour
     private Vector2 moveKeyValue;
 
 
-    // 플레이어 상태
-    public PlayerState playerState { get; private set; }
-    // 애니메이션
-    private AnimationSwitch animeSwitch;
+    //--------------------------------
+    // enum
+    //--------------------------------
 
     public enum PlayerState {
         IDLE,                       // 대기
@@ -156,6 +166,7 @@ public class PlayerMovement : MonoBehaviour
         L_DROP_CLIMBING,            // 왼쪽 떨어짐 등반
         F_DROP_CLIMBING,            // 앞쪽 떨어짐 등반
         B_DROP_CLIMBING,            // 뒤쪽 떨어짐 등반
+        DEATH,                      // 사망
         EMPTY
     }
 
@@ -177,14 +188,45 @@ public class PlayerMovement : MonoBehaviour
         DROP_HIGH,
         DROP_LOW,
         DROP_LOW_END,
-        DROP_CLIMBING
+        DROP_CLIMBING,
+        CRUSHED_TO_DEATH
     }
+
+    //--------------------------------
+    // 상수
+    //--------------------------------
 
     private const float INTERACTION_MOVE_VALUE = 0.25f;
     private const float JUMP_DELAY = 0.15f;
     private const float PUSH_DELAY = 0.5f;
     private const float PUSH_END_DELAY = 0.15f;
 
+
+    //--------------------------------
+    // public 함수
+    //--------------------------------
+
+    // 캐릭터 상태를 대기 상태로 변경
+    public void UpdateStateToIdle()
+    {
+        playerState = PlayerState.IDLE;
+    }
+
+    // 캐릭터가 큐브에 압사
+    public void CrushedToDeath()
+    {
+        // 사망 플래그
+        isDeath = true;
+        // 플레이어 사망
+        playerState = PlayerState.DEATH;
+        // 애니메이션 압사
+        animeSwitch = AnimationSwitch.CRUSHED_TO_DEATH;
+    }
+
+
+    //--------------------------------
+    // private 함수
+    //--------------------------------
 
     private void Start()
     {
@@ -208,6 +250,8 @@ public class PlayerMovement : MonoBehaviour
         actionDelay = 0f;
         // 플레이어 상태
         playerState = PlayerState.IDLE;
+        // 플레이어 사망 플래그
+        isDeath = false;
         // 애니메이션
         animeSwitch = AnimationSwitch.IDLE;
 
@@ -2953,6 +2997,13 @@ public class PlayerMovement : MonoBehaviour
                 break;
             case PlayerState.R_INTERACTION_PULL:
                 // 오른쪽 당김
+
+                // 압사 검사
+                if (CheckCrushedToDeath())
+                {
+                    
+                }
+
                 // 큐브 이동
                 cubeObject.transform.position = cubeObject.transform.position + (Vector3.left * speed) * Time.deltaTime;
                 // 큐브가 이동 거리만큼 이동 했는가
@@ -4674,6 +4725,10 @@ public class PlayerMovement : MonoBehaviour
             case PlayerState.EMPTY:
                 // 의도적으로 아무것도 하지않음
                 break;
+            case PlayerState.DEATH:
+                // 플레이어 사망
+                moveKeyValue = Vector2.zero;
+                break;
             default:
                 break;
         }// switch(playerState)
@@ -4801,6 +4856,10 @@ public class PlayerMovement : MonoBehaviour
                 animator.SetTrigger("Drop Climbing");
                 animeSwitch = AnimationSwitch.IDLE;
                 break;
+            case AnimationSwitch.CRUSHED_TO_DEATH:
+                animator.SetTrigger("Crushed to Death");
+                animeSwitch = AnimationSwitch.IDLE;
+                break;
             default:
                 break;
         }
@@ -4864,12 +4923,6 @@ public class PlayerMovement : MonoBehaviour
         animator.SetFloat("Horizontal Move", move.x * animationSpeedPercent, 0.05f, Time.deltaTime);
     }
 
-    // 캐릭터 상태를 대기 상태로 변경
-    public void UpdateStateToIdle()
-    {
-        playerState = PlayerState.IDLE;
-    }
-
     //-----------------------------------------------
     // 빙판 체크 true, false 값만 반환
     //-----------------------------------------------
@@ -4922,6 +4975,18 @@ public class PlayerMovement : MonoBehaviour
         }
 
         return false;
+    }
+
+    //-----------------------------------------------
+    // 캐릭터 이동, 당기기를 할 때
+    // 떨어지는 큐브의 타이밍을 변경한다
+    //-----------------------------------------------
+    // 압사 체크
+    private bool CheckCrushedToDeath()
+    {
+
+
+        return true;
     }
 
     private void OnControllerColliderHit(ControllerColliderHit hit)

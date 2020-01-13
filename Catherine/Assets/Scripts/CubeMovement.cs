@@ -7,7 +7,9 @@ public class CubeMovement : MonoBehaviour
     // 큐브 이동 목표 좌표
     public Vector3 destPos;
     // 큐브 이동 속도
-    public float speed;
+    public float horizontalSpeed;
+    // 큐브 수직 이동 속도
+    public float verticalSpeed;
     // 미끄러짐
     public bool slideEvent;
     // 떨어짐
@@ -1034,7 +1036,7 @@ public class CubeMovement : MonoBehaviour
                 break;
             case CubeMoveState.DOWN:
                 // 큐브 떨어짐
-                transform.position = transform.position + (Vector3.down * speed) * Time.deltaTime;
+                transform.position = transform.position + (Vector3.down * verticalSpeed) * Time.deltaTime;
 
                 // 수직 이동 거리만큼 이동 했는가
                 if (destPos.y >= transform.position.y)
@@ -1047,7 +1049,7 @@ public class CubeMovement : MonoBehaviour
                 break;
             case CubeMoveState.RIGHT:
                 // 오른쪽 이동
-                transform.position = transform.position + (Vector3.right * speed) * Time.deltaTime;
+                transform.position = transform.position + (Vector3.right * horizontalSpeed) * Time.deltaTime;
 
                 // 수평 이동 거리만큼 이동 했는가
                 if (destPos.x <= transform.position.x) {
@@ -1082,7 +1084,7 @@ public class CubeMovement : MonoBehaviour
                 break;
             case CubeMoveState.LEFT:
                 // 왼쪽 이동
-                transform.position = transform.position + (Vector3.left * speed) * Time.deltaTime;
+                transform.position = transform.position + (Vector3.left * horizontalSpeed) * Time.deltaTime;
 
                 // 수평 이동 거리만큼 이동 했는가
                 if (destPos.x >= transform.position.x)
@@ -1118,7 +1120,7 @@ public class CubeMovement : MonoBehaviour
                 break;
             case CubeMoveState.FORWARD:
                 // 앞쪽 이동
-                transform.position = transform.position + (Vector3.forward * speed) * Time.deltaTime;
+                transform.position = transform.position + (Vector3.forward * horizontalSpeed) * Time.deltaTime;
 
                 // 수평 이동 거리만큼 이동 했는가
                 if (destPos.z <= transform.position.z)
@@ -1154,7 +1156,7 @@ public class CubeMovement : MonoBehaviour
                 break;
             case CubeMoveState.BACK:
                 // 앞쪽 이동
-                transform.position = transform.position + (Vector3.back * speed) * Time.deltaTime;
+                transform.position = transform.position + (Vector3.back * horizontalSpeed) * Time.deltaTime;
 
                 // 수평 이동 거리만큼 이동 했는가
                 if (destPos.z >= transform.position.z)

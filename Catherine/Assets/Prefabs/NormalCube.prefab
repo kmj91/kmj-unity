@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 9194339080087607542}
   - component: {fileID: -4762154962234508246}
   m_Layer: 9
-  m_Name: WhiteCube
+  m_Name: NormalCube
   m_TagString: NormalCube
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -67,6 +67,7 @@ MeshRenderer:
   m_ProbeAnchor: {fileID: 0}
   m_LightProbeVolumeOverride: {fileID: 0}
   m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
   m_PreserveUVs: 0
   m_IgnoreNormalsForChartDetection: 0
   m_ImportantGI: 0
@@ -105,4 +106,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   destPos: {x: 0, y: 0, z: 0}
-  speed: 4
+  horizontalSpeed: 4
+  verticalSpeed: 2
+  slideEvent: 0
+  isMoveDown: 0
