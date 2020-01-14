@@ -4,16 +4,28 @@ using UnityEngine;
 
 public class CubeMovement : MonoBehaviour
 {
-    // 큐브 이동 목표 좌표
-    public Vector3 destPos;
+    //--------------------------------
+    // public 변수
+    //--------------------------------
+
+    // 상태
+    public CubeMoveState cubeMoveState { get; private set; }
+    // 딜레이
+    public float actionDelay { get; private set; }
     // 큐브 이동 속도
     public float horizontalSpeed;
     // 큐브 수직 이동 속도
     public float verticalSpeed;
+    // 큐브 이동 목표 좌표
+    public Vector3 destPos;
     // 미끄러짐
     public bool slideEvent;
     // 떨어짐
     public bool isMoveDown;
+
+    //--------------------------------
+    // private 변수
+    //--------------------------------
 
     // 레이어 마스크 고정된 물체
     private LayerMask layerMaskStatic;
@@ -21,15 +33,14 @@ public class CubeMovement : MonoBehaviour
     private LayerMask layerMaskCube;
     // 레이어 큐브 번호
     private int layerCubeNumber;
-    // 딜레이
-    private float actionDelay;
     // 처음 떨어짐
     private bool isFirstMoveDown;
 
-    // 상태
-    private CubeMoveState cubeMoveState = CubeMoveState.IDLE;
+    //--------------------------------
+    // enum
+    //--------------------------------
 
-    private enum CubeMoveState
+    public enum CubeMoveState
     {
         IDLE,                       // 대기
         DOWN_READY,                 // 아래 준비
@@ -40,14 +51,23 @@ public class CubeMovement : MonoBehaviour
         BACK                        // 뒤쪽
     }
 
-    private const float DOWN_DELAY = 1f;
-    
+    //--------------------------------
+    // 상수
+    //--------------------------------
 
-    void Start()
+    // 큐브가 아래로 이동할 때의 딜레이
+    public const float DOWN_DELAY = 1f;
+
+    //--------------------------------
+    // private 함수
+    //--------------------------------
+
+    private void Start()
     {
+        // 상태
+        cubeMoveState = CubeMoveState.IDLE;
         // 레이어 번호
         layerCubeNumber = LayerMask.NameToLayer("Cube");
-
         // 레이어 마스크
         layerMaskStatic = (1 << layerCubeNumber) + (1 << LayerMask.NameToLayer("Floor"));
         layerMaskCube = 1 << layerCubeNumber;
@@ -58,10 +78,14 @@ public class CubeMovement : MonoBehaviour
     }
 
     
-    void FixedUpdate()
+    private void FixedUpdate()
     {
         MoveProcess();
     }
+
+    //--------------------------------
+    // public 함수
+    //--------------------------------
 
     // 큐브 오른쪽 이동
     public bool MoveRight()

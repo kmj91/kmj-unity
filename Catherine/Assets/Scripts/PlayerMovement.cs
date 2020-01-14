@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using Cinemachine;
 
+using static CubeMovement;
+
 public class PlayerMovement : MonoBehaviour
 {
     //--------------------------------
@@ -43,6 +45,7 @@ public class PlayerMovement : MonoBehaviour
     private Animator animator;                          // 애니메이터
     private Camera followCam;                           // 카메라
     private GameManager gameManager;                    // 게임 매니저 스크립트
+    private Transform headTrans;                        // 캐릭터 머리 트랜스폼
     private Transform centerTrans;                      // 캐릭터 중심 트랜스폼
     private Transform footTrans;                        // 캐릭터 발 트랜스폼
     private LayerMask layerMaskCube;                    // 큐브 레이어 마스크
@@ -200,7 +203,7 @@ public class PlayerMovement : MonoBehaviour
     private const float JUMP_DELAY = 0.15f;
     private const float PUSH_DELAY = 0.5f;
     private const float PUSH_END_DELAY = 0.15f;
-
+    private const float CUBE_HALF_LENGTH = 0.5f;
 
     //--------------------------------
     // public 함수
@@ -242,6 +245,7 @@ public class PlayerMovement : MonoBehaviour
         GameObject gameobject = GameObject.Find("GameManager") as GameObject;
         gameManager = gameobject.GetComponent<GameManager>();
 
+        headTrans = transform.Find("Head");
         centerTrans = transform.Find("Center");
         footTrans = transform.Find("Foot");
         // 레이어 마스크
@@ -279,14 +283,16 @@ public class PlayerMovement : MonoBehaviour
     // moveInput : 입력받은 이동 키값 -1 ~ 1
     //--------------------------------------------
     public void MoveProcess() {
-        Vector2 moveInput;      // 카메라 뱡향에 다라 변화된 키 값
-        Vector3 ray;            // 레이 시작점
-        Vector3 rayDir;         // 레이 방향
-        Vector3 check;          // 체크할 위치
-        Vector3 box;            // 박스 크기
-        Vector3 moveValue;      // 이동 값
-        RaycastHit rayHit;      // 레이 충돌한 물체
-        float followCamAngleY;  // 카메라 방향
+        float playerTime;           // 거리 / 속도를 한 플레이어의 시간 값
+        float cubeTime;             // 거리 / 속도를 한 큐브의 시간 값
+        float followCamAngleY;      // 카메라 방향
+        Vector2 moveInput;          // 카메라 뱡향에 다라 변화된 키 값
+        Vector3 check;              // 체크할 위치
+        Vector3 box;                // 박스 크기
+        Vector3 moveValue;          // 이동 값
+        RaycastHit rayHit;          // 레이 충돌한 물체
+        CubeMovement cubeMovement;  // 큐브 스크립트
+        
 
         box.x = 0.1f;
         box.y = 0.1f;
@@ -357,12 +363,8 @@ public class PlayerMovement : MonoBehaviour
                 {
                     moveKeyValue = Vector2.zero;
 
-                    // 밀기
-                    ray = centerTrans.position;
-                    rayDir = transform.forward;
-
                     // 캐릭터가 바라보는 방향으로 큐브가 있나?
-                    if (Physics.Raycast(ray, rayDir, out rayHit, 1f, layerMaskCube))
+                    if (Physics.Raycast(centerTrans.position, transform.forward, out rayHit, 1f, layerMaskCube))
                     {
                         //------------------------------------------------
                         // 해당 방향으로 큐브가 있으면 상호작용 상태로
@@ -432,10 +434,8 @@ public class PlayerMovement : MonoBehaviour
                     // ← 쪽으로 강하게 키 눌름
                     if (moveInput.x <= -0.3)
                     {
-                        ray = centerTrans.position;
-                        rayDir = Vector3.down;
-                        // 정면 큐브 정보
-                        if (!Physics.Raycast(ray, rayDir, out rayHit, 1f, layerMaskCube))
+                        // 바닥 큐브 정보
+                        if (!Physics.Raycast(centerTrans.position, Vector3.down, out rayHit, 1f, layerMaskCube))
                         {
                             // 에러
                             break;
@@ -446,11 +446,8 @@ public class PlayerMovement : MonoBehaviour
                         destPos.y = rayHit.transform.position.y + 1f;
                         destPos.z = rayHit.transform.position.z;
 
-                        ray = centerTrans.position;
-                        rayDir = transform.forward;
-
                         // ← 방향 있음
-                        if (Physics.Raycast(ray, rayDir, 1f, layerMaskCube))
+                        if (Physics.CheckBox(destPos, box, Quaternion.identity, layerMaskCube))
                         {
                             //--------------------------------
                             // 위쪽 검사
@@ -584,10 +581,8 @@ public class PlayerMovement : MonoBehaviour
                     // → 쪽으로 강하게 키 눌름
                     if (moveInput.x >= 0.3)
                     {
-                        ray = centerTrans.position;
-                        rayDir = Vector3.down;
-                        // 정면 큐브 정보
-                        if (!Physics.Raycast(ray, rayDir, out rayHit, 1f, layerMaskCube))
+                        // 바닥 큐브 정보
+                        if (!Physics.Raycast(centerTrans.position, Vector3.down, out rayHit, 1f, layerMaskCube))
                         {
                             // 에러
                             break;
@@ -598,11 +593,8 @@ public class PlayerMovement : MonoBehaviour
                         destPos.y = rayHit.transform.position.y + 1f;
                         destPos.z = rayHit.transform.position.z;
 
-                        ray = centerTrans.position;
-                        rayDir = transform.forward;
-
                         // → 방향 있음
-                        if (Physics.Raycast(ray, rayDir, 1f))
+                        if (Physics.CheckBox(destPos, box, Quaternion.identity, layerMaskCube))
                         {
                             //--------------------------------
                             // 위쪽 검사
@@ -655,6 +647,45 @@ public class PlayerMovement : MonoBehaviour
                             // 있다
                             if (Physics.CheckBox(check, box, Quaternion.identity, layerMaskCube))
                             {
+                                //--------------------------------
+                                // 위쪽 검사
+                                //   ？
+                                // ★
+                                //--------------------------------
+                                // 이동 목적지 위쪽에 큐브가 있다
+                                if (Physics.Raycast(destPos, Vector3.up, out rayHit, 1f, layerMaskCube))
+                                {
+                                    cubeMovement = rayHit.transform.GetComponent<CubeMovement>();
+
+                                    Debug.Log(cubeMovement.cubeMoveState);
+
+                                    // 위쪽 큐브가 내려오는 중
+                                    if (cubeMovement.cubeMoveState == CubeMoveState.DOWN)
+                                    {
+                                        break;
+                                    }
+                                    // 윈쪽 큐브가 내려올 준비
+                                    else if (cubeMovement.cubeMoveState == CubeMoveState.DOWN_READY)
+                                    {
+                                        // 플레이어 거리 / 속도
+                                        playerTime = (headTrans.position.x - (destPos.x + INTERACTION_MOVE_VALUE)) / speed;
+                                        // 큐브의 대기 시간을 뺌
+                                        playerTime = playerTime - cubeMovement.actionDelay;
+
+                                        // 큐브 거리 / 속도
+                                        cubeTime = ((rayHit.transform.position.y - CUBE_HALF_LENGTH) - headTrans.position.y) / cubeMovement.verticalSpeed;
+
+                                        Debug.Log(cubeMovement.actionDelay);
+                                        Debug.Log("playerTime : " + playerTime + ", cubeTime : " + cubeTime);
+
+                                        // 플레이어가 더 늦게 도착한다면
+                                        if (playerTime < cubeTime)
+                                        {
+                                            break;
+                                        }
+                                    }
+                                }
+
                                 //--------------------------------
                                 // 빙판 검사
                                 // ★
@@ -736,10 +767,8 @@ public class PlayerMovement : MonoBehaviour
                     // ↓ 쪽으로 강하게 키 눌름
                     if (moveInput.y <= -0.3)
                     {
-                        ray = centerTrans.position;
-                        rayDir = Vector3.down;
                         // 정면 큐브 정보
-                        if (!Physics.Raycast(ray, rayDir, out rayHit, 1f, layerMaskCube))
+                        if (!Physics.Raycast(centerTrans.position, Vector3.down, out rayHit, 1f, layerMaskCube))
                         {
                             // 에러
                             break;
@@ -750,11 +779,8 @@ public class PlayerMovement : MonoBehaviour
                         destPos.y = rayHit.transform.position.y + 1f;
                         destPos.z = rayHit.transform.position.z - 1f;
 
-                        ray = centerTrans.position;
-                        rayDir = transform.forward;
-
                         // ↓ 방향 있음
-                        if (Physics.Raycast(ray, rayDir, 1f, layerMaskCube))
+                        if (Physics.CheckBox(destPos, box, Quaternion.identity, layerMaskCube))
                         {
                             //--------------------------------
                             // 위쪽 검사
@@ -891,10 +917,8 @@ public class PlayerMovement : MonoBehaviour
                     // ↑ 쪽으로 강하게 키 눌름
                     if (moveInput.y >= 0.3)
                     {
-                        ray = centerTrans.position;
-                        rayDir = Vector3.down;
                         // 정면 큐브 정보
-                        if (!Physics.Raycast(ray, rayDir, out rayHit, 1f, layerMaskCube))
+                        if (!Physics.Raycast(centerTrans.position, Vector3.down, out rayHit, 1f, layerMaskCube))
                         {
                             // 에러
                             break;
@@ -905,11 +929,8 @@ public class PlayerMovement : MonoBehaviour
                         destPos.y = rayHit.transform.position.y + 1f;
                         destPos.z = rayHit.transform.position.z + 1f;
 
-                        ray = centerTrans.position;
-                        rayDir = transform.forward;
-
                         // ↑ 방향 있음
-                        if (Physics.Raycast(ray, rayDir, 1f, layerMaskCube))
+                        if (Physics.CheckBox(destPos, box, Quaternion.identity, layerMaskCube))
                         {
                             //--------------------------------
                             // 위쪽 검사
@@ -1040,10 +1061,8 @@ public class PlayerMovement : MonoBehaviour
                 // 입력 키 값 ←
                 if (moveInput.x <= -0.3)
                 {
-                    ray = centerTrans.position;
-                    rayDir = transform.forward;
                     // 정면 큐브 정보
-                    if (!Physics.Raycast(ray, rayDir, out rayHit, 1f, layerMaskCube))
+                    if (!Physics.Raycast(centerTrans.position, transform.forward, out rayHit, 1f, layerMaskCube))
                     {
                         // 에러
                         break;
@@ -1109,10 +1128,8 @@ public class PlayerMovement : MonoBehaviour
                 // 입력 키 값 →
                 else if (moveInput.x >= 0.3)
                 {
-                    ray = centerTrans.position;
-                    rayDir = transform.forward;
                     // 정면 큐브 정보
-                    if (!Physics.Raycast(ray, rayDir, out rayHit, 1f, layerMaskCube))
+                    if (!Physics.Raycast(centerTrans.position, transform.forward, out rayHit, 1f, layerMaskCube))
                     {
                         // 에러
                         break;
@@ -1178,10 +1195,8 @@ public class PlayerMovement : MonoBehaviour
                 // 입력 키 값 ↑
                 else if (moveInput.y > 0)
                 {
-                    ray = centerTrans.position;
-                    rayDir = transform.forward;
                     // 정면 큐브 정보
-                    if (!Physics.Raycast(ray, rayDir, out rayHit, 1f, layerMaskCube))
+                    if (!Physics.Raycast(centerTrans.position, transform.forward, out rayHit, 1f, layerMaskCube))
                     {
                         // 에러
                         break;
@@ -1239,10 +1254,8 @@ public class PlayerMovement : MonoBehaviour
                 // 입력 키 값 ←
                 if (moveInput.x <= -0.3)
                 {
-                    ray = centerTrans.position;
-                    rayDir = transform.forward;
                     // 정면 큐브 정보
-                    if (!Physics.Raycast(ray, rayDir, out rayHit, 1f, layerMaskCube))
+                    if (!Physics.Raycast(centerTrans.position, transform.forward, out rayHit, 1f, layerMaskCube))
                     {
                         // 에러
                         break;
@@ -1308,10 +1321,8 @@ public class PlayerMovement : MonoBehaviour
                 // 입력 키 값 →
                 else if (moveInput.x >= 0.3)
                 {
-                    ray = centerTrans.position;
-                    rayDir = transform.forward;
                     // 정면 큐브 정보
-                    if (!Physics.Raycast(ray, rayDir, out rayHit, 1f, layerMaskCube))
+                    if (!Physics.Raycast(centerTrans.position, transform.forward, out rayHit, 1f, layerMaskCube))
                     {
                         // 에러
                         break;
@@ -1377,10 +1388,8 @@ public class PlayerMovement : MonoBehaviour
                 // 입력 키 값 ↑
                 else if (moveInput.y > 0)
                 {
-                    ray = centerTrans.position;
-                    rayDir = transform.forward;
                     // 정면 큐브 정보
-                    if (!Physics.Raycast(ray, rayDir, out rayHit, 1f, layerMaskCube))
+                    if (!Physics.Raycast(centerTrans.position, transform.forward, out rayHit, 1f, layerMaskCube))
                     {
                         // 에러
                         break;
@@ -1438,10 +1447,8 @@ public class PlayerMovement : MonoBehaviour
                 // 입력 키 값 ←
                 if (moveInput.x <= -0.3)
                 {
-                    ray = centerTrans.position;
-                    rayDir = transform.forward;
                     // 정면 큐브 정보
-                    if (!Physics.Raycast(ray, rayDir, out rayHit, 1f, layerMaskCube))
+                    if (!Physics.Raycast(centerTrans.position, transform.forward, out rayHit, 1f, layerMaskCube))
                     {
                         // 에러
                         break;
@@ -1506,10 +1513,8 @@ public class PlayerMovement : MonoBehaviour
                 // 입력 키 값 →
                 if (moveInput.x >= 0.3)
                 {
-                    ray = centerTrans.position;
-                    rayDir = transform.forward;
                     // 정면 큐브 정보
-                    if (!Physics.Raycast(ray, rayDir, out rayHit, 1f, layerMaskCube))
+                    if (!Physics.Raycast(centerTrans.position, transform.forward, out rayHit, 1f, layerMaskCube))
                     {
                         // 에러
                         break;
@@ -1574,10 +1579,8 @@ public class PlayerMovement : MonoBehaviour
                 // 입력 키 값 ↑
                 else if (moveInput.y > 0)
                 {
-                    ray = centerTrans.position;
-                    rayDir = transform.forward;
                     // 정면 큐브 정보
-                    if (!Physics.Raycast(ray, rayDir, out rayHit, 1f, layerMaskCube))
+                    if (!Physics.Raycast(centerTrans.position, transform.forward, out rayHit, 1f, layerMaskCube))
                     {
                         // 에러
                         break;
@@ -1635,10 +1638,8 @@ public class PlayerMovement : MonoBehaviour
                 // 입력 키 값 ←
                 if (moveInput.x <= -0.3)
                 {
-                    ray = centerTrans.position;
-                    rayDir = transform.forward;
                     // 정면 큐브 정보
-                    if (!Physics.Raycast(ray, rayDir, out rayHit, 1f, layerMaskCube))
+                    if (!Physics.Raycast(centerTrans.position, transform.forward, out rayHit, 1f, layerMaskCube))
                     {
                         // 에러
                         break;
@@ -1703,10 +1704,8 @@ public class PlayerMovement : MonoBehaviour
                 // 입력 키 값 →
                 if (moveInput.x >= 0.3)
                 {
-                    ray = centerTrans.position;
-                    rayDir = transform.forward;
                     // 정면 큐브 정보
-                    if (!Physics.Raycast(ray, rayDir, out rayHit, 1f, layerMaskCube))
+                    if (!Physics.Raycast(centerTrans.position, transform.forward, out rayHit, 1f, layerMaskCube))
                     {
                         // 에러
                         break;
@@ -1771,10 +1770,8 @@ public class PlayerMovement : MonoBehaviour
                 // 입력 키 값 ↑
                 else if (moveInput.y > 0)
                 {
-                    ray = centerTrans.position;
-                    rayDir = transform.forward;
                     // 정면 큐브 정보
-                    if (!Physics.Raycast(ray, rayDir, out rayHit, 1f, layerMaskCube))
+                    if (!Physics.Raycast(centerTrans.position, transform.forward, out rayHit, 1f, layerMaskCube))
                     {
                         // 에러
                         break;
@@ -1846,11 +1843,9 @@ public class PlayerMovement : MonoBehaviour
                 // 입력 키 값 ←
                 if (moveInput.x <= -0.3) {
                     // 당김
-                    ray = centerTrans.position;
-                    rayDir = transform.forward;
 
                     // 정면 큐브 정보
-                    if (!Physics.Raycast(ray, rayDir, out rayHit, 1f, layerMaskCube)) {
+                    if (!Physics.Raycast(centerTrans.position, transform.forward, out rayHit, 1f, layerMaskCube)) {
                         // 에러
                         break;
                     }
@@ -1863,10 +1858,47 @@ public class PlayerMovement : MonoBehaviour
                     destPos.x = rayHit.transform.position.x - 2f;
                     destPos.y = rayHit.transform.position.y;
                     destPos.z = rayHit.transform.position.z;
-                    
+
+                    // 이동할 큐브 오브젝트
+                    cubeObject = rayHit.transform.gameObject;
+
                     // 없다
                     if (!Physics.CheckBox(destPos, box, Quaternion.identity, layerMaskCube))
                     {
+                        //--------------------------------
+                        // 위쪽 검사
+                        // ？
+                        //   ★■
+                        //--------------------------------
+                        // 이동 목적지 위쪽에 큐브가 있다
+                        if (Physics.Raycast(destPos, Vector3.up, out rayHit, 1f, layerMaskCube))
+                        {
+                            cubeMovement = rayHit.transform.GetComponent<CubeMovement>();
+
+                            // 위쪽 큐브가 내려오는 중
+                            if (cubeMovement.cubeMoveState == CubeMoveState.DOWN)
+                            {
+                                break;
+                            }
+                            // 윈쪽 큐브가 내려올 준비
+                            else if (cubeMovement.cubeMoveState == CubeMoveState.DOWN_READY)
+                            {
+                                // 플레이어 거리 / 속도
+                                playerTime = (headTrans.position.x - (destPos.x + INTERACTION_MOVE_VALUE)) / speed;
+                                // 큐브의 대기 시간을 뺌
+                                playerTime = playerTime - cubeMovement.actionDelay;
+
+                                // 큐브 거리 / 속도
+                                cubeTime = ((rayHit.transform.position.y - CUBE_HALF_LENGTH) - headTrans.position.y) / cubeMovement.verticalSpeed;
+
+                                // 플레이어가 더 늦게 도착한다면
+                                if (playerTime < cubeTime)
+                                {
+                                    break;
+                                }
+                            }
+                        }
+
                         //--------------------------------
                         // 아래쪽 검사
                         //   ★■
@@ -1881,8 +1913,6 @@ public class PlayerMovement : MonoBehaviour
                         cubeDestPos.x = destPos.x + 1f;
                         cubeDestPos.y = destPos.y;
                         cubeDestPos.z = destPos.z;
-                        // 이동할 큐브 오브젝트
-                        cubeObject = rayHit.transform.gameObject;
 
                         // 있다
                         // 당김
@@ -1909,11 +1939,9 @@ public class PlayerMovement : MonoBehaviour
                 // 입력 키 값 →
                 else if (moveInput.x >= 0.3) {
                     // 밀기
-                    ray = centerTrans.position;
-                    rayDir = transform.forward;
 
                     // 정면 큐브 정보
-                    if (!Physics.Raycast(ray, rayDir, out rayHit, 1f, layerMaskCube))
+                    if (!Physics.Raycast(centerTrans.position, transform.forward, out rayHit, 1f, layerMaskCube))
                     {
                         // 에러
                         break;
@@ -1951,11 +1979,9 @@ public class PlayerMovement : MonoBehaviour
                 if (moveInput.x <= -0.3)
                 {
                     // 밀기
-                    ray = centerTrans.position;
-                    rayDir = transform.forward;
 
                     // 정면 큐브 정보
-                    if (!Physics.Raycast(ray, rayDir, out rayHit, 1f, layerMaskCube))
+                    if (!Physics.Raycast(centerTrans.position, transform.forward, out rayHit, 1f, layerMaskCube))
                     {
                         // 에러
                         break;
@@ -1972,11 +1998,9 @@ public class PlayerMovement : MonoBehaviour
                 else if (moveInput.x >= 0.3)
                 {
                     // 당김
-                    ray = centerTrans.position;
-                    rayDir = transform.forward;
 
                     // 정면 큐브 정보
-                    if (!Physics.Raycast(ray, rayDir, out rayHit, 1f, layerMaskCube))
+                    if (!Physics.Raycast(centerTrans.position, transform.forward, out rayHit, 1f, layerMaskCube))
                     {
                         // 에러
                         break;
@@ -1990,10 +2014,47 @@ public class PlayerMovement : MonoBehaviour
                     destPos.x = rayHit.transform.position.x + 2f;
                     destPos.y = rayHit.transform.position.y;
                     destPos.z = rayHit.transform.position.z;
-                    
+
+                    // 이동할 큐브 오브젝트
+                    cubeObject = rayHit.transform.gameObject;
+
                     // 없다
                     if (!Physics.CheckBox(destPos, box, Quaternion.identity, layerMaskCube))
                     {
+                        //--------------------------------
+                        // 위쪽 검사
+                        //     ？
+                        // ■★
+                        //--------------------------------
+                        // 이동 목적지 위쪽에 큐브가 있다
+                        if (Physics.Raycast(destPos, Vector3.up, out rayHit, 1f, layerMaskCube))
+                        {
+                            cubeMovement = rayHit.transform.GetComponent<CubeMovement>();
+
+                            // 위쪽 큐브가 내려오는 중
+                            if (cubeMovement.cubeMoveState == CubeMoveState.DOWN)
+                            {
+                                break;
+                            }
+                            // 윈쪽 큐브가 내려올 준비
+                            else if (cubeMovement.cubeMoveState == CubeMoveState.DOWN_READY)
+                            {
+                                // 플레이어 거리 / 속도
+                                playerTime = ((destPos.x - INTERACTION_MOVE_VALUE) - headTrans.position.x) / speed;
+                                // 큐브의 대기 시간을 뺌
+                                playerTime = playerTime - cubeMovement.actionDelay;
+
+                                // 큐브 거리 / 속도
+                                cubeTime = ((rayHit.transform.position.y - CUBE_HALF_LENGTH) - headTrans.position.y) / cubeMovement.verticalSpeed;
+
+                                // 플레이어가 더 늦게 도착한다면
+                                if (playerTime < cubeTime)
+                                {
+                                    break;
+                                }
+                            }
+                        }
+
                         //--------------------------------
                         // 아래쪽 검사
                         // ■★
@@ -2008,8 +2069,6 @@ public class PlayerMovement : MonoBehaviour
                         cubeDestPos.x = destPos.x - 1f;
                         cubeDestPos.y = destPos.y;
                         cubeDestPos.z = destPos.z;
-                        // 이동할 큐브 오브젝트
-                        cubeObject = rayHit.transform.gameObject;
 
                         // 있다
                         // 당김
@@ -2057,11 +2116,9 @@ public class PlayerMovement : MonoBehaviour
                 if (moveInput.y >= 0.3)
                 {
                     // 밀기
-                    ray = centerTrans.position;
-                    rayDir = transform.forward;
 
                     // 정면 큐브 정보
-                    if (!Physics.Raycast(ray, rayDir, out rayHit, 1f, layerMaskCube))
+                    if (!Physics.Raycast(centerTrans.position, transform.forward, out rayHit, 1f, layerMaskCube))
                     {
                         // 에러
                         break;
@@ -2078,11 +2135,9 @@ public class PlayerMovement : MonoBehaviour
                 else if (moveInput.y <= -0.3)
                 {
                     // 당김
-                    ray = centerTrans.position;
-                    rayDir = transform.forward;
 
                     // 정면 큐브 정보
-                    if (!Physics.Raycast(ray, rayDir, out rayHit, 1f, layerMaskCube))
+                    if (!Physics.Raycast(centerTrans.position, transform.forward, out rayHit, 1f, layerMaskCube))
                     {
                         // 에러
                         break;
@@ -2099,13 +2154,50 @@ public class PlayerMovement : MonoBehaviour
                     destPos.y = rayHit.transform.position.y;
                     destPos.z = rayHit.transform.position.z - 2f;
 
+                    // 이동할 큐브 오브젝트
+                    cubeObject = rayHit.transform.gameObject;
+
                     // 없다
                     if (!Physics.CheckBox(destPos, box, Quaternion.identity, layerMaskCube))
                     {
                         //--------------------------------
+                        // 위쪽 검사
+                        // ？
+                        //   ★■
+                        //--------------------------------
+                        // 이동 목적지 위쪽에 큐브가 있다
+                        if (Physics.Raycast(destPos, Vector3.up, out rayHit, 1f, layerMaskCube))
+                        {
+                            cubeMovement = rayHit.transform.GetComponent<CubeMovement>();
+
+                            // 위쪽 큐브가 내려오는 중
+                            if (cubeMovement.cubeMoveState == CubeMoveState.DOWN)
+                            {
+                                break;
+                            }
+                            // 윈쪽 큐브가 내려올 준비
+                            else if (cubeMovement.cubeMoveState == CubeMoveState.DOWN_READY)
+                            {
+                                // 플레이어 거리 / 속도
+                                playerTime = (headTrans.position.z - (destPos.z + INTERACTION_MOVE_VALUE)) / speed;
+                                // 큐브의 대기 시간을 뺌
+                                playerTime = playerTime - cubeMovement.actionDelay;
+
+                                // 큐브 거리 / 속도
+                                cubeTime = ((rayHit.transform.position.y - CUBE_HALF_LENGTH) - headTrans.position.y) / cubeMovement.verticalSpeed;
+
+                                // 플레이어가 더 늦게 도착한다면
+                                if (playerTime < cubeTime)
+                                {
+                                    break;
+                                }
+                            }
+                        }
+
+                        //--------------------------------
                         // 아래쪽 검사
-                        // ■★
-                        //     ？
+                        //   ★■
+                        // ？
                         //--------------------------------
                         // 아래쪽 검사
                         check.x = destPos.x;
@@ -2116,8 +2208,6 @@ public class PlayerMovement : MonoBehaviour
                         cubeDestPos.x = destPos.x;
                         cubeDestPos.y = destPos.y;
                         cubeDestPos.z = destPos.z + 1f;
-                        // 이동할 큐브 오브젝트
-                        cubeObject = rayHit.transform.gameObject;
 
                         // 있다
                         // 당김
@@ -2165,11 +2255,9 @@ public class PlayerMovement : MonoBehaviour
                 if (moveInput.y >= 0.3)
                 {
                     // 당김
-                    ray = centerTrans.position;
-                    rayDir = transform.forward;
 
                     // 정면 큐브 정보
-                    if (!Physics.Raycast(ray, rayDir, out rayHit, 1f, layerMaskCube))
+                    if (!Physics.Raycast(centerTrans.position, transform.forward, out rayHit, 1f, layerMaskCube))
                     {
                         // 에러
                         break;
@@ -2186,9 +2274,46 @@ public class PlayerMovement : MonoBehaviour
                     destPos.y = rayHit.transform.position.y;
                     destPos.z = rayHit.transform.position.z + 2f;
 
+                    // 이동할 큐브 오브젝트
+                    cubeObject = rayHit.transform.gameObject;
+
                     // 없다
                     if (!Physics.CheckBox(destPos, box, Quaternion.identity, layerMaskCube))
                     {
+                        //--------------------------------
+                        // 위쪽 검사
+                        //     ？
+                        // ■★
+                        //--------------------------------
+                        // 이동 목적지 위쪽에 큐브가 있다
+                        if (Physics.Raycast(destPos, Vector3.up, out rayHit, 1f, layerMaskCube))
+                        {
+                            cubeMovement = rayHit.transform.GetComponent<CubeMovement>();
+
+                            // 위쪽 큐브가 내려오는 중
+                            if (cubeMovement.cubeMoveState == CubeMoveState.DOWN)
+                            {
+                                break;
+                            }
+                            // 윈쪽 큐브가 내려올 준비
+                            else if (cubeMovement.cubeMoveState == CubeMoveState.DOWN_READY)
+                            {
+                                // 플레이어 거리 / 속도
+                                playerTime = ((destPos.z - INTERACTION_MOVE_VALUE) - headTrans.position.z) / speed;
+                                // 큐브의 대기 시간을 뺌
+                                playerTime = playerTime - cubeMovement.actionDelay;
+
+                                // 큐브 거리 / 속도
+                                cubeTime = ((rayHit.transform.position.y - CUBE_HALF_LENGTH) - headTrans.position.y) / cubeMovement.verticalSpeed;
+
+                                // 플레이어가 더 늦게 도착한다면
+                                if (playerTime < cubeTime)
+                                {
+                                    break;
+                                }
+                            }
+                        }
+
                         //--------------------------------
                         // 아래쪽 검사
                         // ■★
@@ -2203,8 +2328,6 @@ public class PlayerMovement : MonoBehaviour
                         cubeDestPos.x = destPos.x;
                         cubeDestPos.y = destPos.y;
                         cubeDestPos.z = destPos.z - 1f;
-                        // 이동할 큐브 오브젝트
-                        cubeObject = rayHit.transform.gameObject;
 
                         // 있다
                         // 당김
@@ -2231,11 +2354,9 @@ public class PlayerMovement : MonoBehaviour
                 else if (moveInput.y <= -0.3)
                 {
                     // 밀기
-                    ray = centerTrans.position;
-                    rayDir = transform.forward;
 
                     // 정면 큐브 정보
-                    if (!Physics.Raycast(ray, rayDir, out rayHit, 1f, layerMaskCube))
+                    if (!Physics.Raycast(centerTrans.position, transform.forward, out rayHit, 1f, layerMaskCube))
                     {
                         // 에러
                         break;
@@ -3001,7 +3122,7 @@ public class PlayerMovement : MonoBehaviour
                 // 압사 검사
                 if (CheckCrushedToDeath())
                 {
-                    
+                    break;
                 }
 
                 // 큐브 이동
@@ -3359,11 +3480,8 @@ public class PlayerMovement : MonoBehaviour
                     transform.eulerAngles = new Vector3(0, 0, 0);
                 }
 
-                ray = centerTrans.position;
-                rayDir = transform.forward;
-
                 // 앞쪽에 없음
-                if (!Physics.Raycast(ray, rayDir, 1f, layerMaskCube))
+                if (!Physics.Raycast(centerTrans.position, transform.forward, 1f, layerMaskCube))
                 {
                     //--------------------------------
                     // 오른쪽 이동중에 없음
@@ -3407,11 +3525,8 @@ public class PlayerMovement : MonoBehaviour
                     transform.eulerAngles = new Vector3(0, 180, 0);
                 }
 
-                ray = centerTrans.position;
-                rayDir = transform.forward;
-
                 // 앞쪽에 없음
-                if (!Physics.Raycast(ray, rayDir, 1f, layerMaskCube))
+                if (!Physics.Raycast(centerTrans.position, transform.forward, 1f, layerMaskCube))
                 {
                     //--------------------------------
                     // 왼쪽 이동중에 없음
@@ -3455,11 +3570,8 @@ public class PlayerMovement : MonoBehaviour
                     transform.eulerAngles = new Vector3(0, 180, 0);
                 }
 
-                ray = centerTrans.position;
-                rayDir = transform.forward;
-
                 // 앞쪽에 없음
-                if (!Physics.Raycast(ray, rayDir, 1f, layerMaskCube))
+                if (!Physics.Raycast(centerTrans.position, transform.forward, 1f, layerMaskCube))
                 {
                     //--------------------------------
                     // 오른쪽 이동중에 없음
@@ -3503,11 +3615,8 @@ public class PlayerMovement : MonoBehaviour
                     transform.eulerAngles = new Vector3(0, 0, 0);
                 }
 
-                ray = centerTrans.position;
-                rayDir = transform.forward;
-
                 // 앞쪽에 없음
-                if (!Physics.Raycast(ray, rayDir, 1f, layerMaskCube))
+                if (!Physics.Raycast(centerTrans.position, transform.forward, 1f, layerMaskCube))
                 {
                     //--------------------------------
                     // 왼쪽 이동중에 없음
@@ -3550,11 +3659,8 @@ public class PlayerMovement : MonoBehaviour
                     transform.eulerAngles = new Vector3(0, 90, 0);
                 }
 
-                ray = centerTrans.position;
-                rayDir = transform.forward;
-
                 // 앞쪽에 없음
-                if (!Physics.Raycast(ray, rayDir, 1f, layerMaskCube))
+                if (!Physics.Raycast(centerTrans.position, transform.forward, 1f, layerMaskCube))
                 {
                     //--------------------------------
                     // 오른쪽 이동중에 없음
@@ -3597,11 +3703,8 @@ public class PlayerMovement : MonoBehaviour
                     transform.eulerAngles = new Vector3(0, 270, 0);
                 }
 
-                ray = centerTrans.position;
-                rayDir = transform.forward;
-
                 // 앞쪽에 없음
-                if (!Physics.Raycast(ray, rayDir, 1f, layerMaskCube))
+                if (!Physics.Raycast(centerTrans.position, transform.forward, 1f, layerMaskCube))
                 {
                     //--------------------------------
                     // 오른쪽 이동중에 없음
@@ -3644,11 +3747,8 @@ public class PlayerMovement : MonoBehaviour
                     transform.eulerAngles = new Vector3(0, 90, 0);
                 }
 
-                ray = centerTrans.position;
-                rayDir = transform.forward;
-
                 // 앞쪽에 없음
-                if (!Physics.Raycast(ray, rayDir, 1f, layerMaskCube))
+                if (!Physics.Raycast(centerTrans.position, transform.forward, 1f, layerMaskCube))
                 {
                     //--------------------------------
                     // 오른쪽 이동중에 없음
@@ -3691,11 +3791,8 @@ public class PlayerMovement : MonoBehaviour
                     transform.eulerAngles = new Vector3(0, 270, 0);
                 }
 
-                ray = centerTrans.position;
-                rayDir = transform.forward;
-
                 // 앞쪽에 없음
-                if (!Physics.Raycast(ray, rayDir, 1f, layerMaskCube))
+                if (!Physics.Raycast(centerTrans.position, transform.forward, 1f, layerMaskCube))
                 {
                     //--------------------------------
                     // 오른쪽 이동중에 없음
@@ -3953,10 +4050,8 @@ public class PlayerMovement : MonoBehaviour
                 // 바닥에 닿아있다면
                 if (characterController.isGrounded)
                 {
-                    ray = centerTrans.position;
-                    rayDir = Vector3.down;
                     // 바닥 큐브 정보
-                    if (!Physics.Raycast(ray, rayDir, out rayHit, 1f, layerMaskCube))
+                    if (!Physics.Raycast(centerTrans.position, Vector3.down, out rayHit, 1f, layerMaskCube))
                     {
                         // 에러
                         break;
@@ -3999,10 +4094,8 @@ public class PlayerMovement : MonoBehaviour
                 // 입력 키 값 ←
                 if (moveInput.x <= -0.3)
                 {
-                    ray = footTrans.position;
-                    rayDir = Vector3.left;
                     // 발 기준 왼쪽
-                    if (!Physics.Raycast(ray, rayDir, out rayHit, 1f, layerMaskCube))
+                    if (!Physics.Raycast(footTrans.position, Vector3.left, out rayHit, 1f, layerMaskCube))
                     {
                         //없다
                         break;
@@ -4054,10 +4147,8 @@ public class PlayerMovement : MonoBehaviour
                 // 바닥에 닿아있다면
                 if (characterController.isGrounded)
                 {
-                    ray = centerTrans.position;
-                    rayDir = Vector3.down;
                     // 바닥 큐브 정보
-                    if (!Physics.Raycast(ray, rayDir, out rayHit, 1f, layerMaskCube))
+                    if (!Physics.Raycast(centerTrans.position, Vector3.down, out rayHit, 1f, layerMaskCube))
                     {
                         // 에러
                         break;
@@ -4099,10 +4190,8 @@ public class PlayerMovement : MonoBehaviour
                 // 입력 키 값 →
                 if (moveInput.x >= 0.3)
                 {
-                    ray = footTrans.position;
-                    rayDir = Vector3.right;
                     // 발 기준 왼쪽
-                    if (!Physics.Raycast(ray, rayDir, out rayHit, 1f, layerMaskCube))
+                    if (!Physics.Raycast(footTrans.position, Vector3.right, out rayHit, 1f, layerMaskCube))
                     {
                         //없다
                         break;
@@ -4154,10 +4243,8 @@ public class PlayerMovement : MonoBehaviour
                 // 바닥에 닿아있다면
                 if (characterController.isGrounded)
                 {
-                    ray = centerTrans.position;
-                    rayDir = Vector3.down;
                     // 바닥 큐브 정보
-                    if (!Physics.Raycast(ray, rayDir, out rayHit, 1f, layerMaskCube))
+                    if (!Physics.Raycast(centerTrans.position, Vector3.down, out rayHit, 1f, layerMaskCube))
                     {
                         // 에러
                         break;
@@ -4199,10 +4286,8 @@ public class PlayerMovement : MonoBehaviour
                 // 입력 키 값 ↓
                 if (moveInput.y <= -0.3)
                 {
-                    ray = footTrans.position;
-                    rayDir = Vector3.back;
                     // 발 기준 왼쪽
-                    if (!Physics.Raycast(ray, rayDir, out rayHit, 1f, layerMaskCube))
+                    if (!Physics.Raycast(footTrans.position, Vector3.back, out rayHit, 1f, layerMaskCube))
                     {
                         //없다
                         break;
@@ -4254,10 +4339,8 @@ public class PlayerMovement : MonoBehaviour
                 // 바닥에 닿아있다면
                 if (characterController.isGrounded)
                 {
-                    ray = centerTrans.position;
-                    rayDir = Vector3.down;
                     // 바닥 큐브 정보
-                    if (!Physics.Raycast(ray, rayDir, out rayHit, 1f, layerMaskCube))
+                    if (!Physics.Raycast(centerTrans.position, Vector3.down, out rayHit, 1f, layerMaskCube))
                     {
                         // 에러
                         break;
@@ -4299,10 +4382,8 @@ public class PlayerMovement : MonoBehaviour
                 // 입력 키 값 ↑
                 if (moveInput.y >= 0.3)
                 {
-                    ray = footTrans.position;
-                    rayDir = Vector3.forward;
                     // 발 기준 왼쪽
-                    if (!Physics.Raycast(ray, rayDir, out rayHit, 1f, layerMaskCube))
+                    if (!Physics.Raycast(footTrans.position, Vector3.forward, out rayHit, 1f, layerMaskCube))
                     {
                         //없다
                         break;
@@ -4986,7 +5067,7 @@ public class PlayerMovement : MonoBehaviour
     {
 
 
-        return true;
+        return false;
     }
 
     private void OnControllerColliderHit(ControllerColliderHit hit)
