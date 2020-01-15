@@ -491,6 +491,39 @@ public class PlayerMovement : MonoBehaviour
                         else
                         {
                             //--------------------------------
+                            // 위쪽 검사
+                            // ？
+                            //   ★
+                            //--------------------------------
+                            // 이동 목적지 위쪽에 큐브가 있다
+                            if (Physics.Raycast(destPos, Vector3.up, out rayHit, 1f, layerMaskCube))
+                            {
+                                cubeMovement = rayHit.transform.GetComponent<CubeMovement>();
+
+                                // 위쪽 큐브가 내려오는 중
+                                if (cubeMovement.cubeMoveState == CubeMoveState.DOWN)
+                                {
+                                    break;
+                                }
+                                // 윈쪽 큐브가 내려올 준비
+                                else if (cubeMovement.cubeMoveState == CubeMoveState.DOWN_READY)
+                                {
+                                    // 플레이어 거리 / 속도
+                                    playerTime = (headTrans.position.x - (destPos.x + CUBE_HALF_LENGTH)) / speed;
+                                    // 큐브 거리 / 속도
+                                    cubeTime = ((rayHit.transform.position.y - CUBE_HALF_LENGTH) - headTrans.position.y) / cubeMovement.verticalSpeed;
+                                    // 큐브의 대기 시간을 더함
+                                    cubeTime = cubeTime + cubeMovement.GetDelayTime();
+
+                                    // 플레이어가 더 늦게 도착한다면
+                                    if (playerTime > cubeTime)
+                                    {
+                                        break;
+                                    }
+                                }
+                            }
+
+                            //--------------------------------
                             // 아래쪽 검사
                             //   ★
                             // ？■
@@ -636,6 +669,39 @@ public class PlayerMovement : MonoBehaviour
                         else
                         {
                             //--------------------------------
+                            // 위쪽 검사
+                            //   ？
+                            // ★
+                            //--------------------------------
+                            // 이동 목적지 위쪽에 큐브가 있다
+                            if (Physics.Raycast(destPos, Vector3.up, out rayHit, 1f, layerMaskCube))
+                            {
+                                cubeMovement = rayHit.transform.GetComponent<CubeMovement>();
+
+                                // 위쪽 큐브가 내려오는 중
+                                if (cubeMovement.cubeMoveState == CubeMoveState.DOWN)
+                                {
+                                    break;
+                                }
+                                // 윈쪽 큐브가 내려올 준비
+                                else if (cubeMovement.cubeMoveState == CubeMoveState.DOWN_READY)
+                                {
+                                    // 플레이어 거리 / 속도
+                                    playerTime = ((destPos.x - CUBE_HALF_LENGTH) - headTrans.position.x) / speed;
+                                    // 큐브 거리 / 속도
+                                    cubeTime = ((rayHit.transform.position.y - CUBE_HALF_LENGTH) - headTrans.position.y) / cubeMovement.verticalSpeed;
+                                    // 큐브의 대기 시간을 더함
+                                    cubeTime = cubeTime + cubeMovement.GetDelayTime();
+
+                                    // 플레이어가 더 늦게 도착한다면
+                                    if (playerTime > cubeTime)
+                                    {
+                                        break;
+                                    }
+                                }
+                            }
+
+                            //--------------------------------
                             // 아래쪽 검사
                             // ★
                             // ■？
@@ -647,45 +713,6 @@ public class PlayerMovement : MonoBehaviour
                             // 있다
                             if (Physics.CheckBox(check, box, Quaternion.identity, layerMaskCube))
                             {
-                                //--------------------------------
-                                // 위쪽 검사
-                                //   ？
-                                // ★
-                                //--------------------------------
-                                // 이동 목적지 위쪽에 큐브가 있다
-                                if (Physics.Raycast(destPos, Vector3.up, out rayHit, 1f, layerMaskCube))
-                                {
-                                    cubeMovement = rayHit.transform.GetComponent<CubeMovement>();
-
-                                    Debug.Log(cubeMovement.cubeMoveState);
-
-                                    // 위쪽 큐브가 내려오는 중
-                                    if (cubeMovement.cubeMoveState == CubeMoveState.DOWN)
-                                    {
-                                        break;
-                                    }
-                                    // 윈쪽 큐브가 내려올 준비
-                                    else if (cubeMovement.cubeMoveState == CubeMoveState.DOWN_READY)
-                                    {
-                                        // 플레이어 거리 / 속도
-                                        playerTime = (headTrans.position.x - (destPos.x + INTERACTION_MOVE_VALUE)) / speed;
-                                        // 큐브의 대기 시간을 뺌
-                                        playerTime = playerTime - cubeMovement.actionDelay;
-
-                                        // 큐브 거리 / 속도
-                                        cubeTime = ((rayHit.transform.position.y - CUBE_HALF_LENGTH) - headTrans.position.y) / cubeMovement.verticalSpeed;
-
-                                        Debug.Log(cubeMovement.actionDelay);
-                                        Debug.Log("playerTime : " + playerTime + ", cubeTime : " + cubeTime);
-
-                                        // 플레이어가 더 늦게 도착한다면
-                                        if (playerTime < cubeTime)
-                                        {
-                                            break;
-                                        }
-                                    }
-                                }
-
                                 //--------------------------------
                                 // 빙판 검사
                                 // ★
@@ -823,6 +850,39 @@ public class PlayerMovement : MonoBehaviour
                         // ↓ 방향 없음
                         else
                         {
+                            //--------------------------------
+                            // 위쪽 검사
+                            // ？
+                            //   ★
+                            //--------------------------------
+                            // 이동 목적지 위쪽에 큐브가 있다
+                            if (Physics.Raycast(destPos, Vector3.up, out rayHit, 1f, layerMaskCube))
+                            {
+                                cubeMovement = rayHit.transform.GetComponent<CubeMovement>();
+
+                                // 위쪽 큐브가 내려오는 중
+                                if (cubeMovement.cubeMoveState == CubeMoveState.DOWN)
+                                {
+                                    break;
+                                }
+                                // 윈쪽 큐브가 내려올 준비
+                                else if (cubeMovement.cubeMoveState == CubeMoveState.DOWN_READY)
+                                {
+                                    // 플레이어 거리 / 속도
+                                    playerTime = (headTrans.position.z - (destPos.z + CUBE_HALF_LENGTH)) / speed;
+                                    // 큐브 거리 / 속도
+                                    cubeTime = ((rayHit.transform.position.y - CUBE_HALF_LENGTH) - headTrans.position.y) / cubeMovement.verticalSpeed;
+                                    // 큐브의 대기 시간을 더함
+                                    cubeTime = cubeTime + cubeMovement.GetDelayTime();
+
+                                    // 플레이어가 더 늦게 도착한다면
+                                    if (playerTime > cubeTime)
+                                    {
+                                        break;
+                                    }
+                                }
+                            }
+
                             //--------------------------------
                             // 아래쪽 검사
                             //   ★
@@ -973,6 +1033,39 @@ public class PlayerMovement : MonoBehaviour
                         // ↑ 방향 없음
                         else
                         {
+                            //--------------------------------
+                            // 위쪽 검사
+                            //   ？
+                            // ★
+                            //--------------------------------
+                            // 이동 목적지 위쪽에 큐브가 있다
+                            if (Physics.Raycast(destPos, Vector3.up, out rayHit, 1f, layerMaskCube))
+                            {
+                                cubeMovement = rayHit.transform.GetComponent<CubeMovement>();
+
+                                // 위쪽 큐브가 내려오는 중
+                                if (cubeMovement.cubeMoveState == CubeMoveState.DOWN)
+                                {
+                                    break;
+                                }
+                                // 윈쪽 큐브가 내려올 준비
+                                else if (cubeMovement.cubeMoveState == CubeMoveState.DOWN_READY)
+                                {
+                                    // 플레이어 거리 / 속도
+                                    playerTime = ((destPos.z - CUBE_HALF_LENGTH) - headTrans.position.z) / speed;
+                                    // 큐브 거리 / 속도
+                                    cubeTime = ((rayHit.transform.position.y - CUBE_HALF_LENGTH) - headTrans.position.y) / cubeMovement.verticalSpeed;
+                                    // 큐브의 대기 시간을 더함
+                                    cubeTime = cubeTime + cubeMovement.GetDelayTime();
+
+                                    // 플레이어가 더 늦게 도착한다면
+                                    if (playerTime > cubeTime)
+                                    {
+                                        break;
+                                    }
+                                }
+                            }
+
                             //--------------------------------
                             // 아래쪽 검사
                             //   ★
@@ -1884,15 +1977,14 @@ public class PlayerMovement : MonoBehaviour
                             else if (cubeMovement.cubeMoveState == CubeMoveState.DOWN_READY)
                             {
                                 // 플레이어 거리 / 속도
-                                playerTime = (headTrans.position.x - (destPos.x + INTERACTION_MOVE_VALUE)) / speed;
-                                // 큐브의 대기 시간을 뺌
-                                playerTime = playerTime - cubeMovement.actionDelay;
-
+                                playerTime = (headTrans.position.x - (destPos.x + CUBE_HALF_LENGTH)) / speed;
                                 // 큐브 거리 / 속도
                                 cubeTime = ((rayHit.transform.position.y - CUBE_HALF_LENGTH) - headTrans.position.y) / cubeMovement.verticalSpeed;
+                                // 큐브의 대기 시간을 더함
+                                cubeTime = cubeTime + cubeMovement.GetDelayTime();
 
                                 // 플레이어가 더 늦게 도착한다면
-                                if (playerTime < cubeTime)
+                                if (playerTime > cubeTime)
                                 {
                                     break;
                                 }
@@ -2040,15 +2132,14 @@ public class PlayerMovement : MonoBehaviour
                             else if (cubeMovement.cubeMoveState == CubeMoveState.DOWN_READY)
                             {
                                 // 플레이어 거리 / 속도
-                                playerTime = ((destPos.x - INTERACTION_MOVE_VALUE) - headTrans.position.x) / speed;
-                                // 큐브의 대기 시간을 뺌
-                                playerTime = playerTime - cubeMovement.actionDelay;
-
+                                playerTime = ((destPos.x - CUBE_HALF_LENGTH) - headTrans.position.x) / speed;
                                 // 큐브 거리 / 속도
                                 cubeTime = ((rayHit.transform.position.y - CUBE_HALF_LENGTH) - headTrans.position.y) / cubeMovement.verticalSpeed;
+                                // 큐브의 대기 시간을 더함
+                                cubeTime = cubeTime + cubeMovement.GetDelayTime();
 
                                 // 플레이어가 더 늦게 도착한다면
-                                if (playerTime < cubeTime)
+                                if (playerTime > cubeTime)
                                 {
                                     break;
                                 }
@@ -2179,15 +2270,14 @@ public class PlayerMovement : MonoBehaviour
                             else if (cubeMovement.cubeMoveState == CubeMoveState.DOWN_READY)
                             {
                                 // 플레이어 거리 / 속도
-                                playerTime = (headTrans.position.z - (destPos.z + INTERACTION_MOVE_VALUE)) / speed;
-                                // 큐브의 대기 시간을 뺌
-                                playerTime = playerTime - cubeMovement.actionDelay;
-
+                                playerTime = (headTrans.position.z - (destPos.z + CUBE_HALF_LENGTH)) / speed;
                                 // 큐브 거리 / 속도
                                 cubeTime = ((rayHit.transform.position.y - CUBE_HALF_LENGTH) - headTrans.position.y) / cubeMovement.verticalSpeed;
+                                // 큐브의 대기 시간을 더함
+                                cubeTime = cubeTime + cubeMovement.GetDelayTime();
 
                                 // 플레이어가 더 늦게 도착한다면
-                                if (playerTime < cubeTime)
+                                if (playerTime > cubeTime)
                                 {
                                     break;
                                 }
@@ -2299,15 +2389,14 @@ public class PlayerMovement : MonoBehaviour
                             else if (cubeMovement.cubeMoveState == CubeMoveState.DOWN_READY)
                             {
                                 // 플레이어 거리 / 속도
-                                playerTime = ((destPos.z - INTERACTION_MOVE_VALUE) - headTrans.position.z) / speed;
-                                // 큐브의 대기 시간을 뺌
-                                playerTime = playerTime - cubeMovement.actionDelay;
-
+                                playerTime = ((destPos.z - CUBE_HALF_LENGTH) - headTrans.position.z) / speed;
                                 // 큐브 거리 / 속도
                                 cubeTime = ((rayHit.transform.position.y - CUBE_HALF_LENGTH) - headTrans.position.y) / cubeMovement.verticalSpeed;
+                                // 큐브의 대기 시간을 더함
+                                cubeTime = cubeTime + cubeMovement.GetDelayTime();
 
                                 // 플레이어가 더 늦게 도착한다면
-                                if (playerTime < cubeTime)
+                                if (playerTime > cubeTime)
                                 {
                                     break;
                                 }
@@ -3118,13 +3207,6 @@ public class PlayerMovement : MonoBehaviour
                 break;
             case PlayerState.R_INTERACTION_PULL:
                 // 오른쪽 당김
-
-                // 압사 검사
-                if (CheckCrushedToDeath())
-                {
-                    break;
-                }
-
                 // 큐브 이동
                 cubeObject.transform.position = cubeObject.transform.position + (Vector3.left * speed) * Time.deltaTime;
                 // 큐브가 이동 거리만큼 이동 했는가
@@ -5054,18 +5136,6 @@ public class PlayerMovement : MonoBehaviour
                 }
             }
         }
-
-        return false;
-    }
-
-    //-----------------------------------------------
-    // 캐릭터 이동, 당기기를 할 때
-    // 떨어지는 큐브의 타이밍을 변경한다
-    //-----------------------------------------------
-    // 압사 체크
-    private bool CheckCrushedToDeath()
-    {
-
 
         return false;
     }

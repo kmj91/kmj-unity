@@ -56,7 +56,7 @@ public class CubeMovement : MonoBehaviour
     //--------------------------------
 
     // 큐브가 아래로 이동할 때의 딜레이
-    public const float DOWN_DELAY = 1f;
+    public const float DOWN_DELAY = 1.5f;
 
     //--------------------------------
     // private 함수
@@ -86,6 +86,18 @@ public class CubeMovement : MonoBehaviour
     //--------------------------------
     // public 함수
     //--------------------------------
+
+    public float GetDelayTime()
+    {
+        if (actionDelay > DOWN_DELAY)
+        {
+            return 0;
+        }
+        else
+        {
+            return DOWN_DELAY - actionDelay;
+        }
+    }
 
     // 큐브 오른쪽 이동
     public bool MoveRight()
