@@ -27,7 +27,6 @@ public class GameManager : MonoBehaviour
     void Update()
     {
         Vector3 box;            // 박스 크기
-        RaycastHit rayHit;      // 레이 충돌한 물체
 
         box.x = 0.1f;
         box.y = 0.1f;
