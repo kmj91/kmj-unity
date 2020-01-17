@@ -82,6 +82,11 @@ public class CubeMovement : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
+        if (!other.gameObject.CompareTag("Floor"))
+        {
+            return;
+        }
+
         if (cubeMoveState == CubeMoveState.DOWN)
         {
             return;

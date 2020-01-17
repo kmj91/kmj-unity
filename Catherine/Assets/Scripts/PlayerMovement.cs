@@ -278,11 +278,19 @@ public class PlayerMovement : MonoBehaviour
         MoveProcess();
     }
 
+    private void OnTriggerExit(Collider other)
+    {
+        if (other.gameObject.CompareTag("Floor"))
+        {
+            Debug.Log("으악!!! 데챠아아악");
+        }
+    }
+
     //--------------------------------------------
     // 플레이어 이동 처리
     // moveInput : 입력받은 이동 키값 -1 ~ 1
     //--------------------------------------------
-    public void MoveProcess() {
+    private void MoveProcess() {
         float playerTime;           // 거리 / 속도를 한 플레이어의 시간 값
         float cubeTime;             // 거리 / 속도를 한 큐브의 시간 값
         float followCamAngleY;      // 카메라 방향
