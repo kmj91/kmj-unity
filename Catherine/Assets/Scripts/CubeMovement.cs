@@ -4,30 +4,41 @@ using UnityEngine;
 
 public class CubeMovement : MonoBehaviour
 {
+    //--------------------------------
+    // public 변수
+    //--------------------------------
+
+    // 상태
+    public CubeMoveState cubeMoveState { get; private set; }
+    // 딜레이
+    public float actionDelay { get; private set; }
+    // 큐브 이동 속도
+    public float horizontalSpeed;
+    // 큐브 수직 이동 속도
+    public float verticalSpeed;
     // 큐브 이동 목표 좌표
     public Vector3 destPos;
-    // 큐브 이동 속도
-    public float speed;
     // 미끄러짐
     public bool slideEvent;
     // 떨어짐
     public bool isMoveDown;
 
-    // 레이어 마스크 고정된 물체
-    private LayerMask layerMaskStatic;
+    //--------------------------------
+    // private 변수
+    //--------------------------------
+
     // 레이어 마스크 큐브
     private LayerMask layerMaskCube;
-    // 레이어 큐브 번호
-    private int layerCubeNumber;
-    // 딜레이
-    private float actionDelay;
     // 처음 떨어짐
     private bool isFirstMoveDown;
+    // 중력 영향을 받는가
+    private bool isGravity;
 
-    // 상태
-    private CubeMoveState cubeMoveState = CubeMoveState.IDLE;
+    //--------------------------------
+    // enum
+    //--------------------------------
 
-    private enum CubeMoveState
+    public enum CubeMoveState
     {
         IDLE,                       // 대기
         DOWN_READY,                 // 아래 준비
@@ -38,27 +49,72 @@ public class CubeMovement : MonoBehaviour
         BACK                        // 뒤쪽
     }
 
-    private const float DOWN_DELAY = 1f;
-    
+    //--------------------------------
+    // 상수
+    //--------------------------------
 
-    void Start()
+    // 큐브가 아래로 이동할 때의 딜레이
+    public const float DOWN_DELAY = 1.5f;
+
+    //--------------------------------
+    // private 함수
+    //--------------------------------
+
+    private void Start()
     {
-        // 레이어 번호
-        layerCubeNumber = LayerMask.NameToLayer("Cube");
-
-        // 레이어 마스크
-        layerMaskStatic = (1 << layerCubeNumber) + (1 << LayerMask.NameToLayer("Floor"));
-        layerMaskCube = 1 << layerCubeNumber;
+        // 상태
+        cubeMoveState = CubeMoveState.IDLE;
+        // 레이어 마스크 큐브
+        layerMaskCube = 1 << LayerMask.NameToLayer("Cube");
         // 딜레이
         actionDelay = 0f;
         // 처음 떨어짐
         isFirstMoveDown = false;
+        // 중력
+        isGravity = true;
     }
 
     
-    void FixedUpdate()
+    private void FixedUpdate()
     {
         MoveProcess();
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (!other.gameObject.CompareTag("Floor"))
+        {
+            return;
+        }
+
+        if (cubeMoveState == CubeMoveState.DOWN)
+        {
+            return;
+        }
+
+        isGravity = false;
+        cubeMoveState = CubeMoveState.IDLE;
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        isGravity = true;
+    }
+
+    //--------------------------------
+    // public 함수
+    //--------------------------------
+
+    public float GetDelayTime()
+    {
+        if (actionDelay > DOWN_DELAY)
+        {
+            return 0;
+        }
+        else
+        {
+            return DOWN_DELAY - actionDelay;
+        }
     }
 
     // 큐브 오른쪽 이동
@@ -85,7 +141,7 @@ public class CubeMovement : MonoBehaviour
 
                 // 바닥 검사
                 // 없다
-                if (!Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskStatic))
+                if (!Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskCube))
                 {
                     // 미끄러지지않음
                     slideEvent = false;
@@ -100,7 +156,7 @@ public class CubeMovement : MonoBehaviour
                 //-------------------------------------------
                 // 오른쪽 검사
                 // 있다
-                if (Physics.Raycast(transform.position, Vector3.right, out rayHit, 1f, layerMaskStatic))
+                if (Physics.Raycast(transform.position, Vector3.right, out rayHit, 1f, layerMaskCube))
                 {
                     // slideEvent 체크
                     if (!rayHit.transform.gameObject.GetComponent<CubeMovement>().slideEvent)
@@ -123,7 +179,7 @@ public class CubeMovement : MonoBehaviour
 
                 // 바닥 검사
                 // 있다
-                if (Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskStatic))
+                if (Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskCube))
                 {
                     // 미끄러짐
                     slideEvent = true;
@@ -132,7 +188,7 @@ public class CubeMovement : MonoBehaviour
                 // 만약 오른쪽으로 이동이 불가능한 상황이면 이동하지 않아야함
                 // 오른쪽 검사
                 // 있다
-                if (Physics.Raycast(transform.position, Vector3.right, out rayHit, 1f, layerMaskStatic))
+                if (Physics.Raycast(transform.position, Vector3.right, out rayHit, 1f, layerMaskCube))
                 {
                     // 큐브 이동 처리
                     // 이동 불가?
@@ -162,7 +218,7 @@ public class CubeMovement : MonoBehaviour
 
             // 바닥 검사
             // 있다
-            if (Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskStatic))
+            if (Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskCube))
             {
                 // 바닥이 아이스 큐브가 아님
                 if (!rayHit.transform.gameObject.CompareTag("IceCube"))
@@ -188,7 +244,7 @@ public class CubeMovement : MonoBehaviour
             //-------------------------------------------
             // 오른쪽 검사
             // 있다
-            if (Physics.Raycast(transform.position, Vector3.right, out rayHit, 1f, layerMaskStatic))
+            if (Physics.Raycast(transform.position, Vector3.right, out rayHit, 1f, layerMaskCube))
             {
                 // slideEvent 체크
                 if (!rayHit.transform.gameObject.GetComponent<CubeMovement>().slideEvent)
@@ -211,7 +267,7 @@ public class CubeMovement : MonoBehaviour
 
             // 바닥 검사
             // 있다
-            if (Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskStatic))
+            if (Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskCube))
             {
                 // 바닥이 아이스 큐브임
                 if (rayHit.transform.gameObject.CompareTag("IceCube"))
@@ -224,7 +280,7 @@ public class CubeMovement : MonoBehaviour
             // 만약 오른쪽으로 이동이 불가능한 상황이면 이동하지 않아야함
             // 오른쪽 검사
             // 있다
-            if (Physics.Raycast(transform.position, Vector3.right, out rayHit, 1f, layerMaskStatic))
+            if (Physics.Raycast(transform.position, Vector3.right, out rayHit, 1f, layerMaskCube))
             {
                 // 큐브 이동 처리
                 // 이동 불가?
@@ -267,7 +323,7 @@ public class CubeMovement : MonoBehaviour
 
                 // 바닥 검사
                 // 없다
-                if (!Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskStatic))
+                if (!Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskCube))
                 {
                     // 미끄러지지않음
                     slideEvent = false;
@@ -282,7 +338,7 @@ public class CubeMovement : MonoBehaviour
                 //-------------------------------------------
                 // 오른쪽 검사
                 // 있다
-                if (Physics.Raycast(transform.position, Vector3.right, out rayHit, 1f, layerMaskStatic))
+                if (Physics.Raycast(transform.position, Vector3.right, out rayHit, 1f, layerMaskCube))
                 {
                     // slideEvent 체크
                     if (!rayHit.transform.gameObject.GetComponent<CubeMovement>().slideEvent)
@@ -305,7 +361,7 @@ public class CubeMovement : MonoBehaviour
 
                 // 바닥 검사
                 // 있다
-                if (Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskStatic))
+                if (Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskCube))
                 {
                     // 미끄러짐
                     slideEvent = true;
@@ -314,7 +370,7 @@ public class CubeMovement : MonoBehaviour
                 // 만약 오른쪽으로 이동이 불가능한 상황이면 이동하지 않아야함
                 // 오른쪽 검사
                 // 있다
-                if (Physics.Raycast(transform.position, Vector3.right, out rayHit, 1f, layerMaskStatic))
+                if (Physics.Raycast(transform.position, Vector3.right, out rayHit, 1f, layerMaskCube))
                 {
                     // 큐브 이동 처리
                     // 이동 불가?
@@ -344,7 +400,7 @@ public class CubeMovement : MonoBehaviour
 
             // 바닥 검사
             // 있다
-            if (Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskStatic))
+            if (Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskCube))
             {
                 // 바닥이 아이스 큐브가 아님
                 if (!rayHit.transform.gameObject.CompareTag("IceCube"))
@@ -370,7 +426,7 @@ public class CubeMovement : MonoBehaviour
             //-------------------------------------------
             // 왼쪽 검사
             // 있다
-            if (Physics.Raycast(transform.position, Vector3.left, out rayHit, 1f, layerMaskStatic))
+            if (Physics.Raycast(transform.position, Vector3.left, out rayHit, 1f, layerMaskCube))
             {
                 // slideEvent 체크
                 if (!rayHit.transform.gameObject.GetComponent<CubeMovement>().slideEvent)
@@ -393,7 +449,7 @@ public class CubeMovement : MonoBehaviour
 
             // 바닥 검사
             // 있다
-            if (Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskStatic))
+            if (Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskCube))
             {
                 // 바닥이 아이스 큐브임
                 if (rayHit.transform.gameObject.CompareTag("IceCube"))
@@ -406,7 +462,7 @@ public class CubeMovement : MonoBehaviour
             // 만약 왼쪽으로 이동이 불가능한 상황이면 이동하지 않아야함
             // 왼쪽 검사
             // 있다
-            if (Physics.Raycast(transform.position, Vector3.left, out rayHit, 1f, layerMaskStatic))
+            if (Physics.Raycast(transform.position, Vector3.left, out rayHit, 1f, layerMaskCube))
             {
                 // 큐브 이동 처리
                 // 이동 불가?
@@ -449,7 +505,7 @@ public class CubeMovement : MonoBehaviour
 
                 // 바닥 검사
                 // 없다
-                if (!Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskStatic))
+                if (!Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskCube))
                 {
                     // 미끄러지지않음
                     slideEvent = false;
@@ -464,7 +520,7 @@ public class CubeMovement : MonoBehaviour
                 //-------------------------------------------
                 // 오른쪽 검사
                 // 있다
-                if (Physics.Raycast(transform.position, Vector3.right, out rayHit, 1f, layerMaskStatic))
+                if (Physics.Raycast(transform.position, Vector3.right, out rayHit, 1f, layerMaskCube))
                 {
                     // slideEvent 체크
                     if (!rayHit.transform.gameObject.GetComponent<CubeMovement>().slideEvent)
@@ -487,7 +543,7 @@ public class CubeMovement : MonoBehaviour
 
                 // 바닥 검사
                 // 있다
-                if (Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskStatic))
+                if (Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskCube))
                 {
                     // 미끄러짐
                     slideEvent = true;
@@ -496,7 +552,7 @@ public class CubeMovement : MonoBehaviour
                 // 만약 오른쪽으로 이동이 불가능한 상황이면 이동하지 않아야함
                 // 오른쪽 검사
                 // 있다
-                if (Physics.Raycast(transform.position, Vector3.right, out rayHit, 1f, layerMaskStatic))
+                if (Physics.Raycast(transform.position, Vector3.right, out rayHit, 1f, layerMaskCube))
                 {
                     // 큐브 이동 처리
                     // 이동 불가?
@@ -526,7 +582,7 @@ public class CubeMovement : MonoBehaviour
 
             // 바닥 검사
             // 있다
-            if (Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskStatic))
+            if (Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskCube))
             {
                 // 바닥이 아이스 큐브가 아님
                 if (!rayHit.transform.gameObject.CompareTag("IceCube"))
@@ -552,7 +608,7 @@ public class CubeMovement : MonoBehaviour
             //-------------------------------------------
             // 앞쪽 검사
             // 있다
-            if (Physics.Raycast(transform.position, Vector3.forward, out rayHit, 1f, layerMaskStatic))
+            if (Physics.Raycast(transform.position, Vector3.forward, out rayHit, 1f, layerMaskCube))
             {
                 // slideEvent 체크
                 if (!rayHit.transform.gameObject.GetComponent<CubeMovement>().slideEvent)
@@ -575,7 +631,7 @@ public class CubeMovement : MonoBehaviour
 
             // 바닥 검사
             // 있다
-            if (Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskStatic))
+            if (Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskCube))
             {
                 // 바닥이 아이스 큐브임
                 if (rayHit.transform.gameObject.CompareTag("IceCube"))
@@ -588,7 +644,7 @@ public class CubeMovement : MonoBehaviour
             // 만약 앞쪽으로 이동이 불가능한 상황이면 이동하지 않아야함
             // 앞쪽 검사
             // 있다
-            if (Physics.Raycast(transform.position, Vector3.forward, out rayHit, 1f, layerMaskStatic))
+            if (Physics.Raycast(transform.position, Vector3.forward, out rayHit, 1f, layerMaskCube))
             {
                 // 큐브 이동 처리
                 // 이동 불가?
@@ -631,7 +687,7 @@ public class CubeMovement : MonoBehaviour
 
                 // 바닥 검사
                 // 없다
-                if (!Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskStatic))
+                if (!Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskCube))
                 {
                     // 미끄러지지않음
                     slideEvent = false;
@@ -646,7 +702,7 @@ public class CubeMovement : MonoBehaviour
                 //-------------------------------------------
                 // 오른쪽 검사
                 // 있다
-                if (Physics.Raycast(transform.position, Vector3.right, out rayHit, 1f, layerMaskStatic))
+                if (Physics.Raycast(transform.position, Vector3.right, out rayHit, 1f, layerMaskCube))
                 {
                     // slideEvent 체크
                     if (!rayHit.transform.gameObject.GetComponent<CubeMovement>().slideEvent)
@@ -669,7 +725,7 @@ public class CubeMovement : MonoBehaviour
 
                 // 바닥 검사
                 // 있다
-                if (Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskStatic))
+                if (Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskCube))
                 {
                     // 미끄러짐
                     slideEvent = true;
@@ -678,7 +734,7 @@ public class CubeMovement : MonoBehaviour
                 // 만약 오른쪽으로 이동이 불가능한 상황이면 이동하지 않아야함
                 // 오른쪽 검사
                 // 있다
-                if (Physics.Raycast(transform.position, Vector3.right, out rayHit, 1f, layerMaskStatic))
+                if (Physics.Raycast(transform.position, Vector3.right, out rayHit, 1f, layerMaskCube))
                 {
                     // 큐브 이동 처리
                     // 이동 불가?
@@ -708,7 +764,7 @@ public class CubeMovement : MonoBehaviour
 
             // 바닥 검사
             // 있다
-            if (Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskStatic))
+            if (Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskCube))
             {
                 // 바닥이 아이스 큐브가 아님
                 if (!rayHit.transform.gameObject.CompareTag("IceCube"))
@@ -734,7 +790,7 @@ public class CubeMovement : MonoBehaviour
             //-------------------------------------------
             // 앞쪽 검사
             // 있다
-            if (Physics.Raycast(transform.position, Vector3.back, out rayHit, 1f, layerMaskStatic))
+            if (Physics.Raycast(transform.position, Vector3.back, out rayHit, 1f, layerMaskCube))
             {
                 // slideEvent 체크
                 if (!rayHit.transform.gameObject.GetComponent<CubeMovement>().slideEvent)
@@ -757,7 +813,7 @@ public class CubeMovement : MonoBehaviour
 
             // 바닥 검사
             // 있다
-            if (Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskStatic))
+            if (Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskCube))
             {
                 // 바닥이 아이스 큐브임
                 if (rayHit.transform.gameObject.CompareTag("IceCube"))
@@ -770,7 +826,7 @@ public class CubeMovement : MonoBehaviour
             // 만약 뒤쪽으로 이동이 불가능한 상황이면 이동하지 않아야함
             // 뒤쪽 검사
             // 있다
-            if (Physics.Raycast(transform.position, Vector3.back, out rayHit, 1f, layerMaskStatic))
+            if (Physics.Raycast(transform.position, Vector3.back, out rayHit, 1f, layerMaskCube))
             {
                 // 큐브 이동 처리
                 // 이동 불가?
@@ -800,6 +856,12 @@ public class CubeMovement : MonoBehaviour
         Vector3 box;            // 박스 크기
         RaycastHit rayHit;      // 레이 충돌한 물체
 
+        // 중력 영향을 받지않으면
+        if (!isGravity)
+        {
+            return false;
+        }
+
         box.x = 0.1f;
         box.y = 0.1f;
         box.z = 0.1f;
@@ -825,18 +887,9 @@ public class CubeMovement : MonoBehaviour
         ray = transform.position;
         rayDir = Vector3.down;
         // 밑에 고정된 발판이 있나?
-        if (Physics.Raycast(ray, rayDir, out rayHit, 1f, layerMaskStatic))
+        if (Physics.Raycast(ray, rayDir, out rayHit, 1f, layerMaskCube))
         {
             // 있다
-            // 큐브인가?
-            if (rayHit.transform.gameObject.layer != layerCubeNumber)
-            {
-                // 큐브 아님
-                // 이동하지 않음
-                isMoveDown = false;
-                cubeMoveState = CubeMoveState.IDLE;
-                return false;
-            }
 
             // 큐브가 아래로 이동하는 중인지 아닌지?
             if (!rayHit.transform.gameObject.GetComponent<CubeMovement>().isMoveDown)
@@ -862,18 +915,9 @@ public class CubeMovement : MonoBehaviour
         ray = check;
         rayDir = Vector3.left;
         // 왼쪽 밑에 큐브가 있나?
-        if (Physics.Raycast(ray, rayDir, out rayHit, 1f, layerMaskStatic))
+        if (Physics.Raycast(ray, rayDir, out rayHit, 1f, layerMaskCube))
         {
             // 있음
-            // 큐브인가?
-            if (rayHit.transform.gameObject.layer != layerCubeNumber)
-            {
-                // 큐브 아님
-                // 이동하지 않음
-                isMoveDown = false;
-                cubeMoveState = CubeMoveState.IDLE;
-                return false;
-            }
 
             // 큐브가 아래로 이동하는 중인지 아닌지?
             if (!rayHit.transform.gameObject.GetComponent<CubeMovement>().isMoveDown)
@@ -899,18 +943,9 @@ public class CubeMovement : MonoBehaviour
         ray = check;
         rayDir = Vector3.right;
         // 오른쪽 밑에 큐브가 있나?
-        if (Physics.Raycast(ray, rayDir, out rayHit, 1f, layerMaskStatic))
+        if (Physics.Raycast(ray, rayDir, out rayHit, 1f, layerMaskCube))
         {
             // 있음
-            // 큐브인가?
-            if (rayHit.transform.gameObject.layer != layerCubeNumber)
-            {
-                // 큐브 아님
-                // 이동하지 않음
-                isMoveDown = false;
-                cubeMoveState = CubeMoveState.IDLE;
-                return false;
-            }
 
             // 큐브가 아래로 이동하는 중인지 아닌지?
             if (!rayHit.transform.gameObject.GetComponent<CubeMovement>().isMoveDown)
@@ -936,18 +971,9 @@ public class CubeMovement : MonoBehaviour
         ray = check;
         rayDir = Vector3.forward;
         // 앞쪽 밑에 큐브가 있나?
-        if (Physics.Raycast(ray, rayDir, out rayHit, 1f, layerMaskStatic))
+        if (Physics.Raycast(ray, rayDir, out rayHit, 1f, layerMaskCube))
         {
             // 있음
-            // 큐브인가?
-            if (rayHit.transform.gameObject.layer != layerCubeNumber)
-            {
-                // 큐브 아님
-                // 이동하지 않음
-                isMoveDown = false;
-                cubeMoveState = CubeMoveState.IDLE;
-                return false;
-            }
 
             // 큐브가 아래로 이동하는 중인지 아닌지?
             if (!rayHit.transform.gameObject.GetComponent<CubeMovement>().isMoveDown)
@@ -973,18 +999,9 @@ public class CubeMovement : MonoBehaviour
         ray = check;
         rayDir = Vector3.back;
         // 뒤쪽 밑에 큐브가 있나?
-        if (Physics.Raycast(ray, rayDir, out rayHit, 1f, layerMaskStatic))
+        if (Physics.Raycast(ray, rayDir, out rayHit, 1f, layerMaskCube))
         {
             // 있음
-            // 큐브인가?
-            if (rayHit.transform.gameObject.layer != layerCubeNumber)
-            {
-                // 큐브 아님
-                // 이동하지 않음
-                isMoveDown = false;
-                cubeMoveState = CubeMoveState.IDLE;
-                return false;
-            }
 
             // 큐브가 아래로 이동하는 중인지 아닌지?
             if (!rayHit.transform.gameObject.GetComponent<CubeMovement>().isMoveDown)
@@ -1034,7 +1051,7 @@ public class CubeMovement : MonoBehaviour
                 break;
             case CubeMoveState.DOWN:
                 // 큐브 떨어짐
-                transform.position = transform.position + (Vector3.down * speed) * Time.deltaTime;
+                transform.position = transform.position + (Vector3.down * verticalSpeed) * Time.deltaTime;
 
                 // 수직 이동 거리만큼 이동 했는가
                 if (destPos.y >= transform.position.y)
@@ -1047,7 +1064,7 @@ public class CubeMovement : MonoBehaviour
                 break;
             case CubeMoveState.RIGHT:
                 // 오른쪽 이동
-                transform.position = transform.position + (Vector3.right * speed) * Time.deltaTime;
+                transform.position = transform.position + (Vector3.right * horizontalSpeed) * Time.deltaTime;
 
                 // 수평 이동 거리만큼 이동 했는가
                 if (destPos.x <= transform.position.x) {
@@ -1063,7 +1080,7 @@ public class CubeMovement : MonoBehaviour
                         // 미끄러지는 중이 아니지만 밀려난 곳의 발판이 빙판이면 미끄러져야함
                         // 바닥 검사
                         // 있다
-                        if (Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskStatic))
+                        if (Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskCube))
                         {
                             // 바닥이 아이스 큐브
                             if (rayHit.transform.gameObject.CompareTag("IceCube"))
@@ -1082,7 +1099,7 @@ public class CubeMovement : MonoBehaviour
                 break;
             case CubeMoveState.LEFT:
                 // 왼쪽 이동
-                transform.position = transform.position + (Vector3.left * speed) * Time.deltaTime;
+                transform.position = transform.position + (Vector3.left * horizontalSpeed) * Time.deltaTime;
 
                 // 수평 이동 거리만큼 이동 했는가
                 if (destPos.x >= transform.position.x)
@@ -1099,7 +1116,7 @@ public class CubeMovement : MonoBehaviour
                         // 미끄러지는 중이 아니지만 밀려난 곳의 발판이 빙판이면 미끄러져야함
                         // 바닥 검사
                         // 있다
-                        if (Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskStatic))
+                        if (Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskCube))
                         {
                             // 바닥이 아이스 큐브
                             if (rayHit.transform.gameObject.CompareTag("IceCube"))
@@ -1118,7 +1135,7 @@ public class CubeMovement : MonoBehaviour
                 break;
             case CubeMoveState.FORWARD:
                 // 앞쪽 이동
-                transform.position = transform.position + (Vector3.forward * speed) * Time.deltaTime;
+                transform.position = transform.position + (Vector3.forward * horizontalSpeed) * Time.deltaTime;
 
                 // 수평 이동 거리만큼 이동 했는가
                 if (destPos.z <= transform.position.z)
@@ -1135,7 +1152,7 @@ public class CubeMovement : MonoBehaviour
                         // 미끄러지는 중이 아니지만 밀려난 곳의 발판이 빙판이면 미끄러져야함
                         // 바닥 검사
                         // 있다
-                        if (Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskStatic))
+                        if (Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskCube))
                         {
                             // 바닥이 아이스 큐브
                             if (rayHit.transform.gameObject.CompareTag("IceCube"))
@@ -1154,7 +1171,7 @@ public class CubeMovement : MonoBehaviour
                 break;
             case CubeMoveState.BACK:
                 // 앞쪽 이동
-                transform.position = transform.position + (Vector3.back * speed) * Time.deltaTime;
+                transform.position = transform.position + (Vector3.back * horizontalSpeed) * Time.deltaTime;
 
                 // 수평 이동 거리만큼 이동 했는가
                 if (destPos.z >= transform.position.z)
@@ -1171,7 +1188,7 @@ public class CubeMovement : MonoBehaviour
                         // 미끄러지는 중이 아니지만 밀려난 곳의 발판이 빙판이면 미끄러져야함
                         // 바닥 검사
                         // 있다
-                        if (Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskStatic))
+                        if (Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskCube))
                         {
                             // 바닥이 아이스 큐브
                             if (rayHit.transform.gameObject.CompareTag("IceCube"))

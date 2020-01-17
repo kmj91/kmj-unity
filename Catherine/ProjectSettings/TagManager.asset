@@ -4,9 +4,10 @@
 TagManager:
   serializedVersion: 2
   tags:
+  - Floor
   - NormalCube
-  - StaticCube
   - IceCube
+  - StaticCube
   layers:
   - Default
   - TransparentFX
@@ -18,7 +19,7 @@ TagManager:
   - 
   - Player
   - Cube
-  - Floor
+  - 
   - 
   - 
   - 
