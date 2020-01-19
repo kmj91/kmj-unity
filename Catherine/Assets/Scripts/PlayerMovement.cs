@@ -169,7 +169,6 @@ public class PlayerMovement : MonoBehaviour
         L_DROP_CLIMBING,            // 왼쪽 떨어짐 등반
         F_DROP_CLIMBING,            // 앞쪽 떨어짐 등반
         B_DROP_CLIMBING,            // 뒤쪽 떨어짐 등반
-        CRUSHED_TO_DEATH,           // 큐브에 깔려 죽음
         DEATH,                      // 사망
         EMPTY
     }
@@ -193,8 +192,7 @@ public class PlayerMovement : MonoBehaviour
         DROP_LOW,
         DROP_LOW_END,
         DROP_CLIMBING,
-        CRUSHED_TO_DEATH,
-        DROP_TO_DEATH
+        CRUSHED_TO_DEATH
     }
 
     //--------------------------------
@@ -223,11 +221,9 @@ public class PlayerMovement : MonoBehaviour
         // 사망 플래그
         isDeath = true;
         // 플레이어 사망
-        playerState = PlayerState.CRUSHED_TO_DEATH;
+        playerState = PlayerState.DEATH;
         // 애니메이션 압사
         animeSwitch = AnimationSwitch.CRUSHED_TO_DEATH;
-        // 캐릭터 컨트롤러 비활성화
-        characterController.enabled = false;
     }
 
 
@@ -286,16 +282,7 @@ public class PlayerMovement : MonoBehaviour
     {
         if (other.gameObject.CompareTag("Floor"))
         {
-            switch (playerState)
-            {
-                case PlayerState.R_DROP:
-                case PlayerState.L_DROP:
-                case PlayerState.F_DROP:
-                case PlayerState.B_DROP:
-                    playerState = PlayerState.DEATH;
-                    animeSwitch = AnimationSwitch.DROP_TO_DEATH;
-                    break;
-            }
+            Debug.Log("으악!!! 데챠아아악");
         }
     }
 
@@ -4909,11 +4896,6 @@ public class PlayerMovement : MonoBehaviour
             case PlayerState.EMPTY:
                 // 의도적으로 아무것도 하지않음
                 break;
-            case PlayerState.CRUSHED_TO_DEATH:
-                // 큐브에 깔려 죽음
-                moveKeyValue = Vector2.zero;
-                // 캐릭터 이동 처리를 하지 않고 함수를 빠져 나옴
-                return;
             case PlayerState.DEATH:
                 // 플레이어 사망
                 moveKeyValue = Vector2.zero;
@@ -5047,10 +5029,6 @@ public class PlayerMovement : MonoBehaviour
                 break;
             case AnimationSwitch.CRUSHED_TO_DEATH:
                 animator.SetTrigger("Crushed to Death");
-                animeSwitch = AnimationSwitch.IDLE;
-                break;
-            case AnimationSwitch.DROP_TO_DEATH:
-                animator.SetTrigger("Drop to Death");
                 animeSwitch = AnimationSwitch.IDLE;
                 break;
             default:
