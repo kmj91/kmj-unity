@@ -17,12 +17,8 @@ public class CubeMovement : MonoBehaviour
     private LayerMask layerMaskStatic;
     // 레이어 마스크 큐브
     private LayerMask layerMaskCube;
-    // 레이어 큐브 번호
-    private int layerCubeNumber;
-    // 딜레이
-    private float actionDelay;
-    // 처음 떨어짐
-    private bool isFirstMoveDown;
+    // 중력 영향을 받는가
+    private bool isGravity;
 
     // 상태
     private CubeMoveState cubeMoveState = CubeMoveState.IDLE;
@@ -51,8 +47,8 @@ public class CubeMovement : MonoBehaviour
         layerMaskCube = 1 << layerCubeNumber;
         // 딜레이
         actionDelay = 0f;
-        // 처음 떨어짐
-        isFirstMoveDown = false;
+        // 중력
+        isGravity = true;
     }
 
     
@@ -808,9 +804,6 @@ public class CubeMovement : MonoBehaviour
         check.y = transform.position.y - 1f;
         check.z = transform.position.z;
 
-        // 기본 플래그
-        // 만약 밑에 큐브가 아래로 떨어지는 중이라면 false 로
-        isFirstMoveDown = true;
         // 초기화
         actionDelay = 0f;
 
@@ -847,8 +840,6 @@ public class CubeMovement : MonoBehaviour
                 return false;
             }
 
-            // 처음 떨어지는 큐브가 아님
-            isFirstMoveDown = false;
             // 큐브 아래로
             isMoveDown = true;
             cubeMoveState = CubeMoveState.DOWN;
@@ -884,8 +875,6 @@ public class CubeMovement : MonoBehaviour
                 return false;
             }
 
-            // 처음 떨어지는 큐브가 아님
-            isFirstMoveDown = false;
             // 큐브 아래로
             isMoveDown = true;
             cubeMoveState = CubeMoveState.DOWN;
@@ -921,8 +910,6 @@ public class CubeMovement : MonoBehaviour
                 return false;
             }
 
-            // 처음 떨어지는 큐브가 아님
-            isFirstMoveDown = false;
             // 큐브 아래로
             isMoveDown = true;
             cubeMoveState = CubeMoveState.DOWN;
@@ -958,8 +945,6 @@ public class CubeMovement : MonoBehaviour
                 return false;
             }
 
-            // 처음 떨어지는 큐브가 아님
-            isFirstMoveDown = false;
             // 큐브 아래로
             isMoveDown = true;
             cubeMoveState = CubeMoveState.DOWN;
@@ -995,17 +980,18 @@ public class CubeMovement : MonoBehaviour
                 return false;
             }
 
-            // 처음 떨어지는 큐브가 아님
-            isFirstMoveDown = false;
             // 큐브 아래로
             isMoveDown = true;
             cubeMoveState = CubeMoveState.DOWN;
             return true;
         }
 
-        // 아래로 이동
-        //isMoveDown = true;
-        cubeMoveState = CubeMoveState.DOWN_READY;
+        // 처음 떨어지고 있는 중임
+        if (!isMoveDown)
+        {
+            cubeMoveState = CubeMoveState.DOWN_READY;
+        }
+        
         return true;
     }
 
@@ -1017,19 +1003,15 @@ public class CubeMovement : MonoBehaviour
             case CubeMoveState.DOWN_READY:
                 // 큐브 떨어짐 준비
 
-                if (isFirstMoveDown)
-                {
-                    actionDelay = actionDelay + Time.deltaTime;
+                actionDelay = actionDelay + Time.deltaTime;
 
-                    // 대기
-                    if (actionDelay < DOWN_DELAY)
-                    {
-                        break;
-                    }
-                    isMoveDown = true;
-                    isFirstMoveDown = false;
-                    cubeMoveState = CubeMoveState.DOWN;
+                // 대기
+                if (actionDelay < DOWN_DELAY)
+                {
+                    break;
                 }
+                isMoveDown = true;
+                cubeMoveState = CubeMoveState.DOWN;
 
                 break;
             case CubeMoveState.DOWN:
