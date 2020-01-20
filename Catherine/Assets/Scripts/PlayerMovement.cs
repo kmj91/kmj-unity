@@ -217,19 +217,6 @@ public class PlayerMovement : MonoBehaviour
         playerState = PlayerState.IDLE;
     }
 
-    // 캐릭터가 큐브에 압사
-    public void CrushedToDeath()
-    {
-        // 사망 플래그
-        isDeath = true;
-        // 플레이어 사망
-        playerState = PlayerState.CRUSHED_TO_DEATH;
-        // 애니메이션 압사
-        animeSwitch = AnimationSwitch.CRUSHED_TO_DEATH;
-        // 캐릭터 컨트롤러 비활성화
-        characterController.enabled = false;
-    }
-
 
     //--------------------------------
     // private 함수
@@ -292,6 +279,9 @@ public class PlayerMovement : MonoBehaviour
                 case PlayerState.L_DROP:
                 case PlayerState.F_DROP:
                 case PlayerState.B_DROP:
+                case PlayerState.IDLE:
+                    // 사망 플래그
+                    isDeath = true;
                     playerState = PlayerState.DEATH;
                     animeSwitch = AnimationSwitch.DROP_TO_DEATH;
                     break;
@@ -4929,7 +4919,10 @@ public class PlayerMovement : MonoBehaviour
         //Debug.Log(mouseClick);
         //Debug.Log(followCam.transform.eulerAngles);
         //Debug.Log("--------------------------------");
+        // 캐릭터 이동
         Move(moveKeyValue);
+        // 피해 체크
+        CheckDamage();
     }
 
     // 캐릭터 이동
@@ -4978,6 +4971,7 @@ public class PlayerMovement : MonoBehaviour
        // Debug.Log("eulerAngles" + GameObject.Find("Follow Cam").transform.eulerAngles);
     }
 
+    // 플레이어 애니메이션 업데이트
     private void UpdateAnimation()
     {
         Vector2 move;
@@ -5115,6 +5109,42 @@ public class PlayerMovement : MonoBehaviour
         animator.SetFloat("Vertical Move", move.y * animationSpeedPercent, 0.05f, Time.deltaTime);
         animator.SetFloat("Horizontal Move", move.x * animationSpeedPercent, 0.05f, Time.deltaTime);
     }
+
+
+    //-----------------------------------------------
+    // 피해 체크
+    //-----------------------------------------------
+    private void CheckDamage()
+    {
+        Vector3 box;            // 박스 크기
+
+        // 이미 죽어있음
+        if (isDeath)
+        {
+            return;
+        }
+
+        box.x = 0.1f;
+        box.y = 0.1f;
+        box.z = 0.1f;
+
+        if (Physics.CheckBox(headTrans.position, box, Quaternion.identity, layerMaskCube))
+        {
+            // 플레이어 캐릭터가 안죽었으면
+            if (!isDeath)
+            {
+                // 사망 플래그
+                isDeath = true;
+                // 플레이어 사망
+                playerState = PlayerState.CRUSHED_TO_DEATH;
+                // 애니메이션 압사
+                animeSwitch = AnimationSwitch.CRUSHED_TO_DEATH;
+                // 캐릭터 컨트롤러 비활성화
+                characterController.enabled = false;
+            }
+        }
+    }
+
 
     //-----------------------------------------------
     // 빙판 체크 true, false 값만 반환
