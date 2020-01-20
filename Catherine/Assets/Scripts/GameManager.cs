@@ -1,52 +1,42 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
-using static PlayerMovement;
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
-    private Transform playerHeadTrans;      // 플레이어 트랜스폼
     private PlayerMovement playerMovement;  // 플레이어 무브먼트
-    private LayerMask layerMaskCube;        // 큐브 레이어 마스크
+    private GameObject GameOverUI;
 
-    // Start is called before the first frame update
-    void Start()
+    private bool restartFlag;
+
+    private void Start()
     {
-        GameObject player = GameObject.Find("Player");
-
-        // 플레이어 머리
-        playerHeadTrans = player.transform.Find("Head");
         // 플레이어 무브먼트
-        playerMovement = player.GetComponent<PlayerMovement>();
-        // 레이어 마스크
-        layerMaskCube = 1 << LayerMask.NameToLayer("Cube");
+        playerMovement = GameObject.Find("Player").GetComponent<PlayerMovement>();
+        // UI
+        GameOverUI = GameObject.Find("Canvas").transform.Find("gameOverUI").gameObject;
+        // 다시시작 플래그
+        restartFlag = false;
     }
 
-    // Update is called once per frame
-    void Update()
+    private void Update()
     {
-        Vector3 box;            // 박스 크기
-
-        box.x = 0.1f;
-        box.y = 0.1f;
-        box.z = 0.1f;
-
-        if (Physics.CheckBox(playerHeadTrans.position, box, Quaternion.identity, layerMaskCube))
+        if (restartFlag)
         {
-            // 플레이어 캐릭터가 안죽었으면
-            if (!playerMovement.isDeath)
+            // 씬 다시 불러오기
+            if (Input.GetKeyDown(KeyCode.Space))
             {
-                playerMovement.CrushedToDeath();
-
-                // 속도 관련
-                //if (Physics.Raycast(playerHeadTrans.position, Vector3.up, out rayHit, 1f, layerMaskCube))
-                //{
-                //    rayHit.transform.gameObject.GetComponent<CubeMovement>().speed = 2f;
-                //}
+                SceneManager.LoadScene("SampleScene");
             }
         }
 
-        //Debug.Log("playerState : " + playerMovement.playerState);
+        if (playerMovement.isDeath)
+        {
+            // 게임오버
+            GameOverUI.SetActive(true);
+            // 다시 시작
+            restartFlag = true;
+        }
     }
 }
