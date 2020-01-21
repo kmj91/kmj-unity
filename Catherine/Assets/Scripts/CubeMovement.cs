@@ -22,6 +22,8 @@ public class CubeMovement : MonoBehaviour
     public bool slideEvent;
     // 떨어짐
     public bool isMoveDown;
+    // 스파크 이펙트
+    public ParticleSystem sparksEffect;
 
     //--------------------------------
     // private 변수
@@ -68,6 +70,8 @@ public class CubeMovement : MonoBehaviour
         actionDelay = 0f;
         // 중력
         isGravity = true;
+        sparksEffect.Play();
+        //sparksEffect.Stop();
     }
 
     
