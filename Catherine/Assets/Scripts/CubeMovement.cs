@@ -23,7 +23,10 @@ public class CubeMovement : MonoBehaviour
     // 떨어짐
     public bool isMoveDown;
     // 스파크 이펙트
-    public ParticleSystem sparksEffect;
+    public ParticleSystem RF_SparksEffect;
+    public ParticleSystem RB_SparksEffect;
+    public ParticleSystem LF_SparksEffect;
+    public ParticleSystem LB_SparksEffect;
 
     //--------------------------------
     // private 변수
@@ -70,8 +73,6 @@ public class CubeMovement : MonoBehaviour
         actionDelay = 0f;
         // 중력
         isGravity = true;
-        sparksEffect.Play();
-        //sparksEffect.Stop();
     }
 
     
@@ -79,6 +80,7 @@ public class CubeMovement : MonoBehaviour
     {
         MoveProcess();
     }
+
 
     private void OnTriggerEnter(Collider other)
     {
@@ -96,10 +98,104 @@ public class CubeMovement : MonoBehaviour
         cubeMoveState = CubeMoveState.IDLE;
     }
 
+
     private void OnTriggerExit(Collider other)
     {
         isGravity = true;
     }
+
+
+    // 큐브 이펙트 처리
+    private void EffectProcess(Vector3 dir)
+    {
+        Vector3 effectAngle;    // 이펙트 rotation 각도
+
+        //------------------------------------------
+        // 이펙트의 방향을
+        // 파라미터 dir의 방향에 맞게 변경합니다
+        //------------------------------------------
+        if (dir == Vector3.right)
+        {
+            effectAngle.x = 0f;
+            effectAngle.y = 270f;
+            effectAngle.z = 0f;
+        }
+        else if (dir == Vector3.left)
+        {
+            effectAngle.x = 0f;
+            effectAngle.y = 90f;
+            effectAngle.z = 0f;
+        }
+        else if (dir == Vector3.forward)
+        {
+            effectAngle.x = 0f;
+            effectAngle.y = 180f;
+            effectAngle.z = 0f;
+        }
+        else
+        {
+            effectAngle.x = 0f;
+            effectAngle.y = 0f;
+            effectAngle.z = 0f;
+        }
+        // 방향 적용
+        RF_SparksEffect.transform.eulerAngles = effectAngle;
+        RB_SparksEffect.transform.eulerAngles = effectAngle;
+        LF_SparksEffect.transform.eulerAngles = effectAngle;
+        LB_SparksEffect.transform.eulerAngles = effectAngle;
+
+        //------------------------------------------
+        // 이펙트 켜고 끄기
+        // 바닥에 큐브가있다면 마찰을 표현하려고
+        // 이펙트가 켜짐
+        // 없다면 끔
+        //------------------------------------------
+
+        // 있음
+        if (Physics.Raycast(RF_SparksEffect.transform.position, Vector3.down, 1f, layerMaskCube))
+        {
+            RF_SparksEffect.Play();
+        }
+        // 없음
+        else
+        {
+            RF_SparksEffect.Stop();
+        }
+
+        // 있음
+        if (Physics.Raycast(RB_SparksEffect.transform.position, Vector3.down, 1f, layerMaskCube))
+        {
+            RB_SparksEffect.Play();
+        }
+        // 없음
+        else
+        {
+            RB_SparksEffect.Stop();
+        }
+
+        // 있음
+        if (Physics.Raycast(LF_SparksEffect.transform.position, Vector3.down, 1f, layerMaskCube))
+        {
+            LF_SparksEffect.Play();
+        }
+        // 없음
+        else
+        {
+            LF_SparksEffect.Stop();
+        }
+
+        // 있음
+        if (Physics.Raycast(LB_SparksEffect.transform.position, Vector3.down, 1f, layerMaskCube))
+        {
+            LB_SparksEffect.Play();
+        }
+        // 없음
+        else
+        {
+            LB_SparksEffect.Stop();
+        }
+    }
+
 
     //--------------------------------
     // public 함수
@@ -385,7 +481,7 @@ public class CubeMovement : MonoBehaviour
                 // 이동 좌표
                 destPos = transform.position;
                 destPos.x = destPos.x - 1f;
-                // 오른쪽 이동
+                // 왼쪽 이동
                 cubeMoveState = CubeMoveState.LEFT;
             }
 
@@ -567,7 +663,7 @@ public class CubeMovement : MonoBehaviour
                 // 이동 좌표
                 destPos = transform.position;
                 destPos.z = destPos.z + 1f;
-                // 오른쪽 이동
+                // 앞쪽 이동
                 cubeMoveState = CubeMoveState.FORWARD;
             }
 
@@ -749,7 +845,7 @@ public class CubeMovement : MonoBehaviour
                 // 이동 좌표
                 destPos = transform.position;
                 destPos.z = destPos.z - 1f;
-                // 오른쪽 이동
+                // 뒤쪽 이동
                 cubeMoveState = CubeMoveState.BACK;
             }
 
@@ -1052,6 +1148,9 @@ public class CubeMovement : MonoBehaviour
                 // 오른쪽 이동
                 transform.position = transform.position + (Vector3.right * horizontalSpeed) * Time.deltaTime;
 
+                // 이펙트 처리
+                EffectProcess(Vector3.right);
+
                 // 수평 이동 거리만큼 이동 했는가
                 if (destPos.x <= transform.position.x) {
                     // 위치 맞추기
@@ -1080,12 +1179,20 @@ public class CubeMovement : MonoBehaviour
 
                         // 큐브 정지
                         cubeMoveState = CubeMoveState.IDLE;
+                        // 이펙트 끄기
+                        RF_SparksEffect.Stop();
+                        RB_SparksEffect.Stop();
+                        LF_SparksEffect.Stop();
+                        LB_SparksEffect.Stop();
                     }
                 }
                 break;
             case CubeMoveState.LEFT:
                 // 왼쪽 이동
                 transform.position = transform.position + (Vector3.left * horizontalSpeed) * Time.deltaTime;
+
+                // 이펙트 처리
+                EffectProcess(Vector3.left);
 
                 // 수평 이동 거리만큼 이동 했는가
                 if (destPos.x >= transform.position.x)
@@ -1116,12 +1223,20 @@ public class CubeMovement : MonoBehaviour
 
                         // 큐브 정지
                         cubeMoveState = CubeMoveState.IDLE;
+                        // 이펙트 끄기
+                        RF_SparksEffect.Stop();
+                        RB_SparksEffect.Stop();
+                        LF_SparksEffect.Stop();
+                        LB_SparksEffect.Stop();
                     }
                 }
                 break;
             case CubeMoveState.FORWARD:
                 // 앞쪽 이동
                 transform.position = transform.position + (Vector3.forward * horizontalSpeed) * Time.deltaTime;
+
+                // 이펙트 처리
+                EffectProcess(Vector3.forward);
 
                 // 수평 이동 거리만큼 이동 했는가
                 if (destPos.z <= transform.position.z)
@@ -1152,12 +1267,20 @@ public class CubeMovement : MonoBehaviour
 
                         // 큐브 정지
                         cubeMoveState = CubeMoveState.IDLE;
+                        // 이펙트 끄기
+                        RF_SparksEffect.Stop();
+                        RB_SparksEffect.Stop();
+                        LF_SparksEffect.Stop();
+                        LB_SparksEffect.Stop();
                     }
                 }
                 break;
             case CubeMoveState.BACK:
-                // 앞쪽 이동
+                // 뒤쪽 이동
                 transform.position = transform.position + (Vector3.back * horizontalSpeed) * Time.deltaTime;
+
+                // 이펙트 처리
+                EffectProcess(Vector3.back);
 
                 // 수평 이동 거리만큼 이동 했는가
                 if (destPos.z >= transform.position.z)
@@ -1188,6 +1311,11 @@ public class CubeMovement : MonoBehaviour
 
                         // 큐브 정지
                         cubeMoveState = CubeMoveState.IDLE;
+                        // 이펙트 끄기
+                        RF_SparksEffect.Stop();
+                        RB_SparksEffect.Stop();
+                        LF_SparksEffect.Stop();
+                        LB_SparksEffect.Stop();
                     }
                 }
                 break;
