@@ -16,17 +16,23 @@ public class CubeMovement : MonoBehaviour
     public float horizontalSpeed;
     // 큐브 수직 이동 속도
     public float verticalSpeed;
+    // 교체할 중력 값
+    public ParticleSystem.MinMaxCurve iceEffectGravity;
+    // 교체할 크기
+    public ParticleSystem.MinMaxCurve iceEffectSize;
     // 큐브 이동 목표 좌표
     public Vector3 destPos;
     // 미끄러짐
     public bool slideEvent;
     // 떨어짐
-    public bool isMoveDown;
+    public bool isMoveDown; 
     // 스파크 이펙트
     public ParticleSystem RF_SparksEffect;
     public ParticleSystem RB_SparksEffect;
     public ParticleSystem LF_SparksEffect;
     public ParticleSystem LB_SparksEffect;
+
+    public Material mate;
 
     //--------------------------------
     // private 변수
@@ -36,6 +42,15 @@ public class CubeMovement : MonoBehaviour
     private LayerMask layerMaskCube;
     // 중력 영향을 받는가
     private bool isGravity;
+    // 교체될 컬러
+    private Color IceColor;
+    // 재질 블럭
+    private MaterialPropertyBlock materialBlock;
+    // 원본 중력 값
+    private ParticleSystem.MinMaxCurve originalEffectGravityModifier;
+    // 원본 크기
+    private ParticleSystem.MinMaxCurve originalEffectStartSize;
+
 
     //--------------------------------
     // enum
@@ -65,6 +80,8 @@ public class CubeMovement : MonoBehaviour
 
     private void Start()
     {
+        ParticleSystem.MainModule particleMain;     // 파티클 메인
+
         // 상태
         cubeMoveState = CubeMoveState.IDLE;
         // 레이어 마스크 큐브
@@ -74,17 +91,39 @@ public class CubeMovement : MonoBehaviour
         // 중력
         isGravity = true;
 
+        // 재질 블럭 할당
+        materialBlock = new MaterialPropertyBlock();
+        // 교체할 컬러
+        IceColor = mate.GetColor(Shader.PropertyToID("_EmissionColor"));
+        // 재질 블럭
+        materialBlock.SetColor(Shader.PropertyToID("_EmissionColor"), IceColor);
 
-        if (gameObject.CompareTag("NormalCube"))
+        // 중력 값, 크기 교체
+        particleMain = RF_SparksEffect.main;
+        originalEffectGravityModifier = particleMain.gravityModifier;
+        originalEffectStartSize = particleMain.startSize;
+
+        // 얼음 큐브면
+        if (gameObject.CompareTag("IceCube"))
         {
-            var col = RB_SparksEffect.colorOverLifetime;
-            col.enabled = true;
-
-            Gradient grad = new Gradient();
-            grad.SetKeys(new GradientColorKey[] { new GradientColorKey(Color.blue, 0.0f), new GradientColorKey(Color.red, 1.0f) },
-                        new GradientAlphaKey[] { new GradientAlphaKey(1.0f, 0.0f), new GradientAlphaKey(0.0f, 1.0f) });
-
-            col.color = new ParticleSystem.MinMaxGradient(grad);
+            // 이펙트 재질 교체
+            RF_SparksEffect.gameObject.GetComponent<Renderer>().SetPropertyBlock(materialBlock);
+            RB_SparksEffect.gameObject.GetComponent<Renderer>().SetPropertyBlock(materialBlock);
+            LF_SparksEffect.gameObject.GetComponent<Renderer>().SetPropertyBlock(materialBlock);
+            LB_SparksEffect.gameObject.GetComponent<Renderer>().SetPropertyBlock(materialBlock);
+            // 중력 값, 크기 교체
+            particleMain = RF_SparksEffect.main;
+            particleMain.gravityModifier = iceEffectGravity;
+            particleMain.startSize = iceEffectSize;
+            particleMain = RB_SparksEffect.main;
+            particleMain.gravityModifier = iceEffectGravity;
+            particleMain.startSize = iceEffectSize;
+            particleMain = LF_SparksEffect.main;
+            particleMain.gravityModifier = iceEffectGravity;
+            particleMain.startSize = iceEffectSize;
+            particleMain = LB_SparksEffect.main;
+            particleMain.gravityModifier = iceEffectGravity;
+            particleMain.startSize = iceEffectSize;
         }
     }
 
@@ -122,6 +161,8 @@ public class CubeMovement : MonoBehaviour
     private void EffectProcess(Vector3 dir)
     {
         Vector3 effectAngle;    // 이펙트 rotation 각도
+        RaycastHit rayHit;      // 레이 충돌한 물체
+        ParticleSystem.MainModule particleMain;     // 파티클 메인
 
         //------------------------------------------
         // 이펙트의 방향을
@@ -164,47 +205,163 @@ public class CubeMovement : MonoBehaviour
         // 없다면 끔
         //------------------------------------------
 
+        //------------------------------
+        // RF
         // 있음
-        if (Physics.Raycast(RF_SparksEffect.transform.position, Vector3.down, 1f, layerMaskCube))
+        //------------------------------
+        if (Physics.Raycast(RF_SparksEffect.transform.position, Vector3.down, out rayHit, 1f, layerMaskCube))
         {
+            // 아이스 큐브가 아니면
+            if (!gameObject.CompareTag("IceCube"))
+            {
+                // 바닥이 아이스 큐브면
+                if (rayHit.transform.gameObject.CompareTag("IceCube"))
+                {
+                    // 이펙트 재질 교체
+                    RF_SparksEffect.gameObject.GetComponent<Renderer>().SetPropertyBlock(materialBlock);
+                    // 중력 값, 크기 교체
+                    particleMain = RF_SparksEffect.main;
+                    particleMain.gravityModifier = iceEffectGravity;
+                    particleMain.startSize = iceEffectSize;
+                }
+                // 바닥이 아이스 큐브가 아니면
+                else
+                {
+                    // 이펙트 재질 원상태로 복구
+                    RF_SparksEffect.gameObject.GetComponent<Renderer>().SetPropertyBlock(null);
+                    // 중력 값, 크기 복구
+                    particleMain = RF_SparksEffect.main;
+                    particleMain.gravityModifier = originalEffectGravityModifier;
+                    particleMain.startSize = originalEffectStartSize;
+                }
+            }
+            // 이펙트 재생
             RF_SparksEffect.Play();
         }
         // 없음
         else
         {
+            // 이펙트 재생 정지
             RF_SparksEffect.Stop();
         }
 
+        //------------------------------
+        // RB
         // 있음
-        if (Physics.Raycast(RB_SparksEffect.transform.position, Vector3.down, 1f, layerMaskCube))
+        //------------------------------
+        if (Physics.Raycast(RB_SparksEffect.transform.position, Vector3.down, out rayHit, 1f, layerMaskCube))
         {
+            // 아이스 큐브가 아니면
+            if (!gameObject.CompareTag("IceCube"))
+            {
+                // 바닥이 아이스 큐브면
+                if (rayHit.transform.gameObject.CompareTag("IceCube"))
+                {
+                    // 이펙트 재질 교체
+                    RB_SparksEffect.gameObject.GetComponent<Renderer>().SetPropertyBlock(materialBlock);
+                    // 중력 값, 크기 교체
+                    particleMain = RB_SparksEffect.main;
+                    particleMain.gravityModifier = iceEffectGravity;
+                    particleMain.startSize = iceEffectSize;
+                }
+                // 바닥이 아이스 큐브가 아니면
+                else
+                {
+                    // 이펙트 재질 원상태로 복구
+                    RB_SparksEffect.gameObject.GetComponent<Renderer>().SetPropertyBlock(null);
+                    // 중력 값, 크기 복구
+                    particleMain = RB_SparksEffect.main;
+                    particleMain.gravityModifier = originalEffectGravityModifier;
+                    particleMain.startSize = originalEffectStartSize;
+                }
+            }
+            // 이펙트 재생
             RB_SparksEffect.Play();
         }
         // 없음
         else
         {
+            // 이펙트 재생 정지
             RB_SparksEffect.Stop();
         }
 
+        //------------------------------
+        // LF
         // 있음
-        if (Physics.Raycast(LF_SparksEffect.transform.position, Vector3.down, 1f, layerMaskCube))
+        //------------------------------
+        if (Physics.Raycast(LF_SparksEffect.transform.position, Vector3.down, out rayHit, 1f, layerMaskCube))
         {
+            // 아이스 큐브가 아니면
+            if (!gameObject.CompareTag("IceCube"))
+            {
+                // 바닥이 아이스 큐브면
+                if (rayHit.transform.gameObject.CompareTag("IceCube"))
+                {
+                    // 이펙트 재질 교체
+                    LF_SparksEffect.gameObject.GetComponent<Renderer>().SetPropertyBlock(materialBlock);
+                    // 중력 값, 크기 교체
+                    particleMain = LF_SparksEffect.main;
+                    particleMain.gravityModifier = iceEffectGravity;
+                    particleMain.startSize = iceEffectSize;
+                }
+                // 바닥이 아이스 큐브가 아니면
+                else
+                {
+                    // 이펙트 재질 원상태로 복구
+                    LF_SparksEffect.gameObject.GetComponent<Renderer>().SetPropertyBlock(null);
+                    // 중력 값, 크기 복구
+                    particleMain = LF_SparksEffect.main;
+                    particleMain.gravityModifier = originalEffectGravityModifier;
+                    particleMain.startSize = originalEffectStartSize;
+                }
+            }
+            // 이펙트 재생
             LF_SparksEffect.Play();
         }
         // 없음
         else
         {
+            // 이펙트 재생 정지
             LF_SparksEffect.Stop();
         }
 
+        //------------------------------
+        // LB
         // 있음
-        if (Physics.Raycast(LB_SparksEffect.transform.position, Vector3.down, 1f, layerMaskCube))
+        //------------------------------
+        if (Physics.Raycast(LB_SparksEffect.transform.position, Vector3.down, out rayHit, 1f, layerMaskCube))
         {
+            // 아이스 큐브가 아니면
+            if (!gameObject.CompareTag("IceCube"))
+            {
+                // 바닥이 아이스 큐브면
+                if (rayHit.transform.gameObject.CompareTag("IceCube"))
+                {
+                    // 이펙트 재질 교체
+                    LB_SparksEffect.gameObject.GetComponent<Renderer>().SetPropertyBlock(materialBlock);
+                    // 중력 값, 크기 교체
+                    particleMain = LB_SparksEffect.main;
+                    particleMain.gravityModifier = iceEffectGravity;
+                    particleMain.startSize = iceEffectSize;
+                }
+                // 바닥이 아이스 큐브가 아니면
+                else
+                {
+                    // 이펙트 재질 원상태로 복구
+                    LB_SparksEffect.gameObject.GetComponent<Renderer>().SetPropertyBlock(null);
+                    // 중력 값, 크기 복구
+                    particleMain = LB_SparksEffect.main;
+                    particleMain.gravityModifier = originalEffectGravityModifier;
+                    particleMain.startSize = originalEffectStartSize;
+                }
+            }
+            // 이펙트 재생
             LB_SparksEffect.Play();
         }
         // 없음
         else
         {
+            // 이펙트 재생 정지
             LB_SparksEffect.Stop();
         }
     }
@@ -1192,11 +1349,6 @@ public class CubeMovement : MonoBehaviour
 
                         // 큐브 정지
                         cubeMoveState = CubeMoveState.IDLE;
-                        // 이펙트 끄기
-                        RF_SparksEffect.Stop();
-                        RB_SparksEffect.Stop();
-                        LF_SparksEffect.Stop();
-                        LB_SparksEffect.Stop();
                     }
                 }
                 break;
@@ -1236,11 +1388,6 @@ public class CubeMovement : MonoBehaviour
 
                         // 큐브 정지
                         cubeMoveState = CubeMoveState.IDLE;
-                        // 이펙트 끄기
-                        RF_SparksEffect.Stop();
-                        RB_SparksEffect.Stop();
-                        LF_SparksEffect.Stop();
-                        LB_SparksEffect.Stop();
                     }
                 }
                 break;
@@ -1280,11 +1427,6 @@ public class CubeMovement : MonoBehaviour
 
                         // 큐브 정지
                         cubeMoveState = CubeMoveState.IDLE;
-                        // 이펙트 끄기
-                        RF_SparksEffect.Stop();
-                        RB_SparksEffect.Stop();
-                        LF_SparksEffect.Stop();
-                        LB_SparksEffect.Stop();
                     }
                 }
                 break;
@@ -1324,15 +1466,15 @@ public class CubeMovement : MonoBehaviour
 
                         // 큐브 정지
                         cubeMoveState = CubeMoveState.IDLE;
-                        // 이펙트 끄기
-                        RF_SparksEffect.Stop();
-                        RB_SparksEffect.Stop();
-                        LF_SparksEffect.Stop();
-                        LB_SparksEffect.Stop();
                     }
                 }
                 break;
             default:
+                // 이펙트 끄기
+                RF_SparksEffect.Stop();
+                RB_SparksEffect.Stop();
+                LF_SparksEffect.Stop();
+                LB_SparksEffect.Stop();
                 // 떨어지는 상황인지 확인
                 GravityCheck();
                 break;
