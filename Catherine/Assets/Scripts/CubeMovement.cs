@@ -16,6 +16,8 @@ public class CubeMovement : MonoBehaviour
     public float horizontalSpeed;
     // 큐브 수직 이동 속도
     public float verticalSpeed;
+    // 큐브가 아래로 이동할 때의 딜레이
+    public float downDelay;
     // 교체할 중력 값
     public ParticleSystem.MinMaxCurve iceEffectGravity;
     // 교체할 크기
@@ -66,13 +68,6 @@ public class CubeMovement : MonoBehaviour
         FORWARD,                    // 앞쪽
         BACK                        // 뒤쪽
     }
-
-    //--------------------------------
-    // 상수
-    //--------------------------------
-
-    // 큐브가 아래로 이동할 때의 딜레이
-    public const float DOWN_DELAY = 1.5f;
 
     //--------------------------------
     // private 함수
@@ -373,13 +368,13 @@ public class CubeMovement : MonoBehaviour
 
     public float GetDelayTime()
     {
-        if (actionDelay > DOWN_DELAY)
+        if (actionDelay > downDelay)
         {
             return 0;
         }
         else
         {
-            return DOWN_DELAY - actionDelay;
+            return downDelay - actionDelay;
         }
     }
 
@@ -1284,7 +1279,12 @@ public class CubeMovement : MonoBehaviour
 
     private void MoveProcess()
     {
+        Vector3 transAngle;     // 큐브 Rotation
         RaycastHit rayHit;      // 레이 충돌한 물체
+
+        transAngle.x = 0f;
+        transAngle.y = 0f;
+        transAngle.z = 0f;
 
         switch (cubeMoveState) {
             case CubeMoveState.DOWN_READY:
@@ -1293,12 +1293,32 @@ public class CubeMovement : MonoBehaviour
                 actionDelay = actionDelay + Time.deltaTime;
 
                 // 대기
-                if (actionDelay < DOWN_DELAY)
+                if (actionDelay < downDelay)
                 {
+                    // 큐브 흔들기
+                    if (transform.eulerAngles.z == 0f)
+                    {
+                        transAngle.z = 1f;
+                        transform.eulerAngles = transAngle;
+                    }
+                    else if (transform.eulerAngles.z == 1f)
+                    {
+                        transAngle.z = -1f;
+                        transform.eulerAngles = transAngle;
+                    }
+                    else
+                    {
+                        transAngle.z = 1f;
+                        transform.eulerAngles = transAngle;
+                    }
+
                     break;
                 }
+                // 아래로 떨어짐
                 isMoveDown = true;
                 cubeMoveState = CubeMoveState.DOWN;
+                // 큐브 Rotation 원상태로 복구
+                transform.eulerAngles = transAngle;
 
                 break;
             case CubeMoveState.DOWN:

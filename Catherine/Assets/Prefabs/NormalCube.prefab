@@ -128,6 +128,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   horizontalSpeed: 4
   verticalSpeed: 2
+  downDelay: 1
   iceEffectGravity:
     m_Mode: 0
     m_CurveMultiplier: 0
@@ -170,40 +171,6 @@ MonoBehaviour:
   LF_SparksEffect: {fileID: 198000011736848918}
   LB_SparksEffect: {fileID: 198000012577209837}
   mate: {fileID: 2100000, guid: 43945e5982d2f5e44b92aa9cf877d112, type: 2}
-  originalEffectGravityModifier:
-    m_Mode: 0
-    m_CurveMultiplier: 0
-    m_CurveMin:
-      serializedVersion: 2
-      m_Curve: []
-      m_PreInfinity: 2
-      m_PostInfinity: 2
-      m_RotationOrder: 4
-    m_CurveMax:
-      serializedVersion: 2
-      m_Curve: []
-      m_PreInfinity: 2
-      m_PostInfinity: 2
-      m_RotationOrder: 4
-    m_ConstantMin: 0
-    m_ConstantMax: 0
-  originalEffectStartSize:
-    m_Mode: 0
-    m_CurveMultiplier: 0
-    m_CurveMin:
-      serializedVersion: 2
-      m_Curve: []
-      m_PreInfinity: 2
-      m_PostInfinity: 2
-      m_RotationOrder: 4
-    m_CurveMax:
-      serializedVersion: 2
-      m_Curve: []
-      m_PreInfinity: 2
-      m_PostInfinity: 2
-      m_RotationOrder: 4
-    m_ConstantMin: 0
-    m_ConstantMax: 0
 --- !u!1001 &233633189
 PrefabInstance:
   m_ObjectHideFlags: 0
