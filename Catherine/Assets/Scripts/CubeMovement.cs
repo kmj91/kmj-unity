@@ -40,6 +40,10 @@ public class CubeMovement : MonoBehaviour
     // private 변수
     //--------------------------------
 
+    // 틱 토큰
+    private int tickToken;
+    // 큐브 흔들림 틱
+    private float downTick;
     // 레이어 마스크 큐브
     private LayerMask layerMaskCube;
     // 중력 영향을 받는가
@@ -69,6 +73,14 @@ public class CubeMovement : MonoBehaviour
         BACK                        // 뒤쪽
     }
 
+
+    //--------------------------------
+    // 상수
+    //--------------------------------
+
+    private const float TICK_DELAY = 0.08f;
+
+
     //--------------------------------
     // private 함수
     //--------------------------------
@@ -83,6 +95,10 @@ public class CubeMovement : MonoBehaviour
         layerMaskCube = 1 << LayerMask.NameToLayer("Cube");
         // 딜레이
         actionDelay = 0f;
+        // 틱 토큰
+        tickToken = 0;
+        // 큐브 흔들림 틱
+        downTick = 0f;
         // 중력
         isGravity = true;
 
@@ -1296,20 +1312,59 @@ public class CubeMovement : MonoBehaviour
                 if (actionDelay < downDelay)
                 {
                     // 큐브 흔들기
-                    if (transform.eulerAngles.z == 0f)
+                    switch (tickToken)
                     {
-                        transAngle.z = 1f;
-                        transform.eulerAngles = transAngle;
-                    }
-                    else if (transform.eulerAngles.z == 1f)
-                    {
-                        transAngle.z = -1f;
-                        transform.eulerAngles = transAngle;
-                    }
-                    else
-                    {
-                        transAngle.z = 1f;
-                        transform.eulerAngles = transAngle;
+                        case 0:
+                            downTick = downTick + Time.deltaTime;
+                            if (downTick < TICK_DELAY)
+                            {
+                                break;
+                            }
+                            tickToken = 1;
+                            downTick = 0f;
+                            transAngle.x = -0.5f;
+                            transAngle.z = -1f;
+                            transform.eulerAngles = transAngle;
+                            break;
+                        case 1:
+                            downTick = downTick + Time.deltaTime;
+                            if (downTick < TICK_DELAY)
+                            {
+                                break;
+                            }
+                            tickToken = 2;
+                            downTick = 0f;
+                            transAngle.x = 0.5f;
+                            transAngle.y = -0.5f;
+                            transAngle.z = 1f;
+                            transform.eulerAngles = transAngle;
+                            break;
+                        case 2:
+                            downTick = downTick + Time.deltaTime;
+                            if (downTick < TICK_DELAY)
+                            {
+                                break;
+                            }
+                            tickToken = 3;
+                            downTick = 0f;
+                            transAngle.x = -0.5f;
+                            transAngle.y = 1f;
+                            transAngle.z = -0.5f;
+                            transform.eulerAngles = transAngle;
+                            break;
+                        case 3:
+                            downTick = downTick + Time.deltaTime;
+                            if (downTick < TICK_DELAY)
+                            {
+                                break;
+                            }
+                            tickToken = 0;
+                            downTick = 0f;
+                            transAngle.x = 1f;
+                            transAngle.y = -0.5f;
+                            transAngle.z = 0.5f;
+                            transform.eulerAngles = transAngle;
+                            break;
                     }
 
                     break;
@@ -1319,6 +1374,8 @@ public class CubeMovement : MonoBehaviour
                 cubeMoveState = CubeMoveState.DOWN;
                 // 큐브 Rotation 원상태로 복구
                 transform.eulerAngles = transAngle;
+                tickToken = 0;
+                downTick = 0f;
 
                 break;
             case CubeMoveState.DOWN:
