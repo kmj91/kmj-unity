@@ -44,6 +44,8 @@ public class CubeMovement : MonoBehaviour
     private int tickToken;
     // 큐브 흔들림 틱
     private float downTick;
+    // 당겨질 때의 속도
+    private float pullSpeed;
     // 레이어 마스크 큐브
     private LayerMask layerMaskCube;
     // 중력 영향을 받는가
@@ -70,7 +72,11 @@ public class CubeMovement : MonoBehaviour
         RIGHT,                      // 오른쪽
         LEFT,                       // 왼쪽
         FORWARD,                    // 앞쪽
-        BACK                        // 뒤쪽
+        BACK,                       // 뒤쪽
+        PULL_RIGHT,                 // 오른쪽 당겨짐
+        PULL_LEFT,                  // 왼쪽 당겨짐
+        PULL_FORWARD,               // 앞쪽 당겨짐
+        PULL_BACK                   // 뒤쪽 당겨짐
     }
 
 
@@ -99,6 +105,8 @@ public class CubeMovement : MonoBehaviour
         tickToken = 0;
         // 큐브 흔들림 틱
         downTick = 0f;
+        // 당겨질 때의 속도
+        pullSpeed = 0f;
         // 중력
         isGravity = true;
 
@@ -1125,6 +1133,58 @@ public class CubeMovement : MonoBehaviour
         return true;
     }
 
+
+    // 큐브 오른쪽 당겨짐
+    public void PullRight(float playerSpeed)
+    {
+        // 이동 좌표
+        destPos = transform.position;
+        destPos.x = destPos.x + 1f;
+        // 앞쪽 이동
+        cubeMoveState = CubeMoveState.PULL_RIGHT;
+        // 당겨질 때의 속도 플레이어 속도와 맞춤
+        pullSpeed = playerSpeed;
+    }
+
+
+    // 큐브 왼쪽 당겨짐
+    public void PullLeft(float playerSpeed)
+    {
+        // 이동 좌표
+        destPos = transform.position;
+        destPos.x = destPos.x - 1f;
+        // 앞쪽 이동
+        cubeMoveState = CubeMoveState.PULL_LEFT;
+        // 당겨질 때의 속도 플레이어 속도와 맞춤
+        pullSpeed = playerSpeed;
+    }
+
+
+    // 큐브 앞쪽 당겨짐
+    public void PullForward(float playerSpeed)
+    {
+        // 이동 좌표
+        destPos = transform.position;
+        destPos.z = destPos.z + 1f;
+        // 앞쪽 이동
+        cubeMoveState = CubeMoveState.PULL_FORWARD;
+        // 당겨질 때의 속도 플레이어 속도와 맞춤
+        pullSpeed = playerSpeed;
+    }
+
+
+    // 큐브 뒤쪽 당겨짐
+    public void PullBack(float playerSpeed)
+    {
+        // 이동 좌표
+        destPos = transform.position;
+        destPos.z = destPos.z - 1f;
+        // 앞쪽 이동
+        cubeMoveState = CubeMoveState.PULL_BACK;
+        // 당겨질 때의 속도 플레이어 속도와 맞춤
+        pullSpeed = playerSpeed;
+    }
+
     public bool GravityCheck()
     {
         Vector3 ray;            // 레이 시작점
@@ -1544,6 +1604,70 @@ public class CubeMovement : MonoBehaviour
                         // 큐브 정지
                         cubeMoveState = CubeMoveState.IDLE;
                     }
+                }
+                break;
+            case CubeMoveState.PULL_RIGHT:
+                // 오른쪽 당겨짐
+                transform.position = transform.position + (Vector3.right * pullSpeed) * Time.deltaTime;
+
+                // 이펙트 처리
+                EffectProcess(Vector3.right);
+
+                // 수평 이동 거리만큼 이동 했는가
+                if (destPos.x <= transform.position.x)
+                {
+                    // 위치 맞추기
+                    transform.position = destPos;
+                    // 큐브 정지
+                    cubeMoveState = CubeMoveState.IDLE;
+                }
+                break;
+            case CubeMoveState.PULL_LEFT:
+                // 왼쪽 당겨짐
+                transform.position = transform.position + (Vector3.left * pullSpeed) * Time.deltaTime;
+
+                // 이펙트 처리
+                EffectProcess(Vector3.left);
+
+                // 수평 이동 거리만큼 이동 했는가
+                if (destPos.x >= transform.position.x)
+                {
+                    // 위치 맞추기
+                    transform.position = destPos;
+                    // 큐브 정지
+                    cubeMoveState = CubeMoveState.IDLE;
+                }
+                break;
+            case CubeMoveState.PULL_FORWARD:
+                // 앞쪽 당겨짐
+                transform.position = transform.position + (Vector3.forward * pullSpeed) * Time.deltaTime;
+
+                // 이펙트 처리
+                EffectProcess(Vector3.right);
+
+                // 수평 이동 거리만큼 이동 했는가
+                if (destPos.z <= transform.position.z)
+                {
+                    // 위치 맞추기
+                    transform.position = destPos;
+                    // 큐브 정지
+                    cubeMoveState = CubeMoveState.IDLE;
+                }
+                break;
+            case CubeMoveState.PULL_BACK:
+                // 뒤쪽 당겨짐
+                transform.position = transform.position + (Vector3.back * pullSpeed) * Time.deltaTime;
+
+                // 이펙트 처리
+                EffectProcess(Vector3.back);
+
+                // 수평 이동 거리만큼 이동 했는가
+                if (destPos.z >= transform.position.z)
+                {
+                    // 위치 맞추기
+                    transform.position = destPos;
+                    // 큐브 정지
+                    cubeMoveState = CubeMoveState.IDLE;
                 }
                 break;
             default:
