@@ -1356,6 +1356,7 @@ public class CubeMovement : MonoBehaviour
     private void MoveProcess()
     {
         Vector3 transAngle;     // 큐브 Rotation
+        Vector3 tempPosition;   // 임시 큐브 좌표
         RaycastHit rayHit;      // 레이 충돌한 물체
 
         transAngle.x = 0f;
@@ -1608,58 +1609,105 @@ public class CubeMovement : MonoBehaviour
                 break;
             case CubeMoveState.PULL_RIGHT:
                 // 오른쪽 당겨짐
-                transform.position = transform.position + (Vector3.right * pullSpeed) * Time.deltaTime;
+                tempPosition = transform.position + (Vector3.right * pullSpeed) * Time.deltaTime;
 
                 // 이펙트 처리
                 EffectProcess(Vector3.right);
 
+                //---------------------------
+                // 소수점 올림
+                // dest <= tempPosition
+                //   1  <=  0.999
+                // 위와 같은 상황 방지
+                //---------------------------
+                tempPosition.x = Mathf.Ceil(tempPosition.x * 1000) / 1000;
+
                 // 수평 이동 거리만큼 이동 했는가
-                if (destPos.x <= transform.position.x)
+                if (destPos.x <= tempPosition.x)
                 {
                     // 위치 맞추기
                     transform.position = destPos;
                     // 큐브 정지
                     cubeMoveState = CubeMoveState.IDLE;
+                }
+                else
+                {
+                    // 큐브 좌표 갱신
+                    transform.position = tempPosition;
                 }
                 break;
             case CubeMoveState.PULL_LEFT:
                 // 왼쪽 당겨짐
-                transform.position = transform.position + (Vector3.left * pullSpeed) * Time.deltaTime;
+                tempPosition = transform.position + (Vector3.left * pullSpeed) * Time.deltaTime;
 
                 // 이펙트 처리
                 EffectProcess(Vector3.left);
 
+                //---------------------------
+                // 소수점 버림
+                // dest <= tempPosition
+                //   1  <=  1.001
+                // 위와 같은 상황 방지
+                //---------------------------
+                tempPosition.x = Mathf.Floor(tempPosition.x * 1000) / 1000;
+
                 // 수평 이동 거리만큼 이동 했는가
-                if (destPos.x >= transform.position.x)
+                if (destPos.x >= tempPosition.x)
                 {
                     // 위치 맞추기
                     transform.position = destPos;
                     // 큐브 정지
                     cubeMoveState = CubeMoveState.IDLE;
+                }
+                else
+                {
+                    // 큐브 좌표 갱신
+                    transform.position = tempPosition;
                 }
                 break;
             case CubeMoveState.PULL_FORWARD:
                 // 앞쪽 당겨짐
-                transform.position = transform.position + (Vector3.forward * pullSpeed) * Time.deltaTime;
+                tempPosition = transform.position + (Vector3.forward * pullSpeed) * Time.deltaTime;
 
                 // 이펙트 처리
-                EffectProcess(Vector3.right);
+                EffectProcess(Vector3.forward);
+
+                //---------------------------
+                // 소수점 올림
+                // dest <= tempPosition
+                //   1  <=  0.99999
+                // 위와 같은 상황 방지
+                //---------------------------
+                tempPosition.z = Mathf.Ceil(tempPosition.z * 1000) / 1000;
 
                 // 수평 이동 거리만큼 이동 했는가
-                if (destPos.z <= transform.position.z)
+                if (destPos.z <= tempPosition.z)
                 {
                     // 위치 맞추기
                     transform.position = destPos;
                     // 큐브 정지
                     cubeMoveState = CubeMoveState.IDLE;
                 }
+                else
+                {
+                    // 큐브 좌표 갱신
+                    transform.position = tempPosition;
+                }
                 break;
             case CubeMoveState.PULL_BACK:
                 // 뒤쪽 당겨짐
-                transform.position = transform.position + (Vector3.back * pullSpeed) * Time.deltaTime;
+                tempPosition = transform.position + (Vector3.back * pullSpeed) * Time.deltaTime;
 
                 // 이펙트 처리
                 EffectProcess(Vector3.back);
+
+                //---------------------------
+                // 소수점 버림
+                // dest <= tempPosition
+                //   1  <=  1.001
+                // 위와 같은 상황 방지
+                //---------------------------
+                tempPosition.z = Mathf.Floor(tempPosition.z * 1000) / 1000;
 
                 // 수평 이동 거리만큼 이동 했는가
                 if (destPos.z >= transform.position.z)
@@ -1668,6 +1716,11 @@ public class CubeMovement : MonoBehaviour
                     transform.position = destPos;
                     // 큐브 정지
                     cubeMoveState = CubeMoveState.IDLE;
+                }
+                else
+                {
+                    // 큐브 좌표 갱신
+                    transform.position = tempPosition;
                 }
                 break;
             default:

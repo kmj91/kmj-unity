@@ -2023,8 +2023,8 @@ public class PlayerMovement : MonoBehaviour
                         {
                             // 오른쪽 상호작용 당김
                             playerState = PlayerState.R_INTERACTION_PULL;
-                            // Move 함수에서 처리할 키 값
-                            moveKeyValue = Vector2.left;
+                            // 큐브 왼쪽으로 당겨짐
+                            cubeObject.GetComponent<CubeMovement>().PullLeft(speed);
                         }
                         // 없다
                         // 당기고 매달림
@@ -2034,9 +2034,12 @@ public class PlayerMovement : MonoBehaviour
                             playerState = PlayerState.R_INTERACTION_PULL_CLIMBING;
                             // 아래쪽에 매달림
                             destPos.y = destPos.y - 1f;
-                            // Move 함수에서 처리할 키 값
-                            moveKeyValue = Vector2.left;
+                            // 큐브 왼쪽으로 당겨짐
+                            cubeObject.GetComponent<CubeMovement>().PullLeft(speed);
                         }
+
+                        // Move 함수에서 처리할 키 값
+                        moveKeyValue = Vector2.left;
                     }
                 }
                 // 입력 키 값 →
@@ -2320,6 +2323,8 @@ public class PlayerMovement : MonoBehaviour
                         {
                             // 앞쪽 상호작용 당김
                             playerState = PlayerState.F_INTERACTION_PULL;
+                            // 큐브 뒤쪽으로 당겨짐
+                            cubeObject.GetComponent<CubeMovement>().PullBack(speed);
                         }
                         // 없다
                         // 당기고 매달림
@@ -2329,6 +2334,8 @@ public class PlayerMovement : MonoBehaviour
                             playerState = PlayerState.F_INTERACTION_PULL_CLIMBING;
                             // 아래쪽에 매달림
                             destPos.y = destPos.y - 1f;
+                            // 큐브 뒤쪽으로 당겨짐
+                            cubeObject.GetComponent<CubeMovement>().PullBack(speed);
                         }
 
                         // Move 함수에서 처리할 키 값
@@ -2439,6 +2446,8 @@ public class PlayerMovement : MonoBehaviour
                         {
                             // 뒤쪽 상호작용 당김
                             playerState = PlayerState.B_INTERACTION_PULL;
+                            // 큐브 앞쪽으로 당겨짐
+                            cubeObject.GetComponent<CubeMovement>().PullForward(speed);
                         }
                         // 없다
                         // 당기고 매달림
@@ -2448,6 +2457,8 @@ public class PlayerMovement : MonoBehaviour
                             playerState = PlayerState.B_INTERACTION_PULL_CLIMBING;
                             // 아래쪽에 매달림
                             destPos.y = destPos.y - 1f;
+                            // 큐브 앞쪽으로 당겨짐
+                            cubeObject.GetComponent<CubeMovement>().PullForward(speed);
                         }
 
                         // Move 함수에서 처리할 키 값
