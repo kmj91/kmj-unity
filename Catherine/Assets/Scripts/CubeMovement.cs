@@ -27,7 +27,7 @@ public class CubeMovement : MonoBehaviour
     // 미끄러짐
     public bool slideEvent;
     // 떨어짐
-    public bool isMoveDown; 
+    //public bool isMoveDown; 
     // 스파크 이펙트
     public ParticleSystem RF_SparksEffect;
     public ParticleSystem RB_SparksEffect;
@@ -76,7 +76,8 @@ public class CubeMovement : MonoBehaviour
         PULL_RIGHT,                 // 오른쪽 당겨짐
         PULL_LEFT,                  // 왼쪽 당겨짐
         PULL_FORWARD,               // 앞쪽 당겨짐
-        PULL_BACK                   // 뒤쪽 당겨짐
+        PULL_BACK,                  // 뒤쪽 당겨짐
+        SHAKE                       // 큐브 흔들기
     }
 
 
@@ -85,305 +86,6 @@ public class CubeMovement : MonoBehaviour
     //--------------------------------
 
     private const float TICK_DELAY = 0.08f;
-
-
-    //--------------------------------
-    // private 함수
-    //--------------------------------
-
-    private void Start()
-    {
-        ParticleSystem.MainModule particleMain;     // 파티클 메인
-
-        // 상태
-        cubeMoveState = CubeMoveState.IDLE;
-        // 레이어 마스크 큐브
-        layerMaskCube = 1 << LayerMask.NameToLayer("Cube");
-        // 딜레이
-        actionDelay = 0f;
-        // 틱 토큰
-        tickToken = 0;
-        // 큐브 흔들림 틱
-        downTick = 0f;
-        // 당겨질 때의 속도
-        pullSpeed = 0f;
-        // 중력
-        isGravity = true;
-
-        // 재질 블럭 할당
-        materialBlock = new MaterialPropertyBlock();
-        // 교체할 컬러
-        IceColor = mate.GetColor(Shader.PropertyToID("_EmissionColor"));
-        // 재질 블럭
-        materialBlock.SetColor(Shader.PropertyToID("_EmissionColor"), IceColor);
-
-        // 중력 값, 크기 교체
-        particleMain = RF_SparksEffect.main;
-        originalEffectGravityModifier = particleMain.gravityModifier;
-        originalEffectStartSize = particleMain.startSize;
-
-        // 얼음 큐브면
-        if (gameObject.CompareTag("IceCube"))
-        {
-            // 이펙트 재질 교체
-            RF_SparksEffect.gameObject.GetComponent<Renderer>().SetPropertyBlock(materialBlock);
-            RB_SparksEffect.gameObject.GetComponent<Renderer>().SetPropertyBlock(materialBlock);
-            LF_SparksEffect.gameObject.GetComponent<Renderer>().SetPropertyBlock(materialBlock);
-            LB_SparksEffect.gameObject.GetComponent<Renderer>().SetPropertyBlock(materialBlock);
-            // 중력 값, 크기 교체
-            particleMain = RF_SparksEffect.main;
-            particleMain.gravityModifier = iceEffectGravity;
-            particleMain.startSize = iceEffectSize;
-            particleMain = RB_SparksEffect.main;
-            particleMain.gravityModifier = iceEffectGravity;
-            particleMain.startSize = iceEffectSize;
-            particleMain = LF_SparksEffect.main;
-            particleMain.gravityModifier = iceEffectGravity;
-            particleMain.startSize = iceEffectSize;
-            particleMain = LB_SparksEffect.main;
-            particleMain.gravityModifier = iceEffectGravity;
-            particleMain.startSize = iceEffectSize;
-        }
-    }
-
-    
-    private void FixedUpdate()
-    {
-        MoveProcess();
-    }
-
-
-    private void OnTriggerEnter(Collider other)
-    {
-        if (!other.gameObject.CompareTag("Floor"))
-        {
-            return;
-        }
-
-        if (cubeMoveState == CubeMoveState.DOWN)
-        {
-            return;
-        }
-
-        isGravity = false;
-        cubeMoveState = CubeMoveState.IDLE;
-    }
-
-
-    private void OnTriggerExit(Collider other)
-    {
-        isGravity = true;
-    }
-
-
-    // 큐브 이펙트 처리
-    private void EffectProcess(Vector3 dir)
-    {
-        Vector3 effectAngle;    // 이펙트 rotation 각도
-        RaycastHit rayHit;      // 레이 충돌한 물체
-        ParticleSystem.MainModule particleMain;     // 파티클 메인
-
-        //------------------------------------------
-        // 이펙트의 방향을
-        // 파라미터 dir의 방향에 맞게 변경합니다
-        //------------------------------------------
-        if (dir == Vector3.right)
-        {
-            effectAngle.x = 0f;
-            effectAngle.y = 270f;
-            effectAngle.z = 0f;
-        }
-        else if (dir == Vector3.left)
-        {
-            effectAngle.x = 0f;
-            effectAngle.y = 90f;
-            effectAngle.z = 0f;
-        }
-        else if (dir == Vector3.forward)
-        {
-            effectAngle.x = 0f;
-            effectAngle.y = 180f;
-            effectAngle.z = 0f;
-        }
-        else
-        {
-            effectAngle.x = 0f;
-            effectAngle.y = 0f;
-            effectAngle.z = 0f;
-        }
-        // 방향 적용
-        RF_SparksEffect.transform.eulerAngles = effectAngle;
-        RB_SparksEffect.transform.eulerAngles = effectAngle;
-        LF_SparksEffect.transform.eulerAngles = effectAngle;
-        LB_SparksEffect.transform.eulerAngles = effectAngle;
-
-        //------------------------------------------
-        // 이펙트 켜고 끄기
-        // 바닥에 큐브가있다면 마찰을 표현하려고
-        // 이펙트가 켜짐
-        // 없다면 끔
-        //------------------------------------------
-
-        //------------------------------
-        // RF
-        // 있음
-        //------------------------------
-        if (Physics.Raycast(RF_SparksEffect.transform.position, Vector3.down, out rayHit, 1f, layerMaskCube))
-        {
-            // 아이스 큐브가 아니면
-            if (!gameObject.CompareTag("IceCube"))
-            {
-                // 바닥이 아이스 큐브면
-                if (rayHit.transform.gameObject.CompareTag("IceCube"))
-                {
-                    // 이펙트 재질 교체
-                    RF_SparksEffect.gameObject.GetComponent<Renderer>().SetPropertyBlock(materialBlock);
-                    // 중력 값, 크기 교체
-                    particleMain = RF_SparksEffect.main;
-                    particleMain.gravityModifier = iceEffectGravity;
-                    particleMain.startSize = iceEffectSize;
-                }
-                // 바닥이 아이스 큐브가 아니면
-                else
-                {
-                    // 이펙트 재질 원상태로 복구
-                    RF_SparksEffect.gameObject.GetComponent<Renderer>().SetPropertyBlock(null);
-                    // 중력 값, 크기 복구
-                    particleMain = RF_SparksEffect.main;
-                    particleMain.gravityModifier = originalEffectGravityModifier;
-                    particleMain.startSize = originalEffectStartSize;
-                }
-            }
-            // 이펙트 재생
-            RF_SparksEffect.Play();
-        }
-        // 없음
-        else
-        {
-            // 이펙트 재생 정지
-            RF_SparksEffect.Stop();
-        }
-
-        //------------------------------
-        // RB
-        // 있음
-        //------------------------------
-        if (Physics.Raycast(RB_SparksEffect.transform.position, Vector3.down, out rayHit, 1f, layerMaskCube))
-        {
-            // 아이스 큐브가 아니면
-            if (!gameObject.CompareTag("IceCube"))
-            {
-                // 바닥이 아이스 큐브면
-                if (rayHit.transform.gameObject.CompareTag("IceCube"))
-                {
-                    // 이펙트 재질 교체
-                    RB_SparksEffect.gameObject.GetComponent<Renderer>().SetPropertyBlock(materialBlock);
-                    // 중력 값, 크기 교체
-                    particleMain = RB_SparksEffect.main;
-                    particleMain.gravityModifier = iceEffectGravity;
-                    particleMain.startSize = iceEffectSize;
-                }
-                // 바닥이 아이스 큐브가 아니면
-                else
-                {
-                    // 이펙트 재질 원상태로 복구
-                    RB_SparksEffect.gameObject.GetComponent<Renderer>().SetPropertyBlock(null);
-                    // 중력 값, 크기 복구
-                    particleMain = RB_SparksEffect.main;
-                    particleMain.gravityModifier = originalEffectGravityModifier;
-                    particleMain.startSize = originalEffectStartSize;
-                }
-            }
-            // 이펙트 재생
-            RB_SparksEffect.Play();
-        }
-        // 없음
-        else
-        {
-            // 이펙트 재생 정지
-            RB_SparksEffect.Stop();
-        }
-
-        //------------------------------
-        // LF
-        // 있음
-        //------------------------------
-        if (Physics.Raycast(LF_SparksEffect.transform.position, Vector3.down, out rayHit, 1f, layerMaskCube))
-        {
-            // 아이스 큐브가 아니면
-            if (!gameObject.CompareTag("IceCube"))
-            {
-                // 바닥이 아이스 큐브면
-                if (rayHit.transform.gameObject.CompareTag("IceCube"))
-                {
-                    // 이펙트 재질 교체
-                    LF_SparksEffect.gameObject.GetComponent<Renderer>().SetPropertyBlock(materialBlock);
-                    // 중력 값, 크기 교체
-                    particleMain = LF_SparksEffect.main;
-                    particleMain.gravityModifier = iceEffectGravity;
-                    particleMain.startSize = iceEffectSize;
-                }
-                // 바닥이 아이스 큐브가 아니면
-                else
-                {
-                    // 이펙트 재질 원상태로 복구
-                    LF_SparksEffect.gameObject.GetComponent<Renderer>().SetPropertyBlock(null);
-                    // 중력 값, 크기 복구
-                    particleMain = LF_SparksEffect.main;
-                    particleMain.gravityModifier = originalEffectGravityModifier;
-                    particleMain.startSize = originalEffectStartSize;
-                }
-            }
-            // 이펙트 재생
-            LF_SparksEffect.Play();
-        }
-        // 없음
-        else
-        {
-            // 이펙트 재생 정지
-            LF_SparksEffect.Stop();
-        }
-
-        //------------------------------
-        // LB
-        // 있음
-        //------------------------------
-        if (Physics.Raycast(LB_SparksEffect.transform.position, Vector3.down, out rayHit, 1f, layerMaskCube))
-        {
-            // 아이스 큐브가 아니면
-            if (!gameObject.CompareTag("IceCube"))
-            {
-                // 바닥이 아이스 큐브면
-                if (rayHit.transform.gameObject.CompareTag("IceCube"))
-                {
-                    // 이펙트 재질 교체
-                    LB_SparksEffect.gameObject.GetComponent<Renderer>().SetPropertyBlock(materialBlock);
-                    // 중력 값, 크기 교체
-                    particleMain = LB_SparksEffect.main;
-                    particleMain.gravityModifier = iceEffectGravity;
-                    particleMain.startSize = iceEffectSize;
-                }
-                // 바닥이 아이스 큐브가 아니면
-                else
-                {
-                    // 이펙트 재질 원상태로 복구
-                    LB_SparksEffect.gameObject.GetComponent<Renderer>().SetPropertyBlock(null);
-                    // 중력 값, 크기 복구
-                    particleMain = LB_SparksEffect.main;
-                    particleMain.gravityModifier = originalEffectGravityModifier;
-                    particleMain.startSize = originalEffectStartSize;
-                }
-            }
-            // 이펙트 재생
-            LB_SparksEffect.Play();
-        }
-        // 없음
-        else
-        {
-            // 이펙트 재생 정지
-            LB_SparksEffect.Stop();
-        }
-    }
 
 
     //--------------------------------
@@ -1185,18 +887,324 @@ public class CubeMovement : MonoBehaviour
         pullSpeed = playerSpeed;
     }
 
-    public bool GravityCheck()
+
+
+
+
+    //--------------------------------
+    // private 함수
+    //--------------------------------
+
+    private void Start()
     {
-        Vector3 ray;            // 레이 시작점
-        Vector3 rayDir;         // 레이 방향
-        Vector3 check;          // 체크할 위치
-        Vector3 box;            // 박스 크기
+        ParticleSystem.MainModule particleMain;     // 파티클 메인
+
+        // 상태
+        cubeMoveState = CubeMoveState.IDLE;
+        // 레이어 마스크 큐브
+        layerMaskCube = 1 << LayerMask.NameToLayer("Cube");
+        // 딜레이
+        actionDelay = 0f;
+        // 틱 토큰
+        tickToken = 0;
+        // 큐브 흔들림 틱
+        downTick = 0f;
+        // 당겨질 때의 속도
+        pullSpeed = 0f;
+        // 중력
+        isGravity = true;
+
+        // 재질 블럭 할당
+        materialBlock = new MaterialPropertyBlock();
+        // 교체할 컬러
+        IceColor = mate.GetColor(Shader.PropertyToID("_EmissionColor"));
+        // 재질 블럭
+        materialBlock.SetColor(Shader.PropertyToID("_EmissionColor"), IceColor);
+
+        // 중력 값, 크기 교체
+        particleMain = RF_SparksEffect.main;
+        originalEffectGravityModifier = particleMain.gravityModifier;
+        originalEffectStartSize = particleMain.startSize;
+
+        // 얼음 큐브면
+        if (gameObject.CompareTag("IceCube"))
+        {
+            // 이펙트 재질 교체
+            RF_SparksEffect.gameObject.GetComponent<Renderer>().SetPropertyBlock(materialBlock);
+            RB_SparksEffect.gameObject.GetComponent<Renderer>().SetPropertyBlock(materialBlock);
+            LF_SparksEffect.gameObject.GetComponent<Renderer>().SetPropertyBlock(materialBlock);
+            LB_SparksEffect.gameObject.GetComponent<Renderer>().SetPropertyBlock(materialBlock);
+            // 중력 값, 크기 교체
+            particleMain = RF_SparksEffect.main;
+            particleMain.gravityModifier = iceEffectGravity;
+            particleMain.startSize = iceEffectSize;
+            particleMain = RB_SparksEffect.main;
+            particleMain.gravityModifier = iceEffectGravity;
+            particleMain.startSize = iceEffectSize;
+            particleMain = LF_SparksEffect.main;
+            particleMain.gravityModifier = iceEffectGravity;
+            particleMain.startSize = iceEffectSize;
+            particleMain = LB_SparksEffect.main;
+            particleMain.gravityModifier = iceEffectGravity;
+            particleMain.startSize = iceEffectSize;
+        }
+    }
+
+
+    private void FixedUpdate()
+    {
+        MoveProcess();
+    }
+
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (!other.gameObject.CompareTag("Floor"))
+        {
+            return;
+        }
+
+        if (cubeMoveState == CubeMoveState.DOWN)
+        {
+            return;
+        }
+
+        isGravity = false;
+        cubeMoveState = CubeMoveState.IDLE;
+    }
+
+
+    private void OnTriggerExit(Collider other)
+    {
+        isGravity = true;
+    }
+
+
+    // 큐브 이펙트 처리
+    private void EffectProcess(Vector3 dir)
+    {
+        Vector3 effectAngle;    // 이펙트 rotation 각도
         RaycastHit rayHit;      // 레이 충돌한 물체
+        ParticleSystem.MainModule particleMain;     // 파티클 메인
+
+        //------------------------------------------
+        // 이펙트의 방향을
+        // 파라미터 dir의 방향에 맞게 변경합니다
+        //------------------------------------------
+        if (dir == Vector3.right)
+        {
+            effectAngle.x = 0f;
+            effectAngle.y = 270f;
+            effectAngle.z = 0f;
+        }
+        else if (dir == Vector3.left)
+        {
+            effectAngle.x = 0f;
+            effectAngle.y = 90f;
+            effectAngle.z = 0f;
+        }
+        else if (dir == Vector3.forward)
+        {
+            effectAngle.x = 0f;
+            effectAngle.y = 180f;
+            effectAngle.z = 0f;
+        }
+        else
+        {
+            effectAngle.x = 0f;
+            effectAngle.y = 0f;
+            effectAngle.z = 0f;
+        }
+        // 방향 적용
+        RF_SparksEffect.transform.eulerAngles = effectAngle;
+        RB_SparksEffect.transform.eulerAngles = effectAngle;
+        LF_SparksEffect.transform.eulerAngles = effectAngle;
+        LB_SparksEffect.transform.eulerAngles = effectAngle;
+
+        //------------------------------------------
+        // 이펙트 켜고 끄기
+        // 바닥에 큐브가있다면 마찰을 표현하려고
+        // 이펙트가 켜짐
+        // 없다면 끔
+        //------------------------------------------
+
+        //------------------------------
+        // RF
+        // 있음
+        //------------------------------
+        if (Physics.Raycast(RF_SparksEffect.transform.position, Vector3.down, out rayHit, 1f, layerMaskCube))
+        {
+            // 아이스 큐브가 아니면
+            if (!gameObject.CompareTag("IceCube"))
+            {
+                // 바닥이 아이스 큐브면
+                if (rayHit.transform.gameObject.CompareTag("IceCube"))
+                {
+                    // 이펙트 재질 교체
+                    RF_SparksEffect.gameObject.GetComponent<Renderer>().SetPropertyBlock(materialBlock);
+                    // 중력 값, 크기 교체
+                    particleMain = RF_SparksEffect.main;
+                    particleMain.gravityModifier = iceEffectGravity;
+                    particleMain.startSize = iceEffectSize;
+                }
+                // 바닥이 아이스 큐브가 아니면
+                else
+                {
+                    // 이펙트 재질 원상태로 복구
+                    RF_SparksEffect.gameObject.GetComponent<Renderer>().SetPropertyBlock(null);
+                    // 중력 값, 크기 복구
+                    particleMain = RF_SparksEffect.main;
+                    particleMain.gravityModifier = originalEffectGravityModifier;
+                    particleMain.startSize = originalEffectStartSize;
+                }
+            }
+            // 이펙트 재생
+            RF_SparksEffect.Play();
+        }
+        // 없음
+        else
+        {
+            // 이펙트 재생 정지
+            RF_SparksEffect.Stop();
+        }
+
+        //------------------------------
+        // RB
+        // 있음
+        //------------------------------
+        if (Physics.Raycast(RB_SparksEffect.transform.position, Vector3.down, out rayHit, 1f, layerMaskCube))
+        {
+            // 아이스 큐브가 아니면
+            if (!gameObject.CompareTag("IceCube"))
+            {
+                // 바닥이 아이스 큐브면
+                if (rayHit.transform.gameObject.CompareTag("IceCube"))
+                {
+                    // 이펙트 재질 교체
+                    RB_SparksEffect.gameObject.GetComponent<Renderer>().SetPropertyBlock(materialBlock);
+                    // 중력 값, 크기 교체
+                    particleMain = RB_SparksEffect.main;
+                    particleMain.gravityModifier = iceEffectGravity;
+                    particleMain.startSize = iceEffectSize;
+                }
+                // 바닥이 아이스 큐브가 아니면
+                else
+                {
+                    // 이펙트 재질 원상태로 복구
+                    RB_SparksEffect.gameObject.GetComponent<Renderer>().SetPropertyBlock(null);
+                    // 중력 값, 크기 복구
+                    particleMain = RB_SparksEffect.main;
+                    particleMain.gravityModifier = originalEffectGravityModifier;
+                    particleMain.startSize = originalEffectStartSize;
+                }
+            }
+            // 이펙트 재생
+            RB_SparksEffect.Play();
+        }
+        // 없음
+        else
+        {
+            // 이펙트 재생 정지
+            RB_SparksEffect.Stop();
+        }
+
+        //------------------------------
+        // LF
+        // 있음
+        //------------------------------
+        if (Physics.Raycast(LF_SparksEffect.transform.position, Vector3.down, out rayHit, 1f, layerMaskCube))
+        {
+            // 아이스 큐브가 아니면
+            if (!gameObject.CompareTag("IceCube"))
+            {
+                // 바닥이 아이스 큐브면
+                if (rayHit.transform.gameObject.CompareTag("IceCube"))
+                {
+                    // 이펙트 재질 교체
+                    LF_SparksEffect.gameObject.GetComponent<Renderer>().SetPropertyBlock(materialBlock);
+                    // 중력 값, 크기 교체
+                    particleMain = LF_SparksEffect.main;
+                    particleMain.gravityModifier = iceEffectGravity;
+                    particleMain.startSize = iceEffectSize;
+                }
+                // 바닥이 아이스 큐브가 아니면
+                else
+                {
+                    // 이펙트 재질 원상태로 복구
+                    LF_SparksEffect.gameObject.GetComponent<Renderer>().SetPropertyBlock(null);
+                    // 중력 값, 크기 복구
+                    particleMain = LF_SparksEffect.main;
+                    particleMain.gravityModifier = originalEffectGravityModifier;
+                    particleMain.startSize = originalEffectStartSize;
+                }
+            }
+            // 이펙트 재생
+            LF_SparksEffect.Play();
+        }
+        // 없음
+        else
+        {
+            // 이펙트 재생 정지
+            LF_SparksEffect.Stop();
+        }
+
+        //------------------------------
+        // LB
+        // 있음
+        //------------------------------
+        if (Physics.Raycast(LB_SparksEffect.transform.position, Vector3.down, out rayHit, 1f, layerMaskCube))
+        {
+            // 아이스 큐브가 아니면
+            if (!gameObject.CompareTag("IceCube"))
+            {
+                // 바닥이 아이스 큐브면
+                if (rayHit.transform.gameObject.CompareTag("IceCube"))
+                {
+                    // 이펙트 재질 교체
+                    LB_SparksEffect.gameObject.GetComponent<Renderer>().SetPropertyBlock(materialBlock);
+                    // 중력 값, 크기 교체
+                    particleMain = LB_SparksEffect.main;
+                    particleMain.gravityModifier = iceEffectGravity;
+                    particleMain.startSize = iceEffectSize;
+                }
+                // 바닥이 아이스 큐브가 아니면
+                else
+                {
+                    // 이펙트 재질 원상태로 복구
+                    LB_SparksEffect.gameObject.GetComponent<Renderer>().SetPropertyBlock(null);
+                    // 중력 값, 크기 복구
+                    particleMain = LB_SparksEffect.main;
+                    particleMain.gravityModifier = originalEffectGravityModifier;
+                    particleMain.startSize = originalEffectStartSize;
+                }
+            }
+            // 이펙트 재생
+            LB_SparksEffect.Play();
+        }
+        // 없음
+        else
+        {
+            // 이펙트 재생 정지
+            LB_SparksEffect.Stop();
+        }
+    }
+
+
+    // 떨어지는 상황 체크
+    private void GravityCheck()
+    {
+        Vector3 ray;                        // 레이 시작점
+        Vector3 rayDir;                     // 레이 방향
+        Vector3 check;                      // 체크할 위치
+        Vector3 box;                        // 박스 크기
+        Vector3 transAngle;                 // 큐브 Rotation
+        RaycastHit rayHit;                  // 레이 충돌한 물체
+        CubeMovement otherCubeMovement;     // 큐브 스크립트
 
         // 중력 영향을 받지않으면
         if (!isGravity)
         {
-            return false;
+            return;
         }
 
         box.x = 0.1f;
@@ -1225,19 +1233,31 @@ public class CubeMovement : MonoBehaviour
         {
             // 있다
 
-            // 큐브가 아래로 이동하는 중인지 아닌지?
-            if (!rayHit.transform.gameObject.GetComponent<CubeMovement>().isMoveDown)
+            otherCubeMovement = rayHit.transform.gameObject.GetComponent<CubeMovement>();
+
+            // 큐브가 떨어질 준비 중
+            if (otherCubeMovement.cubeMoveState == CubeMoveState.DOWN_READY)
             {
-                // 이동하지 않음
-                isMoveDown = false;
-                cubeMoveState = CubeMoveState.IDLE;
-                return false;
+                // 큐브 흔들기
+                cubeMoveState = CubeMoveState.SHAKE;
+                return;
+            }
+            // 큐브가 아래로 떨어지는 중
+            else if (otherCubeMovement.cubeMoveState == CubeMoveState.DOWN)
+            {
+                // 큐브 아래로
+                cubeMoveState = CubeMoveState.DOWN;
+                // 큐브 Rotation 원상태로 복구
+                transAngle.x = 0f;
+                transAngle.y = 0f;
+                transAngle.z = 0f;
+                transform.eulerAngles = transAngle;
+                return;
             }
 
-            // 큐브 아래로
-            isMoveDown = true;
-            cubeMoveState = CubeMoveState.DOWN;
-            return true;
+            // 이동하지 않음
+            cubeMoveState = CubeMoveState.IDLE;
+            return;
         }
 
         //   □
@@ -1251,19 +1271,31 @@ public class CubeMovement : MonoBehaviour
         {
             // 있음
 
-            // 큐브가 아래로 이동하는 중인지 아닌지?
-            if (!rayHit.transform.gameObject.GetComponent<CubeMovement>().isMoveDown)
+            otherCubeMovement = rayHit.transform.gameObject.GetComponent<CubeMovement>();
+
+            // 큐브가 떨어질 준비 중
+            if (otherCubeMovement.cubeMoveState == CubeMoveState.DOWN_READY)
             {
-                // 이동하지 않음
-                isMoveDown = false;
-                cubeMoveState = CubeMoveState.IDLE;
-                return false;
+                // 큐브 흔들기
+                cubeMoveState = CubeMoveState.SHAKE;
+                return;
+            }
+            // 큐브가 아래로 떨어지는 중
+            else if (otherCubeMovement.cubeMoveState == CubeMoveState.DOWN)
+            {
+                // 큐브 아래로
+                cubeMoveState = CubeMoveState.DOWN;
+                // 큐브 Rotation 원상태로 복구
+                transAngle.x = 0f;
+                transAngle.y = 0f;
+                transAngle.z = 0f;
+                transform.eulerAngles = transAngle;
+                return;
             }
 
-            // 큐브 아래로
-            isMoveDown = true;
-            cubeMoveState = CubeMoveState.DOWN;
-            return true;
+            // 이동하지 않음
+            cubeMoveState = CubeMoveState.IDLE;
+            return;
         }
 
         //   □
@@ -1277,19 +1309,31 @@ public class CubeMovement : MonoBehaviour
         {
             // 있음
 
-            // 큐브가 아래로 이동하는 중인지 아닌지?
-            if (!rayHit.transform.gameObject.GetComponent<CubeMovement>().isMoveDown)
+            otherCubeMovement = rayHit.transform.gameObject.GetComponent<CubeMovement>();
+
+            // 큐브가 떨어질 준비 중
+            if (otherCubeMovement.cubeMoveState == CubeMoveState.DOWN_READY)
             {
-                // 이동하지 않음
-                isMoveDown = false;
-                cubeMoveState = CubeMoveState.IDLE;
-                return false;
+                // 큐브 흔들기
+                cubeMoveState = CubeMoveState.SHAKE;
+                return;
+            }
+            // 큐브가 아래로 떨어지는 중
+            else if (otherCubeMovement.cubeMoveState == CubeMoveState.DOWN)
+            {
+                // 큐브 아래로
+                cubeMoveState = CubeMoveState.DOWN;
+                // 큐브 Rotation 원상태로 복구
+                transAngle.x = 0f;
+                transAngle.y = 0f;
+                transAngle.z = 0f;
+                transform.eulerAngles = transAngle;
+                return;
             }
 
-            // 큐브 아래로
-            isMoveDown = true;
-            cubeMoveState = CubeMoveState.DOWN;
-            return true;
+            // 이동하지 않음
+            cubeMoveState = CubeMoveState.IDLE;
+            return;
         }
 
         //   ？
@@ -1303,19 +1347,31 @@ public class CubeMovement : MonoBehaviour
         {
             // 있음
 
-            // 큐브가 아래로 이동하는 중인지 아닌지?
-            if (!rayHit.transform.gameObject.GetComponent<CubeMovement>().isMoveDown)
+            otherCubeMovement = rayHit.transform.gameObject.GetComponent<CubeMovement>();
+
+            // 큐브가 떨어질 준비 중
+            if (otherCubeMovement.cubeMoveState == CubeMoveState.DOWN_READY)
             {
-                // 이동하지 않음
-                isMoveDown = false;
-                cubeMoveState = CubeMoveState.IDLE;
-                return false;
+                // 큐브 흔들기
+                cubeMoveState = CubeMoveState.SHAKE;
+                return;
+            }
+            // 큐브가 아래로 떨어지는 중
+            else if (otherCubeMovement.cubeMoveState == CubeMoveState.DOWN)
+            {
+                // 큐브 아래로
+                cubeMoveState = CubeMoveState.DOWN;
+                // 큐브 Rotation 원상태로 복구
+                transAngle.x = 0f;
+                transAngle.y = 0f;
+                transAngle.z = 0f;
+                transform.eulerAngles = transAngle;
+                return;
             }
 
-            // 큐브 아래로
-            isMoveDown = true;
-            cubeMoveState = CubeMoveState.DOWN;
-            return true;
+            // 이동하지 않음
+            cubeMoveState = CubeMoveState.IDLE;
+            return;
         }
 
         //   □
@@ -1329,28 +1385,40 @@ public class CubeMovement : MonoBehaviour
         {
             // 있음
 
-            // 큐브가 아래로 이동하는 중인지 아닌지?
-            if (!rayHit.transform.gameObject.GetComponent<CubeMovement>().isMoveDown)
+            otherCubeMovement = rayHit.transform.gameObject.GetComponent<CubeMovement>();
+
+            // 큐브가 떨어질 준비 중
+            if (otherCubeMovement.cubeMoveState == CubeMoveState.DOWN_READY)
             {
-                // 이동하지 않음
-                isMoveDown = false;
-                cubeMoveState = CubeMoveState.IDLE;
-                return false;
+                // 큐브 흔들기
+                cubeMoveState = CubeMoveState.SHAKE;
+                return;
+            }
+            // 큐브가 아래로 떨어지는 중
+            else if (otherCubeMovement.cubeMoveState == CubeMoveState.DOWN)
+            {
+                // 큐브 아래로
+                cubeMoveState = CubeMoveState.DOWN;
+                // 큐브 Rotation 원상태로 복구
+                transAngle.x = 0f;
+                transAngle.y = 0f;
+                transAngle.z = 0f;
+                transform.eulerAngles = transAngle;
+                return;
             }
 
-            // 큐브 아래로
-            isMoveDown = true;
-            cubeMoveState = CubeMoveState.DOWN;
-            return true;
+            // 이동하지 않음
+            cubeMoveState = CubeMoveState.IDLE;
+            return;
         }
 
         // 처음 떨어지고 있는 중임
-        if (!isMoveDown)
+        if (cubeMoveState != CubeMoveState.DOWN)
         {
             cubeMoveState = CubeMoveState.DOWN_READY;
         }
         
-        return true;
+        return;
     }
 
     private void MoveProcess()
@@ -1358,10 +1426,6 @@ public class CubeMovement : MonoBehaviour
         Vector3 transAngle;     // 큐브 Rotation
         Vector3 tempPosition;   // 임시 큐브 좌표
         RaycastHit rayHit;      // 레이 충돌한 물체
-
-        transAngle.x = 0f;
-        transAngle.y = 0f;
-        transAngle.z = 0f;
 
         switch (cubeMoveState) {
             case CubeMoveState.DOWN_READY:
@@ -1373,67 +1437,15 @@ public class CubeMovement : MonoBehaviour
                 if (actionDelay < downDelay)
                 {
                     // 큐브 흔들기
-                    switch (tickToken)
-                    {
-                        case 0:
-                            downTick = downTick + Time.deltaTime;
-                            if (downTick < TICK_DELAY)
-                            {
-                                break;
-                            }
-                            tickToken = 1;
-                            downTick = 0f;
-                            transAngle.x = -0.5f;
-                            transAngle.z = -1f;
-                            transform.eulerAngles = transAngle;
-                            break;
-                        case 1:
-                            downTick = downTick + Time.deltaTime;
-                            if (downTick < TICK_DELAY)
-                            {
-                                break;
-                            }
-                            tickToken = 2;
-                            downTick = 0f;
-                            transAngle.x = 0.5f;
-                            transAngle.y = -0.5f;
-                            transAngle.z = 1f;
-                            transform.eulerAngles = transAngle;
-                            break;
-                        case 2:
-                            downTick = downTick + Time.deltaTime;
-                            if (downTick < TICK_DELAY)
-                            {
-                                break;
-                            }
-                            tickToken = 3;
-                            downTick = 0f;
-                            transAngle.x = -0.5f;
-                            transAngle.y = 1f;
-                            transAngle.z = -0.5f;
-                            transform.eulerAngles = transAngle;
-                            break;
-                        case 3:
-                            downTick = downTick + Time.deltaTime;
-                            if (downTick < TICK_DELAY)
-                            {
-                                break;
-                            }
-                            tickToken = 0;
-                            downTick = 0f;
-                            transAngle.x = 1f;
-                            transAngle.y = -0.5f;
-                            transAngle.z = 0.5f;
-                            transform.eulerAngles = transAngle;
-                            break;
-                    }
-
+                    CubeShake();
                     break;
                 }
                 // 아래로 떨어짐
-                isMoveDown = true;
                 cubeMoveState = CubeMoveState.DOWN;
                 // 큐브 Rotation 원상태로 복구
+                transAngle.x = 0f;
+                transAngle.y = 0f;
+                transAngle.z = 0f;
                 transform.eulerAngles = transAngle;
                 tickToken = 0;
                 downTick = 0f;
@@ -1723,6 +1735,12 @@ public class CubeMovement : MonoBehaviour
                     transform.position = tempPosition;
                 }
                 break;
+            case CubeMoveState.SHAKE:
+                // 큐브 흔들기
+                CubeShake();
+                // 떨어지는 상황인지 확인
+                GravityCheck();
+                break;
             default:
                 // 이펙트 끄기
                 RF_SparksEffect.Stop();
@@ -1731,6 +1749,73 @@ public class CubeMovement : MonoBehaviour
                 LB_SparksEffect.Stop();
                 // 떨어지는 상황인지 확인
                 GravityCheck();
+                break;
+        }
+    }
+
+
+    // 큐브 흔들기
+    private void CubeShake()
+    {
+        Vector3 transAngle;     // 큐브 Rotation
+
+        transAngle.x = 0f;
+        transAngle.y = 0f;
+        transAngle.z = 0f;
+
+        // 큐브 흔들기
+        switch (tickToken)
+        {
+            case 0:
+                downTick = downTick + Time.deltaTime;
+                if (downTick < TICK_DELAY)
+                {
+                    break;
+                }
+                tickToken = 1;
+                downTick = 0f;
+                transAngle.x = -0.5f;
+                transAngle.z = -1f;
+                transform.eulerAngles = transAngle;
+                break;
+            case 1:
+                downTick = downTick + Time.deltaTime;
+                if (downTick < TICK_DELAY)
+                {
+                    break;
+                }
+                tickToken = 2;
+                downTick = 0f;
+                transAngle.x = 0.5f;
+                transAngle.y = -0.5f;
+                transAngle.z = 1f;
+                transform.eulerAngles = transAngle;
+                break;
+            case 2:
+                downTick = downTick + Time.deltaTime;
+                if (downTick < TICK_DELAY)
+                {
+                    break;
+                }
+                tickToken = 3;
+                downTick = 0f;
+                transAngle.x = -0.5f;
+                transAngle.y = 1f;
+                transAngle.z = -0.5f;
+                transform.eulerAngles = transAngle;
+                break;
+            case 3:
+                downTick = downTick + Time.deltaTime;
+                if (downTick < TICK_DELAY)
+                {
+                    break;
+                }
+                tickToken = 0;
+                downTick = 0f;
+                transAngle.x = 1f;
+                transAngle.y = -0.5f;
+                transAngle.z = 0.5f;
+                transform.eulerAngles = transAngle;
                 break;
         }
     }
