@@ -2023,8 +2023,8 @@ public class PlayerMovement : MonoBehaviour
                         {
                             // 오른쪽 상호작용 당김
                             playerState = PlayerState.R_INTERACTION_PULL;
-                            // Move 함수에서 처리할 키 값
-                            moveKeyValue = Vector2.left;
+                            // 큐브 왼쪽으로 당겨짐
+                            cubeObject.GetComponent<CubeMovement>().PullLeft(speed);
                         }
                         // 없다
                         // 당기고 매달림
@@ -2034,9 +2034,12 @@ public class PlayerMovement : MonoBehaviour
                             playerState = PlayerState.R_INTERACTION_PULL_CLIMBING;
                             // 아래쪽에 매달림
                             destPos.y = destPos.y - 1f;
-                            // Move 함수에서 처리할 키 값
-                            moveKeyValue = Vector2.left;
+                            // 큐브 왼쪽으로 당겨짐
+                            cubeObject.GetComponent<CubeMovement>().PullLeft(speed);
                         }
+
+                        // Move 함수에서 처리할 키 값
+                        moveKeyValue = Vector2.left;
                     }
                 }
                 // 입력 키 값 →
@@ -2178,6 +2181,8 @@ public class PlayerMovement : MonoBehaviour
                         {
                             // 왼쪽 상호작용 당김
                             playerState = PlayerState.L_INTERACTION_PULL;
+                            // 큐브 오른쪽으로 당겨짐
+                            cubeObject.GetComponent<CubeMovement>().PullRight(speed);
                         }
                         // 없다
                         // 당기고 매달림
@@ -2187,6 +2192,8 @@ public class PlayerMovement : MonoBehaviour
                             playerState = PlayerState.L_INTERACTION_PULL_CLIMBING;
                             // 아래쪽에 매달림
                             destPos.y = destPos.y - 1f;
+                            // 큐브 오른쪽으로 당겨짐
+                            cubeObject.GetComponent<CubeMovement>().PullRight(speed);
                         }
 
                         // Move 함수에서 처리할 키 값
@@ -2316,6 +2323,8 @@ public class PlayerMovement : MonoBehaviour
                         {
                             // 앞쪽 상호작용 당김
                             playerState = PlayerState.F_INTERACTION_PULL;
+                            // 큐브 뒤쪽으로 당겨짐
+                            cubeObject.GetComponent<CubeMovement>().PullBack(speed);
                         }
                         // 없다
                         // 당기고 매달림
@@ -2325,6 +2334,8 @@ public class PlayerMovement : MonoBehaviour
                             playerState = PlayerState.F_INTERACTION_PULL_CLIMBING;
                             // 아래쪽에 매달림
                             destPos.y = destPos.y - 1f;
+                            // 큐브 뒤쪽으로 당겨짐
+                            cubeObject.GetComponent<CubeMovement>().PullBack(speed);
                         }
 
                         // Move 함수에서 처리할 키 값
@@ -2435,6 +2446,8 @@ public class PlayerMovement : MonoBehaviour
                         {
                             // 뒤쪽 상호작용 당김
                             playerState = PlayerState.B_INTERACTION_PULL;
+                            // 큐브 앞쪽으로 당겨짐
+                            cubeObject.GetComponent<CubeMovement>().PullForward(speed);
                         }
                         // 없다
                         // 당기고 매달림
@@ -2444,6 +2457,8 @@ public class PlayerMovement : MonoBehaviour
                             playerState = PlayerState.B_INTERACTION_PULL_CLIMBING;
                             // 아래쪽에 매달림
                             destPos.y = destPos.y - 1f;
+                            // 큐브 앞쪽으로 당겨짐
+                            cubeObject.GetComponent<CubeMovement>().PullForward(speed);
                         }
 
                         // Move 함수에서 처리할 키 값
@@ -3218,15 +3233,12 @@ public class PlayerMovement : MonoBehaviour
                 break;
             case PlayerState.R_INTERACTION_PULL:
                 // 오른쪽 당김
-                // 큐브 이동
-                cubeObject.transform.position = cubeObject.transform.position + (Vector3.left * speed) * Time.deltaTime;
+                
                 // 큐브가 이동 거리만큼 이동 했는가
                 if (cubeDestPos.x >= cubeObject.transform.position.x)
                 {
                     // 이동 완료
                     moveKeyValue = Vector2.zero;
-                    // 큐브 위치 맞추기
-                    cubeObject.transform.position = cubeDestPos;
                     // 플레이어 위치 맞추기
                     moveValue.x = destPos.x - transform.position.x;
 
@@ -3254,13 +3266,10 @@ public class PlayerMovement : MonoBehaviour
                 break;
             case PlayerState.R_INTERACTION_PULL_CLIMBING:
                 // 오른쪽 당기고 매달림
-                // 큐브 이동
-                cubeObject.transform.position = cubeObject.transform.position + (Vector3.left * speed) * Time.deltaTime;
+                
                 // 큐브가 이동 거리만큼 이동 했는가
                 if (cubeDestPos.x >= cubeObject.transform.position.x)
                 {
-                    // 이동 완료
-                    cubeObject.transform.position = cubeDestPos;
                     // 바닥에 닿아있지 않음
                     if (!characterController.isGrounded)
                     {
@@ -3275,15 +3284,12 @@ public class PlayerMovement : MonoBehaviour
                 break;
             case PlayerState.L_INTERACTION_PULL:
                 // 왼쪽 당김
-                // 큐브 이동
-                cubeObject.transform.position = cubeObject.transform.position + (Vector3.right * speed) * Time.deltaTime;
+
                 // 큐브가 이동 거리만큼 이동 했는가
                 if (cubeDestPos.x <= cubeObject.transform.position.x)
                 {
                     // 이동 완료
                     moveKeyValue = Vector2.zero;
-                    // 큐브 위치 맞추기
-                    cubeObject.transform.position = cubeDestPos;
                     // 플레이어 위치 맞추기
                     moveValue.x = destPos.x - transform.position.x;
 
@@ -3311,13 +3317,10 @@ public class PlayerMovement : MonoBehaviour
                 break;
             case PlayerState.L_INTERACTION_PULL_CLIMBING:
                 // 왼쪽 당기고 매달림
-                // 큐브 이동
-                cubeObject.transform.position = cubeObject.transform.position + (Vector3.right * speed) * Time.deltaTime;
+                
                 // 큐브가 이동 거리만큼 이동 했는가
                 if (cubeDestPos.x <= cubeObject.transform.position.x)
                 {
-                    // 이동 완료
-                    cubeObject.transform.position = cubeDestPos;
                     // 바닥에 닿아있지 않음
                     if (!characterController.isGrounded)
                     {
@@ -3332,15 +3335,12 @@ public class PlayerMovement : MonoBehaviour
                 break;
             case PlayerState.F_INTERACTION_PULL:
                 // 앞쪽 당김
-                // 큐브 이동
-                cubeObject.transform.position = cubeObject.transform.position + (Vector3.back * speed) * Time.deltaTime;
+                
                 // 큐브가 이동 거리만큼 이동 했는가
                 if (cubeDestPos.z >= cubeObject.transform.position.z)
                 {
                     // 이동 완료
                     moveKeyValue = Vector2.zero;
-                    // 큐브 위치 맞추기
-                    cubeObject.transform.position = cubeDestPos;
                     // 플레이어 위치 맞추기
                     moveValue.z = destPos.z - transform.position.z;
 
@@ -3368,13 +3368,9 @@ public class PlayerMovement : MonoBehaviour
                 break;
             case PlayerState.F_INTERACTION_PULL_CLIMBING:
                 // 앞쪽 당기고 매달림
-                // 큐브 이동
-                cubeObject.transform.position = cubeObject.transform.position + (Vector3.back * speed) * Time.deltaTime;
                 // 큐브가 이동 거리만큼 이동 했는가
                 if (cubeDestPos.z >= cubeObject.transform.position.z)
                 {
-                    // 이동 완료
-                    cubeObject.transform.position = cubeDestPos;
                     // 바닥에 닿아있지 않음
                     if (!characterController.isGrounded)
                     {
@@ -3389,15 +3385,12 @@ public class PlayerMovement : MonoBehaviour
                 break;
             case PlayerState.B_INTERACTION_PULL:
                 // 뒤쪽 당김
-                // 큐브 이동
-                cubeObject.transform.position = cubeObject.transform.position + (Vector3.forward * speed) * Time.deltaTime;
+
                 // 큐브가 이동 거리만큼 이동 했는가
                 if (cubeDestPos.z <= cubeObject.transform.position.z)
                 {
                     // 이동 완료
                     moveKeyValue = Vector2.zero;
-                    // 큐브 위치 맞추기
-                    cubeObject.transform.position = cubeDestPos;
                     // 플레이어 위치 맞추기
                     moveValue.z = destPos.z - transform.position.z;
 
@@ -3425,13 +3418,10 @@ public class PlayerMovement : MonoBehaviour
                 break;
             case PlayerState.B_INTERACTION_PULL_CLIMBING:
                 // 뒤쪽 당기고 매달림
-                // 큐브 이동
-                cubeObject.transform.position = cubeObject.transform.position + (Vector3.forward * speed) * Time.deltaTime;
+                
                 // 큐브가 이동 거리만큼 이동 했는가
                 if (cubeDestPos.z <= cubeObject.transform.position.z)
                 {
-                    // 이동 완료
-                    cubeObject.transform.position = cubeDestPos;
                     // 바닥에 닿아있지 않음
                     if (!characterController.isGrounded)
                     {
