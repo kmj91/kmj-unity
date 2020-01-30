@@ -128,7 +128,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   horizontalSpeed: 4
   verticalSpeed: 2
-  downDelay: 1
+  downDelay: 1.2
   iceEffectGravity:
     m_Mode: 0
     m_CurveMultiplier: 0
@@ -165,7 +165,6 @@ MonoBehaviour:
     m_ConstantMax: 0.04
   destPos: {x: 0, y: 0, z: 0}
   slideEvent: 0
-  isMoveDown: 0
   RF_SparksEffect: {fileID: 198000012022972474}
   RB_SparksEffect: {fileID: 5055997826102204291}
   LF_SparksEffect: {fileID: 6260515648964598487}

@@ -12,6 +12,8 @@ public class CubeMovement : MonoBehaviour
     public CubeMoveState cubeMoveState { get; private set; }
     // 딜레이
     public float actionDelay { get; private set; }
+    // 연결된 큐브 딜레이
+    public float chainActionDelay { get; private set; }
     // 큐브 이동 속도
     public float horizontalSpeed;
     // 큐브 수직 이동 속도
@@ -92,7 +94,8 @@ public class CubeMovement : MonoBehaviour
     // public 함수
     //--------------------------------
 
-    public float GetDelayTime()
+    // 아래로 떨어지기까지 남은 시간
+    public float GetDownDelayTime()
     {
         if (actionDelay > downDelay)
         {
@@ -103,6 +106,21 @@ public class CubeMovement : MonoBehaviour
             return downDelay - actionDelay;
         }
     }
+
+
+    // 연결된 큐브가 아래로 떨어지기까지 남은 시간
+    public float GetChainDownDelayTime()
+    {
+        if (chainActionDelay > downDelay)
+        {
+            return 0;
+        }
+        else
+        {
+            return downDelay - chainActionDelay;
+        }
+    }
+
 
     // 큐브 오른쪽 이동
     public bool MoveRight()
@@ -1217,6 +1235,8 @@ public class CubeMovement : MonoBehaviour
 
         // 초기화
         actionDelay = 0f;
+        // 연결된 큐브 딜레이 초기화
+        chainActionDelay = 0f;
 
         // 이동 좌표
         destPos = check;
@@ -1240,6 +1260,8 @@ public class CubeMovement : MonoBehaviour
             {
                 // 큐브 흔들기
                 cubeMoveState = CubeMoveState.SHAKE;
+                // 연결된 큐브 딜레이 가져옴
+                chainActionDelay = otherCubeMovement.actionDelay;
                 return;
             }
             // 큐브가 아래로 떨어지는 중
@@ -1278,6 +1300,8 @@ public class CubeMovement : MonoBehaviour
             {
                 // 큐브 흔들기
                 cubeMoveState = CubeMoveState.SHAKE;
+                // 연결된 큐브 딜레이 가져옴
+                chainActionDelay = otherCubeMovement.actionDelay;
                 return;
             }
             // 큐브가 아래로 떨어지는 중
@@ -1316,6 +1340,8 @@ public class CubeMovement : MonoBehaviour
             {
                 // 큐브 흔들기
                 cubeMoveState = CubeMoveState.SHAKE;
+                // 연결된 큐브 딜레이 가져옴
+                chainActionDelay = otherCubeMovement.actionDelay;
                 return;
             }
             // 큐브가 아래로 떨어지는 중
@@ -1354,6 +1380,8 @@ public class CubeMovement : MonoBehaviour
             {
                 // 큐브 흔들기
                 cubeMoveState = CubeMoveState.SHAKE;
+                // 연결된 큐브 딜레이 가져옴
+                chainActionDelay = otherCubeMovement.actionDelay;
                 return;
             }
             // 큐브가 아래로 떨어지는 중
@@ -1392,6 +1420,8 @@ public class CubeMovement : MonoBehaviour
             {
                 // 큐브 흔들기
                 cubeMoveState = CubeMoveState.SHAKE;
+                // 연결된 큐브 딜레이 가져옴
+                chainActionDelay = otherCubeMovement.actionDelay;
                 return;
             }
             // 큐브가 아래로 떨어지는 중
