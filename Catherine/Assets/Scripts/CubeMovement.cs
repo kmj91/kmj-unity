@@ -12,6 +12,8 @@ public class CubeMovement : MonoBehaviour
     public CubeMoveState cubeMoveState { get; private set; }
     // 딜레이
     public float actionDelay { get; private set; }
+    // 연결된 큐브 딜레이
+    public float chainActionDelay { get; private set; }
     // 큐브 이동 속도
     public float horizontalSpeed;
     // 큐브 수직 이동 속도
@@ -92,7 +94,8 @@ public class CubeMovement : MonoBehaviour
     // public 함수
     //--------------------------------
 
-    public float GetDelayTime()
+    // 아래로 떨어지기까지 남은 시간
+    public float GetDownDelayTime()
     {
         if (actionDelay > downDelay)
         {
@@ -103,6 +106,21 @@ public class CubeMovement : MonoBehaviour
             return downDelay - actionDelay;
         }
     }
+
+
+    // 연결된 큐브가 아래로 떨어지기까지 남은 시간
+    public float GetChainDownDelayTime()
+    {
+        if (chainActionDelay > downDelay)
+        {
+            return 0;
+        }
+        else
+        {
+            return downDelay - chainActionDelay;
+        }
+    }
+
 
     // 큐브 오른쪽 이동
     public bool MoveRight()
@@ -319,13 +337,13 @@ public class CubeMovement : MonoBehaviour
                 }
 
                 //-------------------------------------------
-                // 만약 오른쪽 이동 방향에 큐브가 있다면
+                // 만약 왼쪽 이동 방향에 큐브가 있다면
                 // 같이 미끄러지는 큐브의 경우 이상 없음
                 // 정지한 큐브라면 부딪혀서 정지
                 //-------------------------------------------
-                // 오른쪽 검사
+                // 왼쪽 검사
                 // 있다
-                if (Physics.Raycast(transform.position, Vector3.right, out rayHit, 1f, layerMaskCube))
+                if (Physics.Raycast(transform.position, Vector3.left, out rayHit, 1f, layerMaskCube))
                 {
                     // slideEvent 체크
                     if (!rayHit.transform.gameObject.GetComponent<CubeMovement>().slideEvent)
@@ -354,14 +372,14 @@ public class CubeMovement : MonoBehaviour
                     slideEvent = true;
                 }
 
-                // 만약 오른쪽으로 이동이 불가능한 상황이면 이동하지 않아야함
-                // 오른쪽 검사
+                // 만약 왼쪽으로 이동이 불가능한 상황이면 이동하지 않아야함
+                // 왼쪽 검사
                 // 있다
-                if (Physics.Raycast(transform.position, Vector3.right, out rayHit, 1f, layerMaskCube))
+                if (Physics.Raycast(transform.position, Vector3.left, out rayHit, 1f, layerMaskCube))
                 {
                     // 큐브 이동 처리
                     // 이동 불가?
-                    if (!rayHit.transform.gameObject.GetComponent<CubeMovement>().MoveRight())
+                    if (!rayHit.transform.gameObject.GetComponent<CubeMovement>().MoveLeft())
                     {
                         // 이동하지 않음
                         slideEvent = false;
@@ -501,13 +519,13 @@ public class CubeMovement : MonoBehaviour
                 }
 
                 //-------------------------------------------
-                // 만약 오른쪽 이동 방향에 큐브가 있다면
+                // 만약 앞쪽 이동 방향에 큐브가 있다면
                 // 같이 미끄러지는 큐브의 경우 이상 없음
                 // 정지한 큐브라면 부딪혀서 정지
                 //-------------------------------------------
-                // 오른쪽 검사
+                // 앞쪽 검사
                 // 있다
-                if (Physics.Raycast(transform.position, Vector3.right, out rayHit, 1f, layerMaskCube))
+                if (Physics.Raycast(transform.position, Vector3.forward, out rayHit, 1f, layerMaskCube))
                 {
                     // slideEvent 체크
                     if (!rayHit.transform.gameObject.GetComponent<CubeMovement>().slideEvent)
@@ -536,14 +554,14 @@ public class CubeMovement : MonoBehaviour
                     slideEvent = true;
                 }
 
-                // 만약 오른쪽으로 이동이 불가능한 상황이면 이동하지 않아야함
-                // 오른쪽 검사
+                // 만약 앞쪽으로 이동이 불가능한 상황이면 이동하지 않아야함
+                // 앞쪽 검사
                 // 있다
-                if (Physics.Raycast(transform.position, Vector3.right, out rayHit, 1f, layerMaskCube))
+                if (Physics.Raycast(transform.position, Vector3.forward, out rayHit, 1f, layerMaskCube))
                 {
                     // 큐브 이동 처리
                     // 이동 불가?
-                    if (!rayHit.transform.gameObject.GetComponent<CubeMovement>().MoveRight())
+                    if (!rayHit.transform.gameObject.GetComponent<CubeMovement>().MoveForward())
                     {
                         // 이동하지 않음
                         slideEvent = false;
@@ -683,13 +701,13 @@ public class CubeMovement : MonoBehaviour
                 }
 
                 //-------------------------------------------
-                // 만약 오른쪽 이동 방향에 큐브가 있다면
+                // 만약 뒤쪽 이동 방향에 큐브가 있다면
                 // 같이 미끄러지는 큐브의 경우 이상 없음
                 // 정지한 큐브라면 부딪혀서 정지
                 //-------------------------------------------
-                // 오른쪽 검사
+                // 뒤쪽 검사
                 // 있다
-                if (Physics.Raycast(transform.position, Vector3.right, out rayHit, 1f, layerMaskCube))
+                if (Physics.Raycast(transform.position, Vector3.back, out rayHit, 1f, layerMaskCube))
                 {
                     // slideEvent 체크
                     if (!rayHit.transform.gameObject.GetComponent<CubeMovement>().slideEvent)
@@ -718,14 +736,14 @@ public class CubeMovement : MonoBehaviour
                     slideEvent = true;
                 }
 
-                // 만약 오른쪽으로 이동이 불가능한 상황이면 이동하지 않아야함
-                // 오른쪽 검사
+                // 만약 뒤쪽으로 이동이 불가능한 상황이면 이동하지 않아야함
+                // 뒤쪽 검사
                 // 있다
-                if (Physics.Raycast(transform.position, Vector3.right, out rayHit, 1f, layerMaskCube))
+                if (Physics.Raycast(transform.position, Vector3.back, out rayHit, 1f, layerMaskCube))
                 {
                     // 큐브 이동 처리
                     // 이동 불가?
-                    if (!rayHit.transform.gameObject.GetComponent<CubeMovement>().MoveRight())
+                    if (!rayHit.transform.gameObject.GetComponent<CubeMovement>().MoveBack())
                     {
                         // 이동하지 않음
                         slideEvent = false;
@@ -1217,6 +1235,8 @@ public class CubeMovement : MonoBehaviour
 
         // 초기화
         actionDelay = 0f;
+        // 연결된 큐브 딜레이 초기화
+        chainActionDelay = 0f;
 
         // 이동 좌표
         destPos = check;
@@ -1240,6 +1260,8 @@ public class CubeMovement : MonoBehaviour
             {
                 // 큐브 흔들기
                 cubeMoveState = CubeMoveState.SHAKE;
+                // 연결된 큐브 딜레이 가져옴
+                chainActionDelay = otherCubeMovement.actionDelay;
                 return;
             }
             // 큐브가 아래로 떨어지는 중
@@ -1278,6 +1300,8 @@ public class CubeMovement : MonoBehaviour
             {
                 // 큐브 흔들기
                 cubeMoveState = CubeMoveState.SHAKE;
+                // 연결된 큐브 딜레이 가져옴
+                chainActionDelay = otherCubeMovement.actionDelay;
                 return;
             }
             // 큐브가 아래로 떨어지는 중
@@ -1316,6 +1340,8 @@ public class CubeMovement : MonoBehaviour
             {
                 // 큐브 흔들기
                 cubeMoveState = CubeMoveState.SHAKE;
+                // 연결된 큐브 딜레이 가져옴
+                chainActionDelay = otherCubeMovement.actionDelay;
                 return;
             }
             // 큐브가 아래로 떨어지는 중
@@ -1354,6 +1380,8 @@ public class CubeMovement : MonoBehaviour
             {
                 // 큐브 흔들기
                 cubeMoveState = CubeMoveState.SHAKE;
+                // 연결된 큐브 딜레이 가져옴
+                chainActionDelay = otherCubeMovement.actionDelay;
                 return;
             }
             // 큐브가 아래로 떨어지는 중
@@ -1392,6 +1420,8 @@ public class CubeMovement : MonoBehaviour
             {
                 // 큐브 흔들기
                 cubeMoveState = CubeMoveState.SHAKE;
+                // 연결된 큐브 딜레이 가져옴
+                chainActionDelay = otherCubeMovement.actionDelay;
                 return;
             }
             // 큐브가 아래로 떨어지는 중
