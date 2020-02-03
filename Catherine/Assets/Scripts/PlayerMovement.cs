@@ -97,6 +97,7 @@ public class PlayerMovement : MonoBehaviour
         L_MOVE,                     // 왼쪽 이동
         F_MOVE,                     // 앞쪽 이동
         B_MOVE,                     // 뒤쪽 이동
+        MOVE_FLINCH,                // 이동 움찔
         R_SLIDE,                    // 오른쪽 미끄러짐
         L_SLIDE,                    // 왼쪽 미끄러짐
         F_SLIDE,                    // 앞쪽 미끄러짐
@@ -178,6 +179,7 @@ public class PlayerMovement : MonoBehaviour
     private enum AnimationSwitch
     {
         IDLE,
+        MOVE_FLINCH,
         JUMP,
         CLIMBING,
         CLIMBING_END,
@@ -572,6 +574,10 @@ public class PlayerMovement : MonoBehaviour
                                 // 위쪽 큐브가 내려오는 중
                                 if (cubeMovement.cubeMoveState == CubeMoveState.DOWN)
                                 {
+                                    //------------------------------------
+                                    // 위에서 큐브가 떨어져서 행동 불가
+                                    //------------------------------------
+                                    playerState = PlayerState.MOVE_FLINCH;
                                     break;
                                 }
                                 // 위쪽 큐브가 내려올 준비
@@ -808,6 +814,10 @@ public class PlayerMovement : MonoBehaviour
                                 // 위쪽 큐브가 내려오는 중
                                 if (cubeMovement.cubeMoveState == CubeMoveState.DOWN)
                                 {
+                                    //------------------------------------
+                                    // 위에서 큐브가 떨어져서 행동 불가
+                                    //------------------------------------
+                                    playerState = PlayerState.MOVE_FLINCH;
                                     break;
                                 }
                                 // 위쪽 큐브가 내려올 준비
@@ -1048,6 +1058,10 @@ public class PlayerMovement : MonoBehaviour
                                 // 위쪽 큐브가 내려오는 중
                                 if (cubeMovement.cubeMoveState == CubeMoveState.DOWN)
                                 {
+                                    //------------------------------------
+                                    // 위에서 큐브가 떨어져서 행동 불가
+                                    //------------------------------------
+                                    playerState = PlayerState.MOVE_FLINCH;
                                     break;
                                 }
                                 // 위쪽 큐브가 내려올 준비
@@ -1289,6 +1303,10 @@ public class PlayerMovement : MonoBehaviour
                                 // 위쪽 큐브가 내려오는 중
                                 if (cubeMovement.cubeMoveState == CubeMoveState.DOWN)
                                 {
+                                    //------------------------------------
+                                    // 위에서 큐브가 떨어져서 행동 불가
+                                    //------------------------------------
+                                    playerState = PlayerState.MOVE_FLINCH;
                                     break;
                                 }
                                 // 위쪽 큐브가 내려올 준비
@@ -2824,6 +2842,14 @@ public class PlayerMovement : MonoBehaviour
                     moveValue.z = destPos.z - transform.position.z;
                     characterController.Move(moveValue);
                 }
+                break;
+            case PlayerState.MOVE_FLINCH:
+                // 이동 움찔
+
+                // 애니메이션이 끝날 때까지 기다림
+                playerState = playerState = PlayerState.EMPTY;
+                // 애니메이션 이동 움찔
+                animeSwitch = AnimationSwitch.MOVE_FLINCH;
                 break;
             case PlayerState.R_SLIDE:
                 // 오른쪽 미끄러짐
@@ -5201,6 +5227,10 @@ public class PlayerMovement : MonoBehaviour
 
         switch (animeSwitch)
         {
+            case AnimationSwitch.MOVE_FLINCH:
+                animator.SetTrigger("Move Flinch");
+                animeSwitch = AnimationSwitch.IDLE;
+                break;
             case AnimationSwitch.JUMP:
                 animator.SetTrigger("Jump");
                 animeSwitch = AnimationSwitch.IDLE;
