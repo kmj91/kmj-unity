@@ -98,6 +98,14 @@ public class PlayerMovement : MonoBehaviour
         F_MOVE,                     // 앞쪽 이동
         B_MOVE,                     // 뒤쪽 이동
         MOVE_FLINCH,                // 이동 움찔
+        R_MOVE_COLLISION,           // 오른쪽 이동 충돌
+        R_MOVE_COLLISION_END,       // 오른쪽 이동 충돌 끝
+        L_MOVE_COLLISION,           // 왼쪽 이동 충돌
+        L_MOVE_COLLISION_END,       // 왼쪽 이동 충돌 끝
+        F_MOVE_COLLISION,           // 앞쪽 이동 충돌
+        F_MOVE_COLLISION_END,       // 앞쪽 이동 충돌 끝
+        B_MOVE_COLLISION,           // 뒤쪽 이동 충돌
+        B_MOVE_COLLISION_END,       // 뒤쪽 이동 충돌 끝
         R_SLIDE,                    // 오른쪽 미끄러짐
         L_SLIDE,                    // 왼쪽 미끄러짐
         F_SLIDE,                    // 앞쪽 미끄러짐
@@ -180,6 +188,7 @@ public class PlayerMovement : MonoBehaviour
     {
         IDLE,
         MOVE_FLINCH,
+        MOVE_COLLISION,
         JUMP,
         CLIMBING,
         CLIMBING_END,
@@ -593,6 +602,14 @@ public class PlayerMovement : MonoBehaviour
                                     // 플레이어가 더 늦게 도착한다면
                                     if (playerTime > cubeTime)
                                     {
+                                        //------------------------------------
+                                        // 위에서 큐브가 떨어져서 행동 불가
+                                        //------------------------------------
+                                        playerState = PlayerState.L_MOVE_COLLISION;
+                                        // Move 함수에서 처리할 키 값
+                                        moveKeyValue = Vector2.left;
+                                        // 이동 목적지는 현제 위치
+                                        destPos = transform.position;
                                         break;
                                     }
                                 }
@@ -833,6 +850,14 @@ public class PlayerMovement : MonoBehaviour
                                     // 플레이어가 더 늦게 도착한다면
                                     if (playerTime > cubeTime)
                                     {
+                                        //------------------------------------
+                                        // 위에서 큐브가 떨어져서 행동 불가
+                                        //------------------------------------
+                                        playerState = PlayerState.R_MOVE_COLLISION;
+                                        // Move 함수에서 처리할 키 값
+                                        moveKeyValue = Vector2.right;
+                                        // 이동 목적지는 현제 위치
+                                        destPos = transform.position;
                                         break;
                                     }
                                 }
@@ -1077,6 +1102,14 @@ public class PlayerMovement : MonoBehaviour
                                     // 플레이어가 더 늦게 도착한다면
                                     if (playerTime > cubeTime)
                                     {
+                                        //------------------------------------
+                                        // 위에서 큐브가 떨어져서 행동 불가
+                                        //------------------------------------
+                                        playerState = PlayerState.B_MOVE_COLLISION;
+                                        // Move 함수에서 처리할 키 값
+                                        moveKeyValue = Vector2.down;
+                                        // 이동 목적지는 현제 위치
+                                        destPos = transform.position;
                                         break;
                                     }
                                 }
@@ -1322,6 +1355,14 @@ public class PlayerMovement : MonoBehaviour
                                     // 플레이어가 더 늦게 도착한다면
                                     if (playerTime > cubeTime)
                                     {
+                                        //------------------------------------
+                                        // 위에서 큐브가 떨어져서 행동 불가
+                                        //------------------------------------
+                                        playerState = PlayerState.F_MOVE_COLLISION;
+                                        // Move 함수에서 처리할 키 값
+                                        moveKeyValue = Vector2.up;
+                                        // 이동 목적지는 현제 위치
+                                        destPos = transform.position;
                                         break;
                                     }
                                 }
@@ -2850,6 +2891,206 @@ public class PlayerMovement : MonoBehaviour
                 playerState = playerState = PlayerState.EMPTY;
                 // 애니메이션 이동 움찔
                 animeSwitch = AnimationSwitch.MOVE_FLINCH;
+                break;
+            case PlayerState.R_MOVE_COLLISION:
+                // 오른쪽 이동 충돌
+
+                // 이동하는 중인데 벽에 부딪힘
+                if ((currentSpeed / speed) == 0)
+                {
+                    // 충돌 끝
+                    playerState = PlayerState.R_MOVE_COLLISION_END;
+                    // 애니메이션 이동 충돌
+                    animeSwitch = AnimationSwitch.MOVE_COLLISION;
+                    // 약간의 딜레이가 필요합니다
+                    actionDelay = 0f;
+                    // 캐릭터 속도 관련 셋팅
+                    saveSpeed = speed;
+                    speed = 0.5f;
+                }
+                break;
+            case PlayerState.R_MOVE_COLLISION_END:
+                // 오른쪽 이동 충돌 끝
+                actionDelay = actionDelay + Time.deltaTime;
+
+                // 준비 동작때문에 약 2.5 대기합니다
+                if (actionDelay < 2.5f)
+                {
+                    break;
+                }
+                else
+                {
+                    // Move 함수에서 처리할 키 값
+                    moveKeyValue = Vector2.left;
+                }
+
+                // 캐릭터 이동 속도를 빠르게
+                speed = Mathf.SmoothDamp(currentSpeed, saveSpeed, ref jumpSmoothHorizontal, standSmoothTime);
+
+                // 수평 이동 거리만큼 이동 했는가
+                if (destPos.x >= centerTrans.position.x)
+                {
+                    // 캐릭터의 상태 변화는 애니메이션 클립에서 이벤트를 통해 함수를 호출해서 변경함
+                    // 이동 정지
+                    moveKeyValue = Vector2.zero;
+                    // 애니메이션이 끝날 때까지 기다림
+                    playerState = PlayerState.EMPTY;
+                    // 이동 속도 원상 복구
+                    speed = saveSpeed;
+                    // 플레이어 위치 맞추기
+                    moveValue.x = destPos.x - transform.position.x;
+                    characterController.Move(moveValue);
+                }
+                break;
+            case PlayerState.L_MOVE_COLLISION:
+                // 왼쪽 이동 충돌
+
+                // 이동하는 중인데 벽에 부딪힘
+                if ((currentSpeed / speed) == 0)
+                {
+                    // 충돌 끝
+                    playerState = PlayerState.L_MOVE_COLLISION_END;
+                    // 애니메이션 이동 충돌
+                    animeSwitch = AnimationSwitch.MOVE_COLLISION;
+                    // 약간의 딜레이가 필요합니다
+                    actionDelay = 0f;
+                    // 캐릭터 속도 관련 셋팅
+                    saveSpeed = speed;
+                    speed = 0.5f;
+                }
+                break;
+            case PlayerState.L_MOVE_COLLISION_END:
+                // 왼쪽 이동 충돌 끝
+                actionDelay = actionDelay + Time.deltaTime;
+
+                // 준비 동작때문에 약 2.5 대기합니다
+                if (actionDelay < 2.5f)
+                {
+                    break;
+                }
+                else
+                {
+                    // Move 함수에서 처리할 키 값
+                    moveKeyValue = Vector2.right;
+                }
+
+                // 캐릭터 이동 속도를 빠르게
+                speed = Mathf.SmoothDamp(currentSpeed, saveSpeed, ref jumpSmoothHorizontal, standSmoothTime);
+
+                // 수평 이동 거리만큼 이동 했는가
+                if (destPos.x <= centerTrans.position.x)
+                {
+                    // 캐릭터의 상태 변화는 애니메이션 클립에서 이벤트를 통해 함수를 호출해서 변경함
+                    // 이동 정지
+                    moveKeyValue = Vector2.zero;
+                    // 애니메이션이 끝날 때까지 기다림
+                    playerState = PlayerState.EMPTY;
+                    // 이동 속도 원상 복구
+                    speed = saveSpeed;
+                    // 플레이어 위치 맞추기
+                    moveValue.x = destPos.x - transform.position.x;
+                    characterController.Move(moveValue);
+                }
+                break;
+            case PlayerState.F_MOVE_COLLISION:
+                // 앞쪽 이동 충돌
+
+                // 이동하는 중인데 벽에 부딪힘
+                if ((currentSpeed / speed) == 0)
+                {
+                    // 충돌 끝
+                    playerState = PlayerState.F_MOVE_COLLISION_END;
+                    // 애니메이션 이동 충돌
+                    animeSwitch = AnimationSwitch.MOVE_COLLISION;
+                    // 약간의 딜레이가 필요합니다
+                    actionDelay = 0f;
+                    // 캐릭터 속도 관련 셋팅
+                    saveSpeed = speed;
+                    speed = 0.5f;
+                }
+                break;
+            case PlayerState.F_MOVE_COLLISION_END:
+                // 앞쪽 이동 충돌 끝
+                actionDelay = actionDelay + Time.deltaTime;
+
+                // 준비 동작때문에 약 2.5 대기합니다
+                if (actionDelay < 2.5f)
+                {
+                    break;
+                }
+                else
+                {
+                    // Move 함수에서 처리할 키 값
+                    moveKeyValue = Vector2.down;
+                }
+
+                // 캐릭터 이동 속도를 빠르게
+                speed = Mathf.SmoothDamp(currentSpeed, saveSpeed, ref jumpSmoothHorizontal, standSmoothTime);
+
+                // 수평 이동 거리만큼 이동 했는가
+                if (destPos.z >= centerTrans.position.z)
+                {
+                    // 캐릭터의 상태 변화는 애니메이션 클립에서 이벤트를 통해 함수를 호출해서 변경함
+                    // 이동 정지
+                    moveKeyValue = Vector2.zero;
+                    // 애니메이션이 끝날 때까지 기다림
+                    playerState = PlayerState.EMPTY;
+                    // 이동 속도 원상 복구
+                    speed = saveSpeed;
+                    // 플레이어 위치 맞추기
+                    moveValue.z = destPos.z - transform.position.z;
+                    characterController.Move(moveValue);
+                }
+                break;
+            case PlayerState.B_MOVE_COLLISION:
+                // 뒤쪽 이동 충돌
+
+                // 이동하는 중인데 벽에 부딪힘
+                if ((currentSpeed / speed) == 0)
+                {
+                    // 충돌 끝
+                    playerState = PlayerState.B_MOVE_COLLISION_END;
+                    // 애니메이션 이동 충돌
+                    animeSwitch = AnimationSwitch.MOVE_COLLISION;
+                    // 약간의 딜레이가 필요합니다
+                    actionDelay = 0f;
+                    // 캐릭터 속도 관련 셋팅
+                    saveSpeed = speed;
+                    speed = 0.5f;
+                }
+                break;
+            case PlayerState.B_MOVE_COLLISION_END:
+                // 뒤쪽 이동 충돌 끝
+                actionDelay = actionDelay + Time.deltaTime;
+
+                // 준비 동작때문에 약 2.5 대기합니다
+                if (actionDelay < 2.5f)
+                {
+                    break;
+                }
+                else
+                {
+                    // Move 함수에서 처리할 키 값
+                    moveKeyValue = Vector2.up;
+                }
+
+                // 캐릭터 이동 속도를 빠르게
+                speed = Mathf.SmoothDamp(currentSpeed, saveSpeed, ref jumpSmoothHorizontal, standSmoothTime);
+
+                // 수평 이동 거리만큼 이동 했는가
+                if (destPos.z <= centerTrans.position.z)
+                {
+                    // 캐릭터의 상태 변화는 애니메이션 클립에서 이벤트를 통해 함수를 호출해서 변경함
+                    // 이동 정지
+                    moveKeyValue = Vector2.zero;
+                    // 애니메이션이 끝날 때까지 기다림
+                    playerState = PlayerState.EMPTY;
+                    // 이동 속도 원상 복구
+                    speed = saveSpeed;
+                    // 플레이어 위치 맞추기
+                    moveValue.z = destPos.z - transform.position.z;
+                    characterController.Move(moveValue);
+                }
                 break;
             case PlayerState.R_SLIDE:
                 // 오른쪽 미끄러짐
@@ -5231,6 +5472,10 @@ public class PlayerMovement : MonoBehaviour
                 animator.SetTrigger("Move Flinch");
                 animeSwitch = AnimationSwitch.IDLE;
                 break;
+            case AnimationSwitch.MOVE_COLLISION:
+                animator.SetTrigger("Move Collision");
+                animeSwitch = AnimationSwitch.IDLE;
+                break;
             case AnimationSwitch.JUMP:
                 animator.SetTrigger("Jump");
                 animeSwitch = AnimationSwitch.IDLE;
@@ -5320,6 +5565,10 @@ public class PlayerMovement : MonoBehaviour
             case PlayerState.F_MOVE:
                 move.x = 0f;
                 move.y = 1f;
+                break;
+            case PlayerState.R_MOVE_COLLISION:
+                move.x = 1f;
+                move.y = 0f;
                 break;
             case PlayerState.R_INTERACTION_PULL:
             case PlayerState.R_INTERACTION_PULL_CLIMBING:
