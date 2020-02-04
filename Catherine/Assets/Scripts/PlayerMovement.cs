@@ -32,6 +32,12 @@ public class PlayerMovement : MonoBehaviour
         new Vector2(characterController.velocity.x, characterController.velocity.z).magnitude * 3;
     // 플레이어 상태
     public PlayerState playerState { get; private set; }
+    // 캐릭터 머리 트랜스폼
+    public Transform headTrans;
+    // 캐릭터 중심 트랜스폼
+    public Transform centerTrans;
+    // 캐릭터 발 트랜스폼
+    public Transform footTrans;
     // 플레이어 사망 플래그
     public bool isDeath { get; private set; }
 
@@ -45,9 +51,6 @@ public class PlayerMovement : MonoBehaviour
     private Animator animator;                          // 애니메이터
     private Camera followCam;                           // 카메라
     private GameManager gameManager;                    // 게임 매니저 스크립트
-    private Transform headTrans;                        // 캐릭터 머리 트랜스폼
-    private Transform centerTrans;                      // 캐릭터 중심 트랜스폼
-    private Transform footTrans;                        // 캐릭터 발 트랜스폼
     private LayerMask layerMaskCube;                    // 큐브 레이어 마스크
     private GameObject cubeObject;                      // 이동할 큐브 오브젝트
 
@@ -71,6 +74,8 @@ public class PlayerMovement : MonoBehaviour
     private bool climbingFlag;
     // 마우스 클릭
     private bool mouseClick;
+    // 머리 충돌 체크 옵션
+    private bool checkHeadCollisionOption;
     // 캐릭터 이동 목표 좌표
     private Vector3 destPos;
     // 큐브 이동 목표 좌표
@@ -115,6 +120,8 @@ public class PlayerMovement : MonoBehaviour
         F_UP,                       // 앞쪽 위
         B_UP,                       // 뒤쪽 위
         UP_FLINCH,                  // 점프 움찔
+        R_UP_COLLISION,             // 오른쪽 위 충돌
+        R_UP_COLLISION_END,         // 오른쪽 위 충돌 끝
         R_DOWN,                     // 오른쪽 아래
         L_DOWN,                     // 왼쪽 아래
         F_DOWN,                     // 앞쪽 아래
@@ -190,6 +197,8 @@ public class PlayerMovement : MonoBehaviour
         IDLE,
         MOVE_FLINCH,
         MOVE_COLLISION,
+        UP_COLLISION,
+        UP_COLLISION_END,
         JUMP,
         CLIMBING,
         CLIMBING_END,
@@ -248,9 +257,6 @@ public class PlayerMovement : MonoBehaviour
         GameObject gameobject = GameObject.Find("GameManager") as GameObject;
         gameManager = gameobject.GetComponent<GameManager>();
 
-        headTrans = transform.Find("Head");
-        centerTrans = transform.Find("Center");
-        footTrans = transform.Find("Foot");
         // 레이어 마스크
         layerMaskCube = 1 << LayerMask.NameToLayer("Cube");
         // 딜레이
@@ -261,6 +267,8 @@ public class PlayerMovement : MonoBehaviour
         isDeath = false;
         // 애니메이션
         animeSwitch = AnimationSwitch.IDLE;
+        // 머리 충돌 체크 옵션
+        checkHeadCollisionOption = false;
 
     }
 
@@ -803,14 +811,35 @@ public class PlayerMovement : MonoBehaviour
                                             //-------------------------------------------------------
                                             // 플레이어 거리 / 속도
                                             playerTime = (check.y - footTrans.position.y) / jumpVelocity;
+                                            // 플레이어 대기 시간을 더함
+                                            playerTime = playerTime + JUMP_DELAY;
                                             // 큐브 거리 / 속도
                                             cubeTime = ((rayHit.transform.position.y - CUBE_HALF_LENGTH) - check.y) / cubeMovement.verticalSpeed;
                                             // 큐브의 대기 시간을 더함
                                             cubeTime = cubeTime + cubeMovement.GetChainDownDelayTime();
-
+                                            Debug.Log("체인");
+                                            Debug.Log("playerTime : " + playerTime + ", cubeTime : " + cubeTime);
                                             // 플레이어가 더 늦게 도착한다면
                                             if (playerTime > cubeTime)
                                             {
+                                                //------------------------------------
+                                                // 위에서 큐브가 떨어져서 행동 불가
+                                                //------------------------------------
+                                                // 이동 목적지는 현제 위치
+                                                destPos = transform.position;
+                                                // 약간 위
+                                                destPos.y = destPos.y + 0.5f;
+                                                // 오른쪽 이동 등반 상태
+                                                playerState = PlayerState.R_UP_COLLISION;
+                                                // 애니메이션 점프
+                                                animeSwitch = AnimationSwitch.UP_COLLISION;
+                                                // 점프 애니메이션은 약간의 딜레이가 필요합니다
+                                                actionDelay = 0f;
+                                                // 캐릭터 속도 관련 셋팅
+                                                saveSpeed = speed;
+                                                speed = 0.5f;
+                                                // 머리 충돌 체크 옵션
+                                                checkHeadCollisionOption = true;
                                                 break;
                                             }
                                         }
@@ -828,7 +857,8 @@ public class PlayerMovement : MonoBehaviour
                                             cubeTime = ((rayHit.transform.position.y - CUBE_HALF_LENGTH) - check.y) / cubeMovement.verticalSpeed;
                                             // 큐브의 대기 시간을 더함
                                             cubeTime = cubeTime + cubeMovement.GetDownDelayTime();
-
+                                            Debug.Log("체인");
+                                            Debug.Log("playerTime : " + playerTime + ", cubeTime : " + cubeTime);
                                             // 플레이어가 더 늦게 도착한다면
                                             if (playerTime > cubeTime)
                                             {
@@ -836,7 +866,7 @@ public class PlayerMovement : MonoBehaviour
                                             }
                                         }
                                     }
-
+                                    Debug.Log("통과할수있다고?");
                                     // 위쪽 이동
                                     destPos.y = destPos.y + 0.5f;
                                     // 오른쪽 이동 등반 상태
@@ -3521,6 +3551,88 @@ public class PlayerMovement : MonoBehaviour
                 // 애니메이션 이동 움찔
                 animeSwitch = AnimationSwitch.MOVE_FLINCH;
                 break;
+            case PlayerState.R_UP_COLLISION:
+                // 점프 충돌
+                actionDelay = actionDelay + Time.deltaTime;
+
+                // 점프 준비 동작때문에 약 0.15 대기합니다
+                if (actionDelay < JUMP_DELAY)
+                {
+                    break;
+                }
+                else
+                {
+                    // Move 함수에서 처리할 키 값
+                    moveKeyValue = Vector2.right;
+                }
+                
+                // 수직 이동 거리만큼 이동 하지 못했나
+                if (destPos.y > centerTrans.position.y)
+                {
+                    // 위로 이동함
+                    currentVelocityY = Mathf.SmoothDamp(currentSpeed, jumpVelocity, ref jumpSmoothVertical, upSmoothTime);
+                }
+                // 수직 이동 거리만큼 이동 함
+                else
+                {
+                    // 캐릭터 이동 속도를 빠르게
+                    speed = Mathf.SmoothDamp(currentSpeed, saveSpeed * 1.5f, ref jumpSmoothHorizontal, upSmoothTime);
+                }
+
+                if (!checkHeadCollisionOption)
+                {
+                    Debug.Log("부딪힘");
+                    // 충돌 끝
+                    playerState = PlayerState.R_UP_COLLISION_END;
+                    // 애니메이션 이동 충돌
+                    animeSwitch = AnimationSwitch.UP_COLLISION_END;
+                    // 밀려남
+                    currentVelocityY = -jumpVelocity * 3f;
+                    // 약간의 딜레이가 필요합니다
+                    actionDelay = 0f;
+                    // 이동 정지
+                    moveKeyValue = Vector2.zero;
+                    // 이동 속도 원상 복구
+                    speed = saveSpeed;
+                }
+                /*
+                // 이동하는 중인데 벽에 부딪힘
+                else if ((currentSpeed / speed) == 0)
+                {
+                    // 충돌 끝
+                    playerState = PlayerState.R_UP_COLLISION_END;
+                    // 애니메이션 이동 충돌
+                    animeSwitch = AnimationSwitch.UP_COLLISION_END;
+                    // 약간의 딜레이가 필요합니다
+                    actionDelay = 0f;
+                    // 이동 정지
+                    moveKeyValue = Vector2.zero;
+                    // 이동 속도 원상 복구
+                    speed = saveSpeed;
+                }
+                */
+
+                /*
+                // 수평 이동 거리만큼 이동 했는가
+                if (destPos.x <= centerTrans.position.x)
+                {
+                    // 캐릭터의 상태 변화는 애니메이션 클립에서 이벤트를 통해 함수를 호출해서 변경함
+                    // 이동 정지
+                    moveKeyValue = Vector2.zero;
+                    // 애니메이션이 끝날 때까지 기다림
+                    playerState = PlayerState.EMPTY;
+                    // 이동 속도 원상 복구
+                    speed = saveSpeed;
+                    // 플레이어 위치 맞추기
+                    moveValue.x = destPos.x - transform.position.x;
+                    characterController.Move(moveValue);
+                }
+                */
+                break;
+            case PlayerState.R_UP_COLLISION_END:
+                // 점프 충돌 끝
+
+                break;
             case PlayerState.R_DOWN:
                 actionDelay = actionDelay + Time.deltaTime;
 
@@ -5603,6 +5715,14 @@ public class PlayerMovement : MonoBehaviour
                 animator.SetTrigger("Move Collision");
                 animeSwitch = AnimationSwitch.IDLE;
                 break;
+            case AnimationSwitch.UP_COLLISION:
+                animator.SetTrigger("Up Collision");
+                animeSwitch = AnimationSwitch.IDLE;
+                break;
+            case AnimationSwitch.UP_COLLISION_END:
+                animator.SetTrigger("Up Collision End");
+                animeSwitch = AnimationSwitch.IDLE;
+                break;
             case AnimationSwitch.JUMP:
                 animator.SetTrigger("Jump");
                 animeSwitch = AnimationSwitch.IDLE;
@@ -5755,12 +5875,22 @@ public class PlayerMovement : MonoBehaviour
         box.x = 0.1f;
         box.y = 0.1f;
         box.z = 0.1f;
-
+        
         if (Physics.CheckBox(headTrans.position, box, Quaternion.identity, layerMaskCube))
         {
             // 플레이어 캐릭터가 안죽었으면
             if (!isDeath)
             {
+                // 머리 충돌 옵션
+                if (checkHeadCollisionOption)
+                {
+                    Debug.Log("죽지않음");
+                    //----------------------
+                    // 죽지 않고 빠져나감
+                    //----------------------
+                    checkHeadCollisionOption = false;
+                    return;
+                }
                 // 사망 플래그
                 isDeath = true;
                 // 플레이어 사망
