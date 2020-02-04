@@ -537,7 +537,6 @@ public class PlayerMovement : MonoBehaviour
                                         // 위쪽 큐브가 내려올 준비
                                         else if (cubeMovement.cubeMoveState == CubeMoveState.DOWN_READY)
                                         {
-                                            Debug.Log("내려올 준비");
                                             // 플레이어 거리 / 속도
                                             playerTime = (headTrans.position.x - (destPos.x + CUBE_HALF_LENGTH)) / speed;
                                             // 큐브 거리 / 속도
@@ -590,6 +589,30 @@ public class PlayerMovement : MonoBehaviour
                                     //------------------------------------
                                     playerState = PlayerState.MOVE_FLINCH;
                                     break;
+                                }
+                                // 위쪽 큐브가 연쇄적으로 내려올 준비
+                                else if (cubeMovement.cubeMoveState == CubeMoveState.SHAKE)
+                                {
+                                    // 플레이어 거리 / 속도
+                                    playerTime = (headTrans.position.x - (destPos.x + CUBE_HALF_LENGTH)) / speed;
+                                    // 큐브 거리 / 속도
+                                    cubeTime = ((rayHit.transform.position.y - CUBE_HALF_LENGTH) - headTrans.position.y) / cubeMovement.verticalSpeed;
+                                    // 큐브의 대기 시간을 더함
+                                    cubeTime = cubeTime + cubeMovement.GetDownDelayTime();
+
+                                    // 플레이어가 더 늦게 도착한다면
+                                    if (playerTime > cubeTime)
+                                    {
+                                        //------------------------------------
+                                        // 위에서 큐브가 떨어져서 행동 불가
+                                        //------------------------------------
+                                        playerState = PlayerState.L_MOVE_COLLISION;
+                                        // Move 함수에서 처리할 키 값
+                                        moveKeyValue = Vector2.left;
+                                        // 이동 목적지는 현제 위치
+                                        destPos = transform.position;
+                                        break;
+                                    }
                                 }
                                 // 위쪽 큐브가 내려올 준비
                                 else if (cubeMovement.cubeMoveState == CubeMoveState.DOWN_READY)
@@ -765,6 +788,7 @@ public class PlayerMovement : MonoBehaviour
                                             playerState = PlayerState.UP_FLINCH;
                                             break;
                                         }
+                                        // 위쪽 큐브가 연쇄적으로 내려올 준비
                                         else if (cubeMovement.cubeMoveState == CubeMoveState.SHAKE)
                                         {
                                             //-------------------------------------------------------
@@ -788,7 +812,6 @@ public class PlayerMovement : MonoBehaviour
                                         // 위쪽 큐브가 내려올 준비
                                         else if (cubeMovement.cubeMoveState == CubeMoveState.DOWN_READY)
                                         {
-                                            Debug.Log("내려올 준비");
                                             // 플레이어 거리 / 속도
                                             playerTime = (headTrans.position.x - (destPos.x + CUBE_HALF_LENGTH)) / speed;
                                             // 큐브 거리 / 속도
@@ -839,6 +862,30 @@ public class PlayerMovement : MonoBehaviour
                                     //------------------------------------
                                     playerState = PlayerState.MOVE_FLINCH;
                                     break;
+                                }
+                                // 위쪽 큐브가 연쇄적으로 내려올 준비
+                                else if (cubeMovement.cubeMoveState == CubeMoveState.SHAKE)
+                                {
+                                    // 플레이어 거리 / 속도
+                                    playerTime = ((destPos.x - CUBE_HALF_LENGTH) - headTrans.position.x) / speed;
+                                    // 큐브 거리 / 속도
+                                    cubeTime = ((rayHit.transform.position.y - CUBE_HALF_LENGTH) - headTrans.position.y) / cubeMovement.verticalSpeed;
+                                    // 큐브의 대기 시간을 더함
+                                    cubeTime = cubeTime + cubeMovement.GetDownDelayTime();
+
+                                    // 플레이어가 더 늦게 도착한다면
+                                    if (playerTime > cubeTime)
+                                    {
+                                        //------------------------------------
+                                        // 위에서 큐브가 떨어져서 행동 불가
+                                        //------------------------------------
+                                        playerState = PlayerState.R_MOVE_COLLISION;
+                                        // Move 함수에서 처리할 키 값
+                                        moveKeyValue = Vector2.right;
+                                        // 이동 목적지는 현제 위치
+                                        destPos = transform.position;
+                                        break;
+                                    }
                                 }
                                 // 위쪽 큐브가 내려올 준비
                                 else if (cubeMovement.cubeMoveState == CubeMoveState.DOWN_READY)
@@ -1039,7 +1086,6 @@ public class PlayerMovement : MonoBehaviour
                                         // 위쪽 큐브가 내려올 준비
                                         else if (cubeMovement.cubeMoveState == CubeMoveState.DOWN_READY)
                                         {
-                                            Debug.Log("내려올 준비");
                                             // 플레이어 거리 / 속도
                                             playerTime = (headTrans.position.x - (destPos.x + CUBE_HALF_LENGTH)) / speed;
                                             // 큐브 거리 / 속도
@@ -1092,6 +1138,30 @@ public class PlayerMovement : MonoBehaviour
                                     //------------------------------------
                                     playerState = PlayerState.MOVE_FLINCH;
                                     break;
+                                }
+                                // 위쪽 큐브가 연쇄적으로 내려올 준비
+                                else if (cubeMovement.cubeMoveState == CubeMoveState.SHAKE)
+                                {
+                                    // 플레이어 거리 / 속도
+                                    playerTime = (headTrans.position.z - (destPos.z + CUBE_HALF_LENGTH)) / speed;
+                                    // 큐브 거리 / 속도
+                                    cubeTime = ((rayHit.transform.position.y - CUBE_HALF_LENGTH) - headTrans.position.y) / cubeMovement.verticalSpeed;
+                                    // 큐브의 대기 시간을 더함
+                                    cubeTime = cubeTime + cubeMovement.GetDownDelayTime();
+
+                                    // 플레이어가 더 늦게 도착한다면
+                                    if (playerTime > cubeTime)
+                                    {
+                                        //------------------------------------
+                                        // 위에서 큐브가 떨어져서 행동 불가
+                                        //------------------------------------
+                                        playerState = PlayerState.B_MOVE_COLLISION;
+                                        // Move 함수에서 처리할 키 값
+                                        moveKeyValue = Vector2.down;
+                                        // 이동 목적지는 현제 위치
+                                        destPos = transform.position;
+                                        break;
+                                    }
                                 }
                                 // 위쪽 큐브가 내려올 준비
                                 else if (cubeMovement.cubeMoveState == CubeMoveState.DOWN_READY)
@@ -1293,7 +1363,6 @@ public class PlayerMovement : MonoBehaviour
                                         // 위쪽 큐브가 내려올 준비
                                         else if (cubeMovement.cubeMoveState == CubeMoveState.DOWN_READY)
                                         {
-                                            Debug.Log("내려올 준비");
                                             // 플레이어 거리 / 속도
                                             playerTime = (headTrans.position.x - (destPos.x + CUBE_HALF_LENGTH)) / speed;
                                             // 큐브 거리 / 속도
@@ -1346,6 +1415,30 @@ public class PlayerMovement : MonoBehaviour
                                     //------------------------------------
                                     playerState = PlayerState.MOVE_FLINCH;
                                     break;
+                                }
+                                // 위쪽 큐브가 연쇄적으로 내려올 준비
+                                else if (cubeMovement.cubeMoveState == CubeMoveState.SHAKE)
+                                {
+                                    // 플레이어 거리 / 속도
+                                    playerTime = ((destPos.z - CUBE_HALF_LENGTH) - headTrans.position.z) / speed;
+                                    // 큐브 거리 / 속도
+                                    cubeTime = ((rayHit.transform.position.y - CUBE_HALF_LENGTH) - headTrans.position.y) / cubeMovement.verticalSpeed;
+                                    // 큐브의 대기 시간을 더함
+                                    cubeTime = cubeTime + cubeMovement.GetDownDelayTime();
+
+                                    // 플레이어가 더 늦게 도착한다면
+                                    if (playerTime > cubeTime)
+                                    {
+                                        //------------------------------------
+                                        // 위에서 큐브가 떨어져서 행동 불가
+                                        //------------------------------------
+                                        playerState = PlayerState.F_MOVE_COLLISION;
+                                        // Move 함수에서 처리할 키 값
+                                        moveKeyValue = Vector2.up;
+                                        // 이동 목적지는 현제 위치
+                                        destPos = transform.position;
+                                        break;
+                                    }
                                 }
                                 // 위쪽 큐브가 내려올 준비
                                 else if (cubeMovement.cubeMoveState == CubeMoveState.DOWN_READY)
