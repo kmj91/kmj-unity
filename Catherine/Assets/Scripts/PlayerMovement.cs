@@ -114,6 +114,7 @@ public class PlayerMovement : MonoBehaviour
         L_UP,                       // 왼쪽 위
         F_UP,                       // 앞쪽 위
         B_UP,                       // 뒤쪽 위
+        UP_FLINCH,                  // 점프 움찔
         R_DOWN,                     // 오른쪽 아래
         L_DOWN,                     // 왼쪽 아래
         F_DOWN,                     // 앞쪽 아래
@@ -510,6 +511,7 @@ public class PlayerMovement : MonoBehaviour
                                             //------------------------------------
                                             // 위에서 큐브가 떨어져서 행동 불가
                                             //------------------------------------
+                                            playerState = PlayerState.UP_FLINCH;
                                             break;
                                         }
                                         else if (cubeMovement.cubeMoveState == CubeMoveState.SHAKE)
@@ -760,6 +762,7 @@ public class PlayerMovement : MonoBehaviour
                                             //------------------------------------
                                             // 위에서 큐브가 떨어져서 행동 불가
                                             //------------------------------------
+                                            playerState = PlayerState.UP_FLINCH;
                                             break;
                                         }
                                         else if (cubeMovement.cubeMoveState == CubeMoveState.SHAKE)
@@ -1010,6 +1013,7 @@ public class PlayerMovement : MonoBehaviour
                                             //------------------------------------
                                             // 위에서 큐브가 떨어져서 행동 불가
                                             //------------------------------------
+                                            playerState = PlayerState.UP_FLINCH;
                                             break;
                                         }
                                         else if (cubeMovement.cubeMoveState == CubeMoveState.SHAKE)
@@ -1263,6 +1267,7 @@ public class PlayerMovement : MonoBehaviour
                                             //------------------------------------
                                             // 위에서 큐브가 떨어져서 행동 불가
                                             //------------------------------------
+                                            playerState = PlayerState.UP_FLINCH;
                                             break;
                                         }
                                         else if (cubeMovement.cubeMoveState == CubeMoveState.SHAKE)
@@ -3393,6 +3398,15 @@ public class PlayerMovement : MonoBehaviour
                     moveValue.z = destPos.z - transform.position.z;
                     characterController.Move(moveValue);
                 }
+                break;
+            case PlayerState.UP_FLINCH:
+                // 점프 움찔
+                // 지금은 MOVE_FLINCH와 동일
+
+                // 애니메이션이 끝날 때까지 기다림
+                playerState = playerState = PlayerState.EMPTY;
+                // 애니메이션 이동 움찔
+                animeSwitch = AnimationSwitch.MOVE_FLINCH;
                 break;
             case PlayerState.R_DOWN:
                 actionDelay = actionDelay + Time.deltaTime;
