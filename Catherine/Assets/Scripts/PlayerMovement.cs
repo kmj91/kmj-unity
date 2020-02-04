@@ -537,10 +537,15 @@ public class PlayerMovement : MonoBehaviour
                                         // 위쪽 큐브가 내려올 준비
                                         else if (cubeMovement.cubeMoveState == CubeMoveState.DOWN_READY)
                                         {
+                                            //-------------------------------------------------------
+                                            // 위에서 큐브가 떨어질 준비를 하고 있음
+                                            // 떨어지는 큐브보다 빠르게 지나갈 수 있으면 지나가고
+                                            // 지나갈 수 없다면 그에 따른 행동 필요
+                                            //-------------------------------------------------------
                                             // 플레이어 거리 / 속도
-                                            playerTime = (headTrans.position.x - (destPos.x + CUBE_HALF_LENGTH)) / speed;
+                                            playerTime = (check.y - footTrans.position.y) / jumpVelocity;
                                             // 큐브 거리 / 속도
-                                            cubeTime = ((rayHit.transform.position.y - CUBE_HALF_LENGTH) - headTrans.position.y) / cubeMovement.verticalSpeed;
+                                            cubeTime = ((rayHit.transform.position.y - CUBE_HALF_LENGTH) - check.y) / cubeMovement.verticalSpeed;
                                             // 큐브의 대기 시간을 더함
                                             cubeTime = cubeTime + cubeMovement.GetDownDelayTime();
 
@@ -598,7 +603,7 @@ public class PlayerMovement : MonoBehaviour
                                     // 큐브 거리 / 속도
                                     cubeTime = ((rayHit.transform.position.y - CUBE_HALF_LENGTH) - headTrans.position.y) / cubeMovement.verticalSpeed;
                                     // 큐브의 대기 시간을 더함
-                                    cubeTime = cubeTime + cubeMovement.GetDownDelayTime();
+                                    cubeTime = cubeTime + cubeMovement.GetChainDownDelayTime();
 
                                     // 플레이어가 더 늦게 도착한다면
                                     if (playerTime > cubeTime)
@@ -812,10 +817,15 @@ public class PlayerMovement : MonoBehaviour
                                         // 위쪽 큐브가 내려올 준비
                                         else if (cubeMovement.cubeMoveState == CubeMoveState.DOWN_READY)
                                         {
+                                            //-------------------------------------------------------
+                                            // 위에서 큐브가 떨어질 준비를 하고 있음
+                                            // 떨어지는 큐브보다 빠르게 지나갈 수 있으면 지나가고
+                                            // 지나갈 수 없다면 그에 따른 행동 필요
+                                            //-------------------------------------------------------
                                             // 플레이어 거리 / 속도
-                                            playerTime = (headTrans.position.x - (destPos.x + CUBE_HALF_LENGTH)) / speed;
+                                            playerTime = (check.y - footTrans.position.y) / jumpVelocity;
                                             // 큐브 거리 / 속도
-                                            cubeTime = ((rayHit.transform.position.y - CUBE_HALF_LENGTH) - headTrans.position.y) / cubeMovement.verticalSpeed;
+                                            cubeTime = ((rayHit.transform.position.y - CUBE_HALF_LENGTH) - check.y) / cubeMovement.verticalSpeed;
                                             // 큐브의 대기 시간을 더함
                                             cubeTime = cubeTime + cubeMovement.GetDownDelayTime();
 
@@ -871,7 +881,7 @@ public class PlayerMovement : MonoBehaviour
                                     // 큐브 거리 / 속도
                                     cubeTime = ((rayHit.transform.position.y - CUBE_HALF_LENGTH) - headTrans.position.y) / cubeMovement.verticalSpeed;
                                     // 큐브의 대기 시간을 더함
-                                    cubeTime = cubeTime + cubeMovement.GetDownDelayTime();
+                                    cubeTime = cubeTime + cubeMovement.GetChainDownDelayTime();
 
                                     // 플레이어가 더 늦게 도착한다면
                                     if (playerTime > cubeTime)
@@ -1086,10 +1096,15 @@ public class PlayerMovement : MonoBehaviour
                                         // 위쪽 큐브가 내려올 준비
                                         else if (cubeMovement.cubeMoveState == CubeMoveState.DOWN_READY)
                                         {
+                                            //-------------------------------------------------------
+                                            // 위에서 큐브가 떨어질 준비를 하고 있음
+                                            // 떨어지는 큐브보다 빠르게 지나갈 수 있으면 지나가고
+                                            // 지나갈 수 없다면 그에 따른 행동 필요
+                                            //-------------------------------------------------------
                                             // 플레이어 거리 / 속도
-                                            playerTime = (headTrans.position.x - (destPos.x + CUBE_HALF_LENGTH)) / speed;
+                                            playerTime = (check.y - footTrans.position.y) / jumpVelocity;
                                             // 큐브 거리 / 속도
-                                            cubeTime = ((rayHit.transform.position.y - CUBE_HALF_LENGTH) - headTrans.position.y) / cubeMovement.verticalSpeed;
+                                            cubeTime = ((rayHit.transform.position.y - CUBE_HALF_LENGTH) - check.y) / cubeMovement.verticalSpeed;
                                             // 큐브의 대기 시간을 더함
                                             cubeTime = cubeTime + cubeMovement.GetDownDelayTime();
 
@@ -1147,7 +1162,7 @@ public class PlayerMovement : MonoBehaviour
                                     // 큐브 거리 / 속도
                                     cubeTime = ((rayHit.transform.position.y - CUBE_HALF_LENGTH) - headTrans.position.y) / cubeMovement.verticalSpeed;
                                     // 큐브의 대기 시간을 더함
-                                    cubeTime = cubeTime + cubeMovement.GetDownDelayTime();
+                                    cubeTime = cubeTime + cubeMovement.GetChainDownDelayTime();
 
                                     // 플레이어가 더 늦게 도착한다면
                                     if (playerTime > cubeTime)
@@ -1363,10 +1378,15 @@ public class PlayerMovement : MonoBehaviour
                                         // 위쪽 큐브가 내려올 준비
                                         else if (cubeMovement.cubeMoveState == CubeMoveState.DOWN_READY)
                                         {
+                                            //-------------------------------------------------------
+                                            // 위에서 큐브가 떨어질 준비를 하고 있음
+                                            // 떨어지는 큐브보다 빠르게 지나갈 수 있으면 지나가고
+                                            // 지나갈 수 없다면 그에 따른 행동 필요
+                                            //-------------------------------------------------------
                                             // 플레이어 거리 / 속도
-                                            playerTime = (headTrans.position.x - (destPos.x + CUBE_HALF_LENGTH)) / speed;
+                                            playerTime = (check.y - footTrans.position.y) / jumpVelocity;
                                             // 큐브 거리 / 속도
-                                            cubeTime = ((rayHit.transform.position.y - CUBE_HALF_LENGTH) - headTrans.position.y) / cubeMovement.verticalSpeed;
+                                            cubeTime = ((rayHit.transform.position.y - CUBE_HALF_LENGTH) - check.y) / cubeMovement.verticalSpeed;
                                             // 큐브의 대기 시간을 더함
                                             cubeTime = cubeTime + cubeMovement.GetDownDelayTime();
 
@@ -1424,7 +1444,7 @@ public class PlayerMovement : MonoBehaviour
                                     // 큐브 거리 / 속도
                                     cubeTime = ((rayHit.transform.position.y - CUBE_HALF_LENGTH) - headTrans.position.y) / cubeMovement.verticalSpeed;
                                     // 큐브의 대기 시간을 더함
-                                    cubeTime = cubeTime + cubeMovement.GetDownDelayTime();
+                                    cubeTime = cubeTime + cubeMovement.GetChainDownDelayTime();
 
                                     // 플레이어가 더 늦게 도착한다면
                                     if (playerTime > cubeTime)
