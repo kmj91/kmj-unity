@@ -3426,6 +3426,8 @@ public class PlayerMovement : MonoBehaviour
                 }
                 else
                 {
+                    // 테스트
+                    characterController.center = characterController.center + Vector3.up;
                     // Move 함수에서 처리할 키 값
                     moveKeyValue = Vector2.left;
                 }
@@ -3441,6 +3443,8 @@ public class PlayerMovement : MonoBehaviour
                 {
                     // 캐릭터 이동 속도를 빠르게
                     speed = Mathf.SmoothDamp(currentSpeed, saveSpeed * 1.5f, ref jumpSmoothHorizontal, upSmoothTime);
+                    // 수직 이동하지 않음
+                    currentVelocityY = 0f;
                 }
 
                 // 수평 이동 거리만큼 이동 했는가
@@ -3456,6 +3460,8 @@ public class PlayerMovement : MonoBehaviour
                     // 플레이어 위치 맞추기
                     moveValue.x = destPos.x - transform.position.x;
                     characterController.Move(moveValue);
+                    // 테스트
+                    characterController.center = new Vector3(0f, 0.7f, 0f);
                 }
                 break;
             case PlayerState.F_UP:
