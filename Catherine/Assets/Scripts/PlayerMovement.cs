@@ -74,8 +74,6 @@ public class PlayerMovement : MonoBehaviour
     private bool climbingFlag;
     // 마우스 클릭
     private bool mouseClick;
-    // 머리 충돌 체크 옵션
-    private bool checkHeadCollisionOption;
     // 캐릭터 이동 목표 좌표
     private Vector3 destPos;
     // 큐브 이동 목표 좌표
@@ -226,6 +224,7 @@ public class PlayerMovement : MonoBehaviour
     private const float JUMP_DELAY = 0.15f;
     private const float PUSH_DELAY = 0.5f;
     private const float PUSH_END_DELAY = 0.15f;
+    private const float CUBE_LENGTH = 1f;
     private const float CUBE_HALF_LENGTH = 0.5f;
 
     //--------------------------------
@@ -267,9 +266,6 @@ public class PlayerMovement : MonoBehaviour
         isDeath = false;
         // 애니메이션
         animeSwitch = AnimationSwitch.IDLE;
-        // 머리 충돌 체크 옵션
-        checkHeadCollisionOption = false;
-
     }
 
     private void FixedUpdate()
@@ -827,8 +823,8 @@ public class PlayerMovement : MonoBehaviour
                                                 //------------------------------------
                                                 // 이동 목적지는 현제 위치
                                                 destPos = transform.position;
-                                                // 약간 위
-                                                destPos.y = destPos.y + 0.5f;
+                                                // 현제 위치에서 높이는 큐브 높이 만큼
+                                                destPos.y = destPos.y + CUBE_LENGTH;
                                                 // 오른쪽 이동 등반 상태
                                                 playerState = PlayerState.R_UP_COLLISION;
                                                 // 애니메이션 점프
@@ -838,8 +834,6 @@ public class PlayerMovement : MonoBehaviour
                                                 // 캐릭터 속도 관련 셋팅
                                                 saveSpeed = speed;
                                                 speed = 0.5f;
-                                                // 머리 충돌 체크 옵션
-                                                checkHeadCollisionOption = true;
                                                 break;
                                             }
                                         }
@@ -3426,8 +3420,6 @@ public class PlayerMovement : MonoBehaviour
                 }
                 else
                 {
-                    // 테스트
-                    characterController.center = characterController.center + Vector3.up;
                     // Move 함수에서 처리할 키 값
                     moveKeyValue = Vector2.left;
                 }
@@ -3443,8 +3435,6 @@ public class PlayerMovement : MonoBehaviour
                 {
                     // 캐릭터 이동 속도를 빠르게
                     speed = Mathf.SmoothDamp(currentSpeed, saveSpeed * 1.5f, ref jumpSmoothHorizontal, upSmoothTime);
-                    // 수직 이동하지 않음
-                    currentVelocityY = 0f;
                 }
 
                 // 수평 이동 거리만큼 이동 했는가
@@ -3460,8 +3450,6 @@ public class PlayerMovement : MonoBehaviour
                     // 플레이어 위치 맞추기
                     moveValue.x = destPos.x - transform.position.x;
                     characterController.Move(moveValue);
-                    // 테스트
-                    characterController.center = new Vector3(0f, 0.7f, 0f);
                 }
                 break;
             case PlayerState.F_UP:
@@ -3585,7 +3573,8 @@ public class PlayerMovement : MonoBehaviour
                     speed = Mathf.SmoothDamp(currentSpeed, saveSpeed * 1.5f, ref jumpSmoothHorizontal, upSmoothTime);
                 }
 
-                if (!checkHeadCollisionOption)
+                // 머리가 부딪힘
+                if (Physics.Raycast(headTrans.position, Vector3.up, 0.2f, layerMaskCube))
                 {
                     Debug.Log("부딪힘");
                     // 충돌 끝
@@ -3593,7 +3582,7 @@ public class PlayerMovement : MonoBehaviour
                     // 애니메이션 이동 충돌
                     animeSwitch = AnimationSwitch.UP_COLLISION_END;
                     // 밀려남
-                    currentVelocityY = -jumpVelocity * 3f;
+                    //currentVelocityY = -jumpVelocity;
                     // 약간의 딜레이가 필요합니다
                     actionDelay = 0f;
                     // 이동 정지
@@ -3601,39 +3590,13 @@ public class PlayerMovement : MonoBehaviour
                     // 이동 속도 원상 복구
                     speed = saveSpeed;
                 }
-                /*
-                // 이동하는 중인데 벽에 부딪힘
-                else if ((currentSpeed / speed) == 0)
-                {
-                    // 충돌 끝
-                    playerState = PlayerState.R_UP_COLLISION_END;
-                    // 애니메이션 이동 충돌
-                    animeSwitch = AnimationSwitch.UP_COLLISION_END;
-                    // 약간의 딜레이가 필요합니다
-                    actionDelay = 0f;
-                    // 이동 정지
-                    moveKeyValue = Vector2.zero;
-                    // 이동 속도 원상 복구
-                    speed = saveSpeed;
-                }
-                */
 
-                /*
                 // 수평 이동 거리만큼 이동 했는가
-                if (destPos.x <= centerTrans.position.x)
+                if (destPos.x + CUBE_HALF_LENGTH <= centerTrans.position.x)
                 {
-                    // 캐릭터의 상태 변화는 애니메이션 클립에서 이벤트를 통해 함수를 호출해서 변경함
                     // 이동 정지
                     moveKeyValue = Vector2.zero;
-                    // 애니메이션이 끝날 때까지 기다림
-                    playerState = PlayerState.EMPTY;
-                    // 이동 속도 원상 복구
-                    speed = saveSpeed;
-                    // 플레이어 위치 맞추기
-                    moveValue.x = destPos.x - transform.position.x;
-                    characterController.Move(moveValue);
                 }
-                */
                 break;
             case PlayerState.R_UP_COLLISION_END:
                 // 점프 충돌 끝
@@ -5870,7 +5833,8 @@ public class PlayerMovement : MonoBehaviour
     //-----------------------------------------------
     private void CheckDamage()
     {
-        Vector3 box;            // 박스 크기
+        Vector3 box;                // 박스 크기
+        RaycastHit rayHit;          // 레이 충돌한 물체
 
         // 이미 죽어있음
         if (isDeath)
@@ -5884,28 +5848,27 @@ public class PlayerMovement : MonoBehaviour
         
         if (Physics.CheckBox(headTrans.position, box, Quaternion.identity, layerMaskCube))
         {
-            // 플레이어 캐릭터가 안죽었으면
-            if (!isDeath)
+            if (Physics.Raycast(centerTrans.position, Vector3.up, out rayHit, 1f, layerMaskCube))
             {
-                // 머리 충돌 옵션
-                if (checkHeadCollisionOption)
+                // 위에서 큐브가 떨어지는 중이고 아래에 공간이 없음
+                if (rayHit.transform.GetComponent<CubeMovement>().cubeMoveState == CubeMoveState.DOWN &&
+                    characterController.isGrounded)
+                    //Physics.Raycast(centerTrans.position, Vector3.down, 0.5f, layerMaskCube))
                 {
-                    Debug.Log("죽지않음");
-                    //----------------------
-                    // 죽지 않고 빠져나감
-                    //----------------------
-                    checkHeadCollisionOption = false;
-                    return;
+                    // 플레이어 캐릭터가 안죽었으면
+                    if (!isDeath)
+                    {
+                        // 사망 플래그
+                        isDeath = true;
+                        // 플레이어 사망
+                        playerState = PlayerState.CRUSHED_TO_DEATH;
+                        // 애니메이션 압사
+                        animeSwitch = AnimationSwitch.CRUSHED_TO_DEATH;
+                        // 캐릭터 컨트롤러 비활성화
+                        characterController.enabled = false;
+                    }
                 }
-                // 사망 플래그
-                isDeath = true;
-                // 플레이어 사망
-                playerState = PlayerState.CRUSHED_TO_DEATH;
-                // 애니메이션 압사
-                animeSwitch = AnimationSwitch.CRUSHED_TO_DEATH;
-                // 캐릭터 컨트롤러 비활성화
-                characterController.enabled = false;
-            }
+            } 
         }
     }
 
