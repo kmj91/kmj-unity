@@ -3194,6 +3194,13 @@ public class PlayerMovement : MonoBehaviour
             case PlayerState.R_MOVE_COLLISION:
                 // 오른쪽 이동 충돌
 
+                // 수평 이동 거리만큼 이동 했는가
+                if (destPos.x + CUBE_SHORT_LENGTH <= centerTrans.position.x)
+                {
+                    // 이동 정지
+                    moveKeyValue = Vector2.zero;
+                }
+
                 // 이동하는 중인데 벽에 부딪힘
                 if ((currentSpeed / speed) == 0)
                 {
@@ -3243,6 +3250,13 @@ public class PlayerMovement : MonoBehaviour
                 break;
             case PlayerState.L_MOVE_COLLISION:
                 // 왼쪽 이동 충돌
+
+                // 수평 이동 거리만큼 이동 했는가
+                if (destPos.x - CUBE_SHORT_LENGTH >= centerTrans.position.x)
+                {
+                    // 이동 정지
+                    moveKeyValue = Vector2.zero;
+                }
 
                 // 이동하는 중인데 벽에 부딪힘
                 if ((currentSpeed / speed) == 0)
@@ -3294,6 +3308,13 @@ public class PlayerMovement : MonoBehaviour
             case PlayerState.F_MOVE_COLLISION:
                 // 앞쪽 이동 충돌
 
+                // 수평 이동 거리만큼 이동 했는가
+                if (destPos.z + CUBE_SHORT_LENGTH <= centerTrans.position.z)
+                {
+                    // 이동 정지
+                    moveKeyValue = Vector2.zero;
+                }
+
                 // 이동하는 중인데 벽에 부딪힘
                 if ((currentSpeed / speed) == 0)
                 {
@@ -3343,6 +3364,13 @@ public class PlayerMovement : MonoBehaviour
                 break;
             case PlayerState.B_MOVE_COLLISION:
                 // 뒤쪽 이동 충돌
+
+                // 수평 이동 거리만큼 이동 했는가
+                if (destPos.z - CUBE_SHORT_LENGTH >= centerTrans.position.z)
+                {
+                    // 이동 정지
+                    moveKeyValue = Vector2.zero;
+                }
 
                 // 이동하는 중인데 벽에 부딪힘
                 if ((currentSpeed / speed) == 0)
@@ -6178,9 +6206,21 @@ public class PlayerMovement : MonoBehaviour
                 move.x = 0f;
                 move.y = 1f;
                 break;
+            case PlayerState.L_MOVE_COLLISION:
+                move.x = -1f;
+                move.y = 0f;
+                break;
             case PlayerState.R_MOVE_COLLISION:
                 move.x = 1f;
                 move.y = 0f;
+                break;
+            case PlayerState.B_MOVE_COLLISION:
+                move.x = 0f;
+                move.y = -1f;
+                break;
+            case PlayerState.F_MOVE_COLLISION:
+                move.x = 0f;
+                move.y = 1f;
                 break;
             case PlayerState.R_INTERACTION_PULL:
             case PlayerState.R_INTERACTION_PULL_CLIMBING:
