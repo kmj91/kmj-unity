@@ -32,6 +32,12 @@ public class PlayerMovement : MonoBehaviour
         new Vector2(characterController.velocity.x, characterController.velocity.z).magnitude * 3;
     // 플레이어 상태
     public PlayerState playerState { get; private set; }
+    // 캐릭터 머리 트랜스폼
+    public Transform headTrans;
+    // 캐릭터 중심 트랜스폼
+    public Transform centerTrans;
+    // 캐릭터 발 트랜스폼
+    public Transform footTrans;
     // 플레이어 사망 플래그
     public bool isDeath { get; private set; }
 
@@ -45,9 +51,6 @@ public class PlayerMovement : MonoBehaviour
     private Animator animator;                          // 애니메이터
     private Camera followCam;                           // 카메라
     private GameManager gameManager;                    // 게임 매니저 스크립트
-    private Transform headTrans;                        // 캐릭터 머리 트랜스폼
-    private Transform centerTrans;                      // 캐릭터 중심 트랜스폼
-    private Transform footTrans;                        // 캐릭터 발 트랜스폼
     private LayerMask layerMaskCube;                    // 큐브 레이어 마스크
     private GameObject cubeObject;                      // 이동할 큐브 오브젝트
 
@@ -97,6 +100,15 @@ public class PlayerMovement : MonoBehaviour
         L_MOVE,                     // 왼쪽 이동
         F_MOVE,                     // 앞쪽 이동
         B_MOVE,                     // 뒤쪽 이동
+        MOVE_FLINCH,                // 이동 움찔
+        R_MOVE_COLLISION,           // 오른쪽 이동 충돌
+        R_MOVE_COLLISION_END,       // 오른쪽 이동 충돌 끝
+        L_MOVE_COLLISION,           // 왼쪽 이동 충돌
+        L_MOVE_COLLISION_END,       // 왼쪽 이동 충돌 끝
+        F_MOVE_COLLISION,           // 앞쪽 이동 충돌
+        F_MOVE_COLLISION_END,       // 앞쪽 이동 충돌 끝
+        B_MOVE_COLLISION,           // 뒤쪽 이동 충돌
+        B_MOVE_COLLISION_END,       // 뒤쪽 이동 충돌 끝
         R_SLIDE,                    // 오른쪽 미끄러짐
         L_SLIDE,                    // 왼쪽 미끄러짐
         F_SLIDE,                    // 앞쪽 미끄러짐
@@ -105,6 +117,15 @@ public class PlayerMovement : MonoBehaviour
         L_UP,                       // 왼쪽 위
         F_UP,                       // 앞쪽 위
         B_UP,                       // 뒤쪽 위
+        UP_FLINCH,                  // 점프 움찔
+        R_UP_COLLISION,             // 오른쪽 위 충돌
+        R_UP_COLLISION_END,         // 오른쪽 위 충돌 끝
+        L_UP_COLLISION,             // 왼쪽 위 충돌
+        L_UP_COLLISION_END,         // 왼쪽 위 충돌 끝
+        F_UP_COLLISION,             // 앞쪽 위 충돌
+        F_UP_COLLISION_END,         // 앞쪽 위 충돌 끝
+        B_UP_COLLISION,             // 뒤쪽 위 충돌
+        B_UP_COLLISION_END,         // 뒤쪽 위 충돌 끝
         R_DOWN,                     // 오른쪽 아래
         L_DOWN,                     // 왼쪽 아래
         F_DOWN,                     // 앞쪽 아래
@@ -178,6 +199,11 @@ public class PlayerMovement : MonoBehaviour
     private enum AnimationSwitch
     {
         IDLE,
+        MOVE_FLINCH,
+        MOVE_COLLISION,
+        UP_COLLISION,
+        UP_COLLISION_DOWN,
+        UP_COLLISION_END,
         JUMP,
         CLIMBING,
         CLIMBING_END,
@@ -205,7 +231,9 @@ public class PlayerMovement : MonoBehaviour
     private const float JUMP_DELAY = 0.15f;
     private const float PUSH_DELAY = 0.5f;
     private const float PUSH_END_DELAY = 0.15f;
+    private const float CUBE_LENGTH = 1f;
     private const float CUBE_HALF_LENGTH = 0.5f;
+    private const float CUBE_SHORT_LENGTH = 0.25f;
 
     //--------------------------------
     // public 함수
@@ -217,6 +245,34 @@ public class PlayerMovement : MonoBehaviour
         playerState = PlayerState.IDLE;
     }
 
+    // 캐릭터 키 입력을 바라보는 곳 기준 뒤 방향으로
+    public void UpdateMoveBack()
+    {
+        // 정면 보고 있음
+        if ((int)transform.eulerAngles.y == 0)
+        {
+            // 뒤쪽으로
+            moveKeyValue = Vector2.down;
+        }
+        // 오른쪽 보고 있음
+        else if ((int)transform.eulerAngles.y == 90)
+        {
+            // 왼쪽으로
+            moveKeyValue = Vector2.left;
+        }
+        // 뒤쪽 보고 있음
+        else if ((int)transform.eulerAngles.y == 180)
+        {
+            // 앞쪽으로
+            moveKeyValue = Vector2.up;
+        }
+        // 왼쪽 보고 있음
+        else if ((int)transform.eulerAngles.y == 270)
+        {
+            // 오른쪽으로
+            moveKeyValue = Vector2.right;
+        }
+    }
 
     //--------------------------------
     // private 함수
@@ -236,9 +292,6 @@ public class PlayerMovement : MonoBehaviour
         GameObject gameobject = GameObject.Find("GameManager") as GameObject;
         gameManager = gameobject.GetComponent<GameManager>();
 
-        headTrans = transform.Find("Head");
-        centerTrans = transform.Find("Center");
-        footTrans = transform.Find("Foot");
         // 레이어 마스크
         layerMaskCube = 1 << LayerMask.NameToLayer("Cube");
         // 딜레이
@@ -249,7 +302,6 @@ public class PlayerMovement : MonoBehaviour
         isDeath = false;
         // 애니메이션
         animeSwitch = AnimationSwitch.IDLE;
-
     }
 
     private void FixedUpdate()
@@ -499,6 +551,7 @@ public class PlayerMovement : MonoBehaviour
                                             //------------------------------------
                                             // 위에서 큐브가 떨어져서 행동 불가
                                             //------------------------------------
+                                            playerState = PlayerState.UP_FLINCH;
                                             break;
                                         }
                                         else if (cubeMovement.cubeMoveState == CubeMoveState.SHAKE)
@@ -510,6 +563,8 @@ public class PlayerMovement : MonoBehaviour
                                             //-------------------------------------------------------
                                             // 플레이어 거리 / 속도
                                             playerTime = (check.y - footTrans.position.y) / jumpVelocity;
+                                            // 플레이어 대기 시간을 더함
+                                            playerTime = playerTime + JUMP_DELAY;
                                             // 큐브 거리 / 속도
                                             cubeTime = ((rayHit.transform.position.y - CUBE_HALF_LENGTH) - check.y) / cubeMovement.verticalSpeed;
                                             // 큐브의 대기 시간을 더함
@@ -518,23 +573,61 @@ public class PlayerMovement : MonoBehaviour
                                             // 플레이어가 더 늦게 도착한다면
                                             if (playerTime > cubeTime)
                                             {
+                                                //------------------------------------
+                                                // 위에서 큐브가 떨어져서 행동 불가
+                                                //------------------------------------
+                                                // 이동 목적지는 현제 위치
+                                                destPos = transform.position;
+                                                // 현제 위치에서 높이는 큐브 높이 만큼
+                                                destPos.y = destPos.y + CUBE_LENGTH;
+                                                // 왼쪽 점프 충돌
+                                                playerState = PlayerState.L_UP_COLLISION;
+                                                // 애니메이션 점프
+                                                animeSwitch = AnimationSwitch.UP_COLLISION;
+                                                // 점프 애니메이션은 약간의 딜레이가 필요합니다
+                                                actionDelay = 0f;
+                                                // 캐릭터 속도 관련 셋팅
+                                                saveSpeed = speed;
+                                                speed = 0.5f;
                                                 break;
                                             }
                                         }
                                         // 위쪽 큐브가 내려올 준비
                                         else if (cubeMovement.cubeMoveState == CubeMoveState.DOWN_READY)
                                         {
-                                            Debug.Log("내려올 준비");
+                                            //-------------------------------------------------------
+                                            // 위에서 큐브가 떨어질 준비를 하고 있음
+                                            // 떨어지는 큐브보다 빠르게 지나갈 수 있으면 지나가고
+                                            // 지나갈 수 없다면 그에 따른 행동 필요
+                                            //-------------------------------------------------------
                                             // 플레이어 거리 / 속도
-                                            playerTime = (headTrans.position.x - (destPos.x + CUBE_HALF_LENGTH)) / speed;
+                                            playerTime = (check.y - footTrans.position.y) / jumpVelocity;
+                                            // 플레이어 대기 시간을 더함
+                                            playerTime = playerTime + JUMP_DELAY;
                                             // 큐브 거리 / 속도
-                                            cubeTime = ((rayHit.transform.position.y - CUBE_HALF_LENGTH) - headTrans.position.y) / cubeMovement.verticalSpeed;
+                                            cubeTime = ((rayHit.transform.position.y - CUBE_HALF_LENGTH) - check.y) / cubeMovement.verticalSpeed;
                                             // 큐브의 대기 시간을 더함
                                             cubeTime = cubeTime + cubeMovement.GetDownDelayTime();
 
                                             // 플레이어가 더 늦게 도착한다면
                                             if (playerTime > cubeTime)
                                             {
+                                                //------------------------------------
+                                                // 위에서 큐브가 떨어져서 행동 불가
+                                                //------------------------------------
+                                                // 이동 목적지는 현제 위치
+                                                destPos = transform.position;
+                                                // 현제 위치에서 높이는 큐브 높이 만큼
+                                                destPos.y = destPos.y + CUBE_LENGTH;
+                                                // 오른쪽 점프 충돌
+                                                playerState = PlayerState.R_UP_COLLISION;
+                                                // 애니메이션 점프
+                                                animeSwitch = AnimationSwitch.UP_COLLISION;
+                                                // 점프 애니메이션은 약간의 딜레이가 필요합니다
+                                                actionDelay = 0f;
+                                                // 캐릭터 속도 관련 셋팅
+                                                saveSpeed = speed;
+                                                speed = 0.5f;
                                                 break;
                                             }
                                         }
@@ -572,7 +665,35 @@ public class PlayerMovement : MonoBehaviour
                                 // 위쪽 큐브가 내려오는 중
                                 if (cubeMovement.cubeMoveState == CubeMoveState.DOWN)
                                 {
+                                    //------------------------------------
+                                    // 위에서 큐브가 떨어져서 행동 불가
+                                    //------------------------------------
+                                    playerState = PlayerState.MOVE_FLINCH;
                                     break;
+                                }
+                                // 위쪽 큐브가 연쇄적으로 내려올 준비
+                                else if (cubeMovement.cubeMoveState == CubeMoveState.SHAKE)
+                                {
+                                    // 플레이어 거리 / 속도
+                                    playerTime = (headTrans.position.x - (destPos.x + CUBE_HALF_LENGTH)) / speed;
+                                    // 큐브 거리 / 속도
+                                    cubeTime = ((rayHit.transform.position.y - CUBE_HALF_LENGTH) - headTrans.position.y) / cubeMovement.verticalSpeed;
+                                    // 큐브의 대기 시간을 더함
+                                    cubeTime = cubeTime + cubeMovement.GetChainDownDelayTime();
+
+                                    // 플레이어가 더 늦게 도착한다면
+                                    if (playerTime > cubeTime)
+                                    {
+                                        //------------------------------------
+                                        // 위에서 큐브가 떨어져서 행동 불가
+                                        //------------------------------------
+                                        playerState = PlayerState.L_MOVE_COLLISION;
+                                        // Move 함수에서 처리할 키 값
+                                        moveKeyValue = Vector2.left;
+                                        // 이동 목적지는 현제 위치
+                                        destPos = transform.position;
+                                        break;
+                                    }
                                 }
                                 // 위쪽 큐브가 내려올 준비
                                 else if (cubeMovement.cubeMoveState == CubeMoveState.DOWN_READY)
@@ -587,6 +708,14 @@ public class PlayerMovement : MonoBehaviour
                                     // 플레이어가 더 늦게 도착한다면
                                     if (playerTime > cubeTime)
                                     {
+                                        //------------------------------------
+                                        // 위에서 큐브가 떨어져서 행동 불가
+                                        //------------------------------------
+                                        playerState = PlayerState.L_MOVE_COLLISION;
+                                        // Move 함수에서 처리할 키 값
+                                        moveKeyValue = Vector2.left;
+                                        // 이동 목적지는 현제 위치
+                                        destPos = transform.position;
                                         break;
                                     }
                                 }
@@ -737,8 +866,10 @@ public class PlayerMovement : MonoBehaviour
                                             //------------------------------------
                                             // 위에서 큐브가 떨어져서 행동 불가
                                             //------------------------------------
+                                            playerState = PlayerState.UP_FLINCH;
                                             break;
                                         }
+                                        // 위쪽 큐브가 연쇄적으로 내려올 준비
                                         else if (cubeMovement.cubeMoveState == CubeMoveState.SHAKE)
                                         {
                                             //-------------------------------------------------------
@@ -748,36 +879,73 @@ public class PlayerMovement : MonoBehaviour
                                             //-------------------------------------------------------
                                             // 플레이어 거리 / 속도
                                             playerTime = (check.y - footTrans.position.y) / jumpVelocity;
+                                            // 플레이어 대기 시간을 더함
+                                            playerTime = playerTime + JUMP_DELAY;
                                             // 큐브 거리 / 속도
                                             cubeTime = ((rayHit.transform.position.y - CUBE_HALF_LENGTH) - check.y) / cubeMovement.verticalSpeed;
                                             // 큐브의 대기 시간을 더함
                                             cubeTime = cubeTime + cubeMovement.GetChainDownDelayTime();
-
                                             // 플레이어가 더 늦게 도착한다면
                                             if (playerTime > cubeTime)
                                             {
+                                                //------------------------------------
+                                                // 위에서 큐브가 떨어져서 행동 불가
+                                                //------------------------------------
+                                                // 이동 목적지는 현제 위치
+                                                destPos = transform.position;
+                                                // 현제 위치에서 높이는 큐브 높이 만큼
+                                                destPos.y = destPos.y + CUBE_LENGTH;
+                                                // 오른쪽 점프 충돌
+                                                playerState = PlayerState.R_UP_COLLISION;
+                                                // 애니메이션 점프
+                                                animeSwitch = AnimationSwitch.UP_COLLISION;
+                                                // 점프 애니메이션은 약간의 딜레이가 필요합니다
+                                                actionDelay = 0f;
+                                                // 캐릭터 속도 관련 셋팅
+                                                saveSpeed = speed;
+                                                speed = 0.5f;
                                                 break;
                                             }
                                         }
                                         // 위쪽 큐브가 내려올 준비
                                         else if (cubeMovement.cubeMoveState == CubeMoveState.DOWN_READY)
                                         {
-                                            Debug.Log("내려올 준비");
+                                            //-------------------------------------------------------
+                                            // 위에서 큐브가 떨어질 준비를 하고 있음
+                                            // 떨어지는 큐브보다 빠르게 지나갈 수 있으면 지나가고
+                                            // 지나갈 수 없다면 그에 따른 행동 필요
+                                            //-------------------------------------------------------
                                             // 플레이어 거리 / 속도
-                                            playerTime = (headTrans.position.x - (destPos.x + CUBE_HALF_LENGTH)) / speed;
+                                            playerTime = (check.y - footTrans.position.y) / jumpVelocity;
+                                            // 플레이어 대기 시간을 더함
+                                            playerTime = playerTime + JUMP_DELAY;
                                             // 큐브 거리 / 속도
-                                            cubeTime = ((rayHit.transform.position.y - CUBE_HALF_LENGTH) - headTrans.position.y) / cubeMovement.verticalSpeed;
+                                            cubeTime = ((rayHit.transform.position.y - CUBE_HALF_LENGTH) - check.y) / cubeMovement.verticalSpeed;
                                             // 큐브의 대기 시간을 더함
                                             cubeTime = cubeTime + cubeMovement.GetDownDelayTime();
-
                                             // 플레이어가 더 늦게 도착한다면
                                             if (playerTime > cubeTime)
                                             {
+                                                //------------------------------------
+                                                // 위에서 큐브가 떨어져서 행동 불가
+                                                //------------------------------------
+                                                // 이동 목적지는 현제 위치
+                                                destPos = transform.position;
+                                                // 현제 위치에서 높이는 큐브 높이 만큼
+                                                destPos.y = destPos.y + CUBE_LENGTH;
+                                                // 오른쪽 점프 충돌
+                                                playerState = PlayerState.R_UP_COLLISION;
+                                                // 애니메이션 점프
+                                                animeSwitch = AnimationSwitch.UP_COLLISION;
+                                                // 점프 애니메이션은 약간의 딜레이가 필요합니다
+                                                actionDelay = 0f;
+                                                // 캐릭터 속도 관련 셋팅
+                                                saveSpeed = speed;
+                                                speed = 0.5f;
                                                 break;
                                             }
                                         }
                                     }
-
                                     // 위쪽 이동
                                     destPos.y = destPos.y + 0.5f;
                                     // 오른쪽 이동 등반 상태
@@ -808,7 +976,35 @@ public class PlayerMovement : MonoBehaviour
                                 // 위쪽 큐브가 내려오는 중
                                 if (cubeMovement.cubeMoveState == CubeMoveState.DOWN)
                                 {
+                                    //------------------------------------
+                                    // 위에서 큐브가 떨어져서 행동 불가
+                                    //------------------------------------
+                                    playerState = PlayerState.MOVE_FLINCH;
                                     break;
+                                }
+                                // 위쪽 큐브가 연쇄적으로 내려올 준비
+                                else if (cubeMovement.cubeMoveState == CubeMoveState.SHAKE)
+                                {
+                                    // 플레이어 거리 / 속도
+                                    playerTime = ((destPos.x - CUBE_HALF_LENGTH) - headTrans.position.x) / speed;
+                                    // 큐브 거리 / 속도
+                                    cubeTime = ((rayHit.transform.position.y - CUBE_HALF_LENGTH) - headTrans.position.y) / cubeMovement.verticalSpeed;
+                                    // 큐브의 대기 시간을 더함
+                                    cubeTime = cubeTime + cubeMovement.GetChainDownDelayTime();
+
+                                    // 플레이어가 더 늦게 도착한다면
+                                    if (playerTime > cubeTime)
+                                    {
+                                        //------------------------------------
+                                        // 위에서 큐브가 떨어져서 행동 불가
+                                        //------------------------------------
+                                        playerState = PlayerState.R_MOVE_COLLISION;
+                                        // Move 함수에서 처리할 키 값
+                                        moveKeyValue = Vector2.right;
+                                        // 이동 목적지는 현제 위치
+                                        destPos = transform.position;
+                                        break;
+                                    }
                                 }
                                 // 위쪽 큐브가 내려올 준비
                                 else if (cubeMovement.cubeMoveState == CubeMoveState.DOWN_READY)
@@ -823,6 +1019,14 @@ public class PlayerMovement : MonoBehaviour
                                     // 플레이어가 더 늦게 도착한다면
                                     if (playerTime > cubeTime)
                                     {
+                                        //------------------------------------
+                                        // 위에서 큐브가 떨어져서 행동 불가
+                                        //------------------------------------
+                                        playerState = PlayerState.R_MOVE_COLLISION;
+                                        // Move 함수에서 처리할 키 값
+                                        moveKeyValue = Vector2.right;
+                                        // 이동 목적지는 현제 위치
+                                        destPos = transform.position;
                                         break;
                                     }
                                 }
@@ -975,6 +1179,7 @@ public class PlayerMovement : MonoBehaviour
                                             //------------------------------------
                                             // 위에서 큐브가 떨어져서 행동 불가
                                             //------------------------------------
+                                            playerState = PlayerState.UP_FLINCH;
                                             break;
                                         }
                                         else if (cubeMovement.cubeMoveState == CubeMoveState.SHAKE)
@@ -986,6 +1191,8 @@ public class PlayerMovement : MonoBehaviour
                                             //-------------------------------------------------------
                                             // 플레이어 거리 / 속도
                                             playerTime = (check.y - footTrans.position.y) / jumpVelocity;
+                                            // 플레이어 대기 시간을 더함
+                                            playerTime = playerTime + JUMP_DELAY;
                                             // 큐브 거리 / 속도
                                             cubeTime = ((rayHit.transform.position.y - CUBE_HALF_LENGTH) - check.y) / cubeMovement.verticalSpeed;
                                             // 큐브의 대기 시간을 더함
@@ -994,23 +1201,61 @@ public class PlayerMovement : MonoBehaviour
                                             // 플레이어가 더 늦게 도착한다면
                                             if (playerTime > cubeTime)
                                             {
+                                                //------------------------------------
+                                                // 위에서 큐브가 떨어져서 행동 불가
+                                                //------------------------------------
+                                                // 이동 목적지는 현제 위치
+                                                destPos = transform.position;
+                                                // 현제 위치에서 높이는 큐브 높이 만큼
+                                                destPos.y = destPos.y + CUBE_LENGTH;
+                                                // 뒤쪽 점프 충돌
+                                                playerState = PlayerState.B_UP_COLLISION;
+                                                // 애니메이션 점프
+                                                animeSwitch = AnimationSwitch.UP_COLLISION;
+                                                // 점프 애니메이션은 약간의 딜레이가 필요합니다
+                                                actionDelay = 0f;
+                                                // 캐릭터 속도 관련 셋팅
+                                                saveSpeed = speed;
+                                                speed = 0.5f;
                                                 break;
                                             }
                                         }
                                         // 위쪽 큐브가 내려올 준비
                                         else if (cubeMovement.cubeMoveState == CubeMoveState.DOWN_READY)
                                         {
-                                            Debug.Log("내려올 준비");
+                                            //-------------------------------------------------------
+                                            // 위에서 큐브가 떨어질 준비를 하고 있음
+                                            // 떨어지는 큐브보다 빠르게 지나갈 수 있으면 지나가고
+                                            // 지나갈 수 없다면 그에 따른 행동 필요
+                                            //-------------------------------------------------------
                                             // 플레이어 거리 / 속도
-                                            playerTime = (headTrans.position.x - (destPos.x + CUBE_HALF_LENGTH)) / speed;
+                                            playerTime = (check.y - footTrans.position.y) / jumpVelocity;
+                                            // 플레이어 대기 시간을 더함
+                                            playerTime = playerTime + JUMP_DELAY;
                                             // 큐브 거리 / 속도
-                                            cubeTime = ((rayHit.transform.position.y - CUBE_HALF_LENGTH) - headTrans.position.y) / cubeMovement.verticalSpeed;
+                                            cubeTime = ((rayHit.transform.position.y - CUBE_HALF_LENGTH) - check.y) / cubeMovement.verticalSpeed;
                                             // 큐브의 대기 시간을 더함
                                             cubeTime = cubeTime + cubeMovement.GetDownDelayTime();
 
                                             // 플레이어가 더 늦게 도착한다면
                                             if (playerTime > cubeTime)
                                             {
+                                                //------------------------------------
+                                                // 위에서 큐브가 떨어져서 행동 불가
+                                                //------------------------------------
+                                                // 이동 목적지는 현제 위치
+                                                destPos = transform.position;
+                                                // 현제 위치에서 높이는 큐브 높이 만큼
+                                                destPos.y = destPos.y + CUBE_LENGTH;
+                                                // 뒤쪽 점프 충돌
+                                                playerState = PlayerState.B_UP_COLLISION;
+                                                // 애니메이션 점프
+                                                animeSwitch = AnimationSwitch.UP_COLLISION;
+                                                // 점프 애니메이션은 약간의 딜레이가 필요합니다
+                                                actionDelay = 0f;
+                                                // 캐릭터 속도 관련 셋팅
+                                                saveSpeed = speed;
+                                                speed = 0.5f;
                                                 break;
                                             }
                                         }
@@ -1048,7 +1293,35 @@ public class PlayerMovement : MonoBehaviour
                                 // 위쪽 큐브가 내려오는 중
                                 if (cubeMovement.cubeMoveState == CubeMoveState.DOWN)
                                 {
+                                    //------------------------------------
+                                    // 위에서 큐브가 떨어져서 행동 불가
+                                    //------------------------------------
+                                    playerState = PlayerState.MOVE_FLINCH;
                                     break;
+                                }
+                                // 위쪽 큐브가 연쇄적으로 내려올 준비
+                                else if (cubeMovement.cubeMoveState == CubeMoveState.SHAKE)
+                                {
+                                    // 플레이어 거리 / 속도
+                                    playerTime = (headTrans.position.z - (destPos.z + CUBE_HALF_LENGTH)) / speed;
+                                    // 큐브 거리 / 속도
+                                    cubeTime = ((rayHit.transform.position.y - CUBE_HALF_LENGTH) - headTrans.position.y) / cubeMovement.verticalSpeed;
+                                    // 큐브의 대기 시간을 더함
+                                    cubeTime = cubeTime + cubeMovement.GetChainDownDelayTime();
+
+                                    // 플레이어가 더 늦게 도착한다면
+                                    if (playerTime > cubeTime)
+                                    {
+                                        //------------------------------------
+                                        // 위에서 큐브가 떨어져서 행동 불가
+                                        //------------------------------------
+                                        playerState = PlayerState.B_MOVE_COLLISION;
+                                        // Move 함수에서 처리할 키 값
+                                        moveKeyValue = Vector2.down;
+                                        // 이동 목적지는 현제 위치
+                                        destPos = transform.position;
+                                        break;
+                                    }
                                 }
                                 // 위쪽 큐브가 내려올 준비
                                 else if (cubeMovement.cubeMoveState == CubeMoveState.DOWN_READY)
@@ -1063,6 +1336,14 @@ public class PlayerMovement : MonoBehaviour
                                     // 플레이어가 더 늦게 도착한다면
                                     if (playerTime > cubeTime)
                                     {
+                                        //------------------------------------
+                                        // 위에서 큐브가 떨어져서 행동 불가
+                                        //------------------------------------
+                                        playerState = PlayerState.B_MOVE_COLLISION;
+                                        // Move 함수에서 처리할 키 값
+                                        moveKeyValue = Vector2.down;
+                                        // 이동 목적지는 현제 위치
+                                        destPos = transform.position;
                                         break;
                                     }
                                 }
@@ -1216,6 +1497,7 @@ public class PlayerMovement : MonoBehaviour
                                             //------------------------------------
                                             // 위에서 큐브가 떨어져서 행동 불가
                                             //------------------------------------
+                                            playerState = PlayerState.UP_FLINCH;
                                             break;
                                         }
                                         else if (cubeMovement.cubeMoveState == CubeMoveState.SHAKE)
@@ -1227,6 +1509,8 @@ public class PlayerMovement : MonoBehaviour
                                             //-------------------------------------------------------
                                             // 플레이어 거리 / 속도
                                             playerTime = (check.y - footTrans.position.y) / jumpVelocity;
+                                            // 플레이어 대기 시간을 더함
+                                            playerTime = playerTime + JUMP_DELAY;
                                             // 큐브 거리 / 속도
                                             cubeTime = ((rayHit.transform.position.y - CUBE_HALF_LENGTH) - check.y) / cubeMovement.verticalSpeed;
                                             // 큐브의 대기 시간을 더함
@@ -1235,23 +1519,61 @@ public class PlayerMovement : MonoBehaviour
                                             // 플레이어가 더 늦게 도착한다면
                                             if (playerTime > cubeTime)
                                             {
+                                                //------------------------------------
+                                                // 위에서 큐브가 떨어져서 행동 불가
+                                                //------------------------------------
+                                                // 이동 목적지는 현제 위치
+                                                destPos = transform.position;
+                                                // 현제 위치에서 높이는 큐브 높이 만큼
+                                                destPos.y = destPos.y + CUBE_LENGTH;
+                                                // 앞쪽 점프 충돌
+                                                playerState = PlayerState.F_UP_COLLISION;
+                                                // 애니메이션 점프
+                                                animeSwitch = AnimationSwitch.UP_COLLISION;
+                                                // 점프 애니메이션은 약간의 딜레이가 필요합니다
+                                                actionDelay = 0f;
+                                                // 캐릭터 속도 관련 셋팅
+                                                saveSpeed = speed;
+                                                speed = 0.5f;
                                                 break;
                                             }
                                         }
                                         // 위쪽 큐브가 내려올 준비
                                         else if (cubeMovement.cubeMoveState == CubeMoveState.DOWN_READY)
                                         {
-                                            Debug.Log("내려올 준비");
+                                            //-------------------------------------------------------
+                                            // 위에서 큐브가 떨어질 준비를 하고 있음
+                                            // 떨어지는 큐브보다 빠르게 지나갈 수 있으면 지나가고
+                                            // 지나갈 수 없다면 그에 따른 행동 필요
+                                            //-------------------------------------------------------
                                             // 플레이어 거리 / 속도
-                                            playerTime = (headTrans.position.x - (destPos.x + CUBE_HALF_LENGTH)) / speed;
+                                            playerTime = (check.y - footTrans.position.y) / jumpVelocity;
+                                            // 플레이어 대기 시간을 더함
+                                            playerTime = playerTime + JUMP_DELAY;
                                             // 큐브 거리 / 속도
-                                            cubeTime = ((rayHit.transform.position.y - CUBE_HALF_LENGTH) - headTrans.position.y) / cubeMovement.verticalSpeed;
+                                            cubeTime = ((rayHit.transform.position.y - CUBE_HALF_LENGTH) - check.y) / cubeMovement.verticalSpeed;
                                             // 큐브의 대기 시간을 더함
                                             cubeTime = cubeTime + cubeMovement.GetDownDelayTime();
 
                                             // 플레이어가 더 늦게 도착한다면
                                             if (playerTime > cubeTime)
                                             {
+                                                //------------------------------------
+                                                // 위에서 큐브가 떨어져서 행동 불가
+                                                //------------------------------------
+                                                // 이동 목적지는 현제 위치
+                                                destPos = transform.position;
+                                                // 현제 위치에서 높이는 큐브 높이 만큼
+                                                destPos.y = destPos.y + CUBE_LENGTH;
+                                                // 앞쪽 점프 충돌
+                                                playerState = PlayerState.F_UP_COLLISION;
+                                                // 애니메이션 점프
+                                                animeSwitch = AnimationSwitch.UP_COLLISION;
+                                                // 점프 애니메이션은 약간의 딜레이가 필요합니다
+                                                actionDelay = 0f;
+                                                // 캐릭터 속도 관련 셋팅
+                                                saveSpeed = speed;
+                                                speed = 0.5f;
                                                 break;
                                             }
                                         }
@@ -1289,7 +1611,35 @@ public class PlayerMovement : MonoBehaviour
                                 // 위쪽 큐브가 내려오는 중
                                 if (cubeMovement.cubeMoveState == CubeMoveState.DOWN)
                                 {
+                                    //------------------------------------
+                                    // 위에서 큐브가 떨어져서 행동 불가
+                                    //------------------------------------
+                                    playerState = PlayerState.MOVE_FLINCH;
                                     break;
+                                }
+                                // 위쪽 큐브가 연쇄적으로 내려올 준비
+                                else if (cubeMovement.cubeMoveState == CubeMoveState.SHAKE)
+                                {
+                                    // 플레이어 거리 / 속도
+                                    playerTime = ((destPos.z - CUBE_HALF_LENGTH) - headTrans.position.z) / speed;
+                                    // 큐브 거리 / 속도
+                                    cubeTime = ((rayHit.transform.position.y - CUBE_HALF_LENGTH) - headTrans.position.y) / cubeMovement.verticalSpeed;
+                                    // 큐브의 대기 시간을 더함
+                                    cubeTime = cubeTime + cubeMovement.GetChainDownDelayTime();
+
+                                    // 플레이어가 더 늦게 도착한다면
+                                    if (playerTime > cubeTime)
+                                    {
+                                        //------------------------------------
+                                        // 위에서 큐브가 떨어져서 행동 불가
+                                        //------------------------------------
+                                        playerState = PlayerState.F_MOVE_COLLISION;
+                                        // Move 함수에서 처리할 키 값
+                                        moveKeyValue = Vector2.up;
+                                        // 이동 목적지는 현제 위치
+                                        destPos = transform.position;
+                                        break;
+                                    }
                                 }
                                 // 위쪽 큐브가 내려올 준비
                                 else if (cubeMovement.cubeMoveState == CubeMoveState.DOWN_READY)
@@ -1304,6 +1654,14 @@ public class PlayerMovement : MonoBehaviour
                                     // 플레이어가 더 늦게 도착한다면
                                     if (playerTime > cubeTime)
                                     {
+                                        //------------------------------------
+                                        // 위에서 큐브가 떨어져서 행동 불가
+                                        //------------------------------------
+                                        playerState = PlayerState.F_MOVE_COLLISION;
+                                        // Move 함수에서 처리할 키 값
+                                        moveKeyValue = Vector2.up;
+                                        // 이동 목적지는 현제 위치
+                                        destPos = transform.position;
                                         break;
                                     }
                                 }
@@ -2825,6 +3183,242 @@ public class PlayerMovement : MonoBehaviour
                     characterController.Move(moveValue);
                 }
                 break;
+            case PlayerState.MOVE_FLINCH:
+                // 이동 움찔
+
+                // 애니메이션이 끝날 때까지 기다림
+                playerState = playerState = PlayerState.EMPTY;
+                // 애니메이션 이동 움찔
+                animeSwitch = AnimationSwitch.MOVE_FLINCH;
+                break;
+            case PlayerState.R_MOVE_COLLISION:
+                // 오른쪽 이동 충돌
+
+                // 수평 이동 거리만큼 이동 했는가
+                if (destPos.x + CUBE_SHORT_LENGTH <= centerTrans.position.x)
+                {
+                    // 이동 정지
+                    moveKeyValue = Vector2.zero;
+                }
+
+                // 이동하는 중인데 벽에 부딪힘
+                if ((currentSpeed / speed) == 0)
+                {
+                    // 충돌 끝
+                    playerState = PlayerState.R_MOVE_COLLISION_END;
+                    // 애니메이션 이동 충돌
+                    animeSwitch = AnimationSwitch.MOVE_COLLISION;
+                    // 약간의 딜레이가 필요합니다
+                    actionDelay = 0f;
+                    // 캐릭터 속도 관련 셋팅
+                    saveSpeed = speed;
+                    speed = 0.5f;
+                }
+                break;
+            case PlayerState.R_MOVE_COLLISION_END:
+                // 오른쪽 이동 충돌 끝
+                actionDelay = actionDelay + Time.deltaTime;
+
+                // 준비 동작때문에 약 2.5 대기합니다
+                if (actionDelay < 2.5f)
+                {
+                    break;
+                }
+                else
+                {
+                    // Move 함수에서 처리할 키 값
+                    moveKeyValue = Vector2.left;
+                }
+
+                // 캐릭터 이동 속도를 빠르게
+                speed = Mathf.SmoothDamp(currentSpeed, saveSpeed, ref jumpSmoothHorizontal, standSmoothTime);
+
+                // 수평 이동 거리만큼 이동 했는가
+                if (destPos.x >= centerTrans.position.x)
+                {
+                    // 캐릭터의 상태 변화는 애니메이션 클립에서 이벤트를 통해 함수를 호출해서 변경함
+                    // 이동 정지
+                    moveKeyValue = Vector2.zero;
+                    // 애니메이션이 끝날 때까지 기다림
+                    playerState = PlayerState.EMPTY;
+                    // 이동 속도 원상 복구
+                    speed = saveSpeed;
+                    // 플레이어 위치 맞추기
+                    moveValue.x = destPos.x - transform.position.x;
+                    characterController.Move(moveValue);
+                }
+                break;
+            case PlayerState.L_MOVE_COLLISION:
+                // 왼쪽 이동 충돌
+
+                // 수평 이동 거리만큼 이동 했는가
+                if (destPos.x - CUBE_SHORT_LENGTH >= centerTrans.position.x)
+                {
+                    // 이동 정지
+                    moveKeyValue = Vector2.zero;
+                }
+
+                // 이동하는 중인데 벽에 부딪힘
+                if ((currentSpeed / speed) == 0)
+                {
+                    // 충돌 끝
+                    playerState = PlayerState.L_MOVE_COLLISION_END;
+                    // 애니메이션 이동 충돌
+                    animeSwitch = AnimationSwitch.MOVE_COLLISION;
+                    // 약간의 딜레이가 필요합니다
+                    actionDelay = 0f;
+                    // 캐릭터 속도 관련 셋팅
+                    saveSpeed = speed;
+                    speed = 0.5f;
+                }
+                break;
+            case PlayerState.L_MOVE_COLLISION_END:
+                // 왼쪽 이동 충돌 끝
+                actionDelay = actionDelay + Time.deltaTime;
+
+                // 준비 동작때문에 약 2.5 대기합니다
+                if (actionDelay < 2.5f)
+                {
+                    break;
+                }
+                else
+                {
+                    // Move 함수에서 처리할 키 값
+                    moveKeyValue = Vector2.right;
+                }
+
+                // 캐릭터 이동 속도를 빠르게
+                speed = Mathf.SmoothDamp(currentSpeed, saveSpeed, ref jumpSmoothHorizontal, standSmoothTime);
+
+                // 수평 이동 거리만큼 이동 했는가
+                if (destPos.x <= centerTrans.position.x)
+                {
+                    // 캐릭터의 상태 변화는 애니메이션 클립에서 이벤트를 통해 함수를 호출해서 변경함
+                    // 이동 정지
+                    moveKeyValue = Vector2.zero;
+                    // 애니메이션이 끝날 때까지 기다림
+                    playerState = PlayerState.EMPTY;
+                    // 이동 속도 원상 복구
+                    speed = saveSpeed;
+                    // 플레이어 위치 맞추기
+                    moveValue.x = destPos.x - transform.position.x;
+                    characterController.Move(moveValue);
+                }
+                break;
+            case PlayerState.F_MOVE_COLLISION:
+                // 앞쪽 이동 충돌
+
+                // 수평 이동 거리만큼 이동 했는가
+                if (destPos.z + CUBE_SHORT_LENGTH <= centerTrans.position.z)
+                {
+                    // 이동 정지
+                    moveKeyValue = Vector2.zero;
+                }
+
+                // 이동하는 중인데 벽에 부딪힘
+                if ((currentSpeed / speed) == 0)
+                {
+                    // 충돌 끝
+                    playerState = PlayerState.F_MOVE_COLLISION_END;
+                    // 애니메이션 이동 충돌
+                    animeSwitch = AnimationSwitch.MOVE_COLLISION;
+                    // 약간의 딜레이가 필요합니다
+                    actionDelay = 0f;
+                    // 캐릭터 속도 관련 셋팅
+                    saveSpeed = speed;
+                    speed = 0.5f;
+                }
+                break;
+            case PlayerState.F_MOVE_COLLISION_END:
+                // 앞쪽 이동 충돌 끝
+                actionDelay = actionDelay + Time.deltaTime;
+
+                // 준비 동작때문에 약 2.5 대기합니다
+                if (actionDelay < 2.5f)
+                {
+                    break;
+                }
+                else
+                {
+                    // Move 함수에서 처리할 키 값
+                    moveKeyValue = Vector2.down;
+                }
+
+                // 캐릭터 이동 속도를 빠르게
+                speed = Mathf.SmoothDamp(currentSpeed, saveSpeed, ref jumpSmoothHorizontal, standSmoothTime);
+
+                // 수평 이동 거리만큼 이동 했는가
+                if (destPos.z >= centerTrans.position.z)
+                {
+                    // 캐릭터의 상태 변화는 애니메이션 클립에서 이벤트를 통해 함수를 호출해서 변경함
+                    // 이동 정지
+                    moveKeyValue = Vector2.zero;
+                    // 애니메이션이 끝날 때까지 기다림
+                    playerState = PlayerState.EMPTY;
+                    // 이동 속도 원상 복구
+                    speed = saveSpeed;
+                    // 플레이어 위치 맞추기
+                    moveValue.z = destPos.z - transform.position.z;
+                    characterController.Move(moveValue);
+                }
+                break;
+            case PlayerState.B_MOVE_COLLISION:
+                // 뒤쪽 이동 충돌
+
+                // 수평 이동 거리만큼 이동 했는가
+                if (destPos.z - CUBE_SHORT_LENGTH >= centerTrans.position.z)
+                {
+                    // 이동 정지
+                    moveKeyValue = Vector2.zero;
+                }
+
+                // 이동하는 중인데 벽에 부딪힘
+                if ((currentSpeed / speed) == 0)
+                {
+                    // 충돌 끝
+                    playerState = PlayerState.B_MOVE_COLLISION_END;
+                    // 애니메이션 이동 충돌
+                    animeSwitch = AnimationSwitch.MOVE_COLLISION;
+                    // 약간의 딜레이가 필요합니다
+                    actionDelay = 0f;
+                    // 캐릭터 속도 관련 셋팅
+                    saveSpeed = speed;
+                    speed = 0.5f;
+                }
+                break;
+            case PlayerState.B_MOVE_COLLISION_END:
+                // 뒤쪽 이동 충돌 끝
+                actionDelay = actionDelay + Time.deltaTime;
+
+                // 준비 동작때문에 약 2.5 대기합니다
+                if (actionDelay < 2.5f)
+                {
+                    break;
+                }
+                else
+                {
+                    // Move 함수에서 처리할 키 값
+                    moveKeyValue = Vector2.up;
+                }
+
+                // 캐릭터 이동 속도를 빠르게
+                speed = Mathf.SmoothDamp(currentSpeed, saveSpeed, ref jumpSmoothHorizontal, standSmoothTime);
+
+                // 수평 이동 거리만큼 이동 했는가
+                if (destPos.z <= centerTrans.position.z)
+                {
+                    // 캐릭터의 상태 변화는 애니메이션 클립에서 이벤트를 통해 함수를 호출해서 변경함
+                    // 이동 정지
+                    moveKeyValue = Vector2.zero;
+                    // 애니메이션이 끝날 때까지 기다림
+                    playerState = PlayerState.EMPTY;
+                    // 이동 속도 원상 복구
+                    speed = saveSpeed;
+                    // 플레이어 위치 맞추기
+                    moveValue.z = destPos.z - transform.position.z;
+                    characterController.Move(moveValue);
+                }
+                break;
             case PlayerState.R_SLIDE:
                 // 오른쪽 미끄러짐
 
@@ -3120,6 +3714,307 @@ public class PlayerMovement : MonoBehaviour
                     moveKeyValue = Vector2.zero;
                     // 애니메이션이 끝날 때까지 기다림
                     playerState = PlayerState.EMPTY;
+                    // 이동 속도 원상 복구
+                    speed = saveSpeed;
+                    // 플레이어 위치 맞추기
+                    moveValue.z = destPos.z - transform.position.z;
+                    characterController.Move(moveValue);
+                }
+                break;
+            case PlayerState.UP_FLINCH:
+                // 점프 움찔
+                // 지금은 MOVE_FLINCH와 동일
+
+                // 애니메이션이 끝날 때까지 기다림
+                playerState = playerState = PlayerState.EMPTY;
+                // 애니메이션 이동 움찔
+                animeSwitch = AnimationSwitch.MOVE_FLINCH;
+                break;
+            case PlayerState.R_UP_COLLISION:
+                // 오른쪽 점프 충돌
+                actionDelay = actionDelay + Time.deltaTime;
+
+                // 점프 준비 동작때문에 약 0.15 대기합니다
+                if (actionDelay < JUMP_DELAY)
+                {
+                    break;
+                }
+                else
+                {
+                    // 수평 이동 거리만큼 이동 했는가
+                    if (destPos.x + CUBE_SHORT_LENGTH <= centerTrans.position.x)
+                    {
+                        // 이동 정지
+                        moveKeyValue = Vector2.zero;
+                    }
+                    else
+                    {
+                        // 오른쪽 이동
+                        moveKeyValue = Vector2.right;
+                    }
+                }
+                
+                // 수직 이동 거리만큼 이동 하지 못했나
+                if (destPos.y > centerTrans.position.y)
+                {
+                    // 위로 이동함
+                    currentVelocityY = Mathf.SmoothDamp(currentSpeed, jumpVelocity, ref jumpSmoothVertical, upSmoothTime);
+                }
+                // 수직 이동 거리만큼 이동 함
+                else
+                {
+                    // 캐릭터 이동 속도를 빠르게
+                    speed = Mathf.SmoothDamp(currentSpeed, saveSpeed * 1.5f, ref jumpSmoothHorizontal, upSmoothTime);
+                }
+
+                // 머리가 부딪힘
+                if (Physics.Raycast(headTrans.position, Vector3.up, 0.2f, layerMaskCube))
+                {
+                    // 충돌 끝
+                    playerState = PlayerState.R_UP_COLLISION_END;
+                    // 애니메이션 점프 충돌 다운
+                    animeSwitch = AnimationSwitch.UP_COLLISION_DOWN;
+                    // 밀려남
+                    currentVelocityY = 0f;
+                    // 약간의 딜레이가 필요합니다
+                    actionDelay = 0f;
+                    // 이동 정지
+                    moveKeyValue = Vector2.zero;
+                    // 캐릭터 속도 관련 셋팅
+                    speed = 0.5f;
+                }
+                break;
+            case PlayerState.R_UP_COLLISION_END:
+                // 오른쪽 점프 충돌 끝
+
+                // 수평 이동 거리만큼 이동 했는가
+                if (destPos.x >= centerTrans.position.x)
+                {
+                    // 이동 정지
+                    moveKeyValue = Vector2.zero;
+                    // 대기 상태
+                    playerState = PlayerState.IDLE;
+                    // 애니메이션 점프 충돌 종료
+                    animeSwitch = AnimationSwitch.UP_COLLISION_END;
+                    // 이동 속도 원상 복구
+                    speed = saveSpeed;
+                    // 플레이어 위치 맞추기
+                    moveValue.x = destPos.x - transform.position.x;
+                    characterController.Move(moveValue);
+                }
+                break;
+            case PlayerState.L_UP_COLLISION:
+                // 왼쪽 점프 충돌
+                actionDelay = actionDelay + Time.deltaTime;
+
+                // 점프 준비 동작때문에 약 0.15 대기합니다
+                if (actionDelay < JUMP_DELAY)
+                {
+                    break;
+                }
+                else
+                {
+                    // 수평 이동 거리만큼 이동 했는가
+                    if (destPos.x - CUBE_SHORT_LENGTH >= centerTrans.position.x)
+                    {
+                        // 이동 정지
+                        moveKeyValue = Vector2.zero;
+                    }
+                    else
+                    {
+                        // 왼쪽 이동
+                        moveKeyValue = Vector2.left;
+                    }
+                }
+
+                // 수직 이동 거리만큼 이동 하지 못했나
+                if (destPos.y > centerTrans.position.y)
+                {
+                    // 위로 이동함
+                    currentVelocityY = Mathf.SmoothDamp(currentSpeed, jumpVelocity, ref jumpSmoothVertical, upSmoothTime);
+                }
+                // 수직 이동 거리만큼 이동 함
+                else
+                {
+                    // 캐릭터 이동 속도를 빠르게
+                    speed = Mathf.SmoothDamp(currentSpeed, saveSpeed * 1.5f, ref jumpSmoothHorizontal, upSmoothTime);
+                }
+
+                // 머리가 부딪힘
+                if (Physics.Raycast(headTrans.position, Vector3.up, 0.2f, layerMaskCube))
+                {
+                    // 충돌 끝
+                    playerState = PlayerState.L_UP_COLLISION_END;
+                    // 애니메이션 점프 충돌 다운
+                    animeSwitch = AnimationSwitch.UP_COLLISION_DOWN;
+                    // 밀려남
+                    currentVelocityY = 0f;
+                    // 약간의 딜레이가 필요합니다
+                    actionDelay = 0f;
+                    // 이동 정지
+                    moveKeyValue = Vector2.zero;
+                    // 캐릭터 속도 관련 셋팅
+                    speed = 0.5f;
+                }
+                break;
+            case PlayerState.L_UP_COLLISION_END:
+                // 왼쪽 점프 충돌 끝
+
+                // 수평 이동 거리만큼 이동 했는가
+                if (destPos.x <= centerTrans.position.x)
+                {
+                    // 이동 정지
+                    moveKeyValue = Vector2.zero;
+                    // 대기 상태
+                    playerState = PlayerState.IDLE;
+                    // 애니메이션 점프 충돌 종료
+                    animeSwitch = AnimationSwitch.UP_COLLISION_END;
+                    // 이동 속도 원상 복구
+                    speed = saveSpeed;
+                    // 플레이어 위치 맞추기
+                    moveValue.x = destPos.x - transform.position.x;
+                    characterController.Move(moveValue);
+                }
+                break;
+            case PlayerState.F_UP_COLLISION:
+                // 앞쪽 점프 충돌
+                actionDelay = actionDelay + Time.deltaTime;
+
+                // 점프 준비 동작때문에 약 0.15 대기합니다
+                if (actionDelay < JUMP_DELAY)
+                {
+                    break;
+                }
+                else
+                {
+                    // 수평 이동 거리만큼 이동 했는가
+                    if (destPos.z + CUBE_SHORT_LENGTH <= centerTrans.position.z)
+                    {
+                        // 이동 정지
+                        moveKeyValue = Vector2.zero;
+                    }
+                    else
+                    {
+                        // 앞쪽 이동
+                        moveKeyValue = Vector2.up;
+                    }
+                }
+
+                // 수직 이동 거리만큼 이동 하지 못했나
+                if (destPos.y > centerTrans.position.y)
+                {
+                    // 위로 이동함
+                    currentVelocityY = Mathf.SmoothDamp(currentSpeed, jumpVelocity, ref jumpSmoothVertical, upSmoothTime);
+                }
+                // 수직 이동 거리만큼 이동 함
+                else
+                {
+                    // 캐릭터 이동 속도를 빠르게
+                    speed = Mathf.SmoothDamp(currentSpeed, saveSpeed * 1.5f, ref jumpSmoothHorizontal, upSmoothTime);
+                }
+
+                // 머리가 부딪힘
+                if (Physics.Raycast(headTrans.position, Vector3.up, 0.2f, layerMaskCube))
+                {
+                    // 충돌 끝
+                    playerState = PlayerState.F_UP_COLLISION_END;
+                    // 애니메이션 점프 충돌 다운
+                    animeSwitch = AnimationSwitch.UP_COLLISION_DOWN;
+                    // 밀려남
+                    currentVelocityY = 0f;
+                    // 약간의 딜레이가 필요합니다
+                    actionDelay = 0f;
+                    // 이동 정지
+                    moveKeyValue = Vector2.zero;
+                    // 캐릭터 속도 관련 셋팅
+                    speed = 0.5f;
+                }
+                break;
+            case PlayerState.F_UP_COLLISION_END:
+                // 앞쪽 점프 충돌 끝
+
+                // 수평 이동 거리만큼 이동 했는가
+                if (destPos.z >= centerTrans.position.z)
+                {
+                    // 이동 정지
+                    moveKeyValue = Vector2.zero;
+                    // 대기 상태
+                    playerState = PlayerState.IDLE;
+                    // 애니메이션 점프 충돌 종료
+                    animeSwitch = AnimationSwitch.UP_COLLISION_END;
+                    // 이동 속도 원상 복구
+                    speed = saveSpeed;
+                    // 플레이어 위치 맞추기
+                    moveValue.z = destPos.z - transform.position.z;
+                    characterController.Move(moveValue);
+                }
+                break;
+            case PlayerState.B_UP_COLLISION:
+                // 뒤쪽 점프 충돌
+                actionDelay = actionDelay + Time.deltaTime;
+
+                // 점프 준비 동작때문에 약 0.15 대기합니다
+                if (actionDelay < JUMP_DELAY)
+                {
+                    break;
+                }
+                else
+                {
+                    // 수평 이동 거리만큼 이동 했는가
+                    if (destPos.z - CUBE_SHORT_LENGTH >= centerTrans.position.z)
+                    {
+                        // 이동 정지
+                        moveKeyValue = Vector2.zero;
+                    }
+                    else
+                    {
+                        // 뒤쪽 이동
+                        moveKeyValue = Vector2.down;
+                    }
+                }
+
+                // 수직 이동 거리만큼 이동 하지 못했나
+                if (destPos.y > centerTrans.position.y)
+                {
+                    // 위로 이동함
+                    currentVelocityY = Mathf.SmoothDamp(currentSpeed, jumpVelocity, ref jumpSmoothVertical, upSmoothTime);
+                }
+                // 수직 이동 거리만큼 이동 함
+                else
+                {
+                    // 캐릭터 이동 속도를 빠르게
+                    speed = Mathf.SmoothDamp(currentSpeed, saveSpeed * 1.5f, ref jumpSmoothHorizontal, upSmoothTime);
+                }
+
+                // 머리가 부딪힘
+                if (Physics.Raycast(headTrans.position, Vector3.up, 0.2f, layerMaskCube))
+                {
+                    // 충돌 끝
+                    playerState = PlayerState.B_UP_COLLISION_END;
+                    // 애니메이션 점프 충돌 다운
+                    animeSwitch = AnimationSwitch.UP_COLLISION_DOWN;
+                    // 밀려남
+                    currentVelocityY = 0f;
+                    // 약간의 딜레이가 필요합니다
+                    actionDelay = 0f;
+                    // 이동 정지
+                    moveKeyValue = Vector2.zero;
+                    // 캐릭터 속도 관련 셋팅
+                    speed = 0.5f;
+                }
+                break;
+            case PlayerState.B_UP_COLLISION_END:
+                // 뒤쪽 점프 충돌 끝
+
+                // 수평 이동 거리만큼 이동 했는가
+                if (destPos.z <= centerTrans.position.z)
+                {
+                    // 이동 정지
+                    moveKeyValue = Vector2.zero;
+                    // 대기 상태
+                    playerState = PlayerState.IDLE;
+                    // 애니메이션 점프 충돌 종료
+                    animeSwitch = AnimationSwitch.UP_COLLISION_END;
                     // 이동 속도 원상 복구
                     speed = saveSpeed;
                     // 플레이어 위치 맞추기
@@ -5201,6 +6096,26 @@ public class PlayerMovement : MonoBehaviour
 
         switch (animeSwitch)
         {
+            case AnimationSwitch.MOVE_FLINCH:
+                animator.SetTrigger("Move Flinch");
+                animeSwitch = AnimationSwitch.IDLE;
+                break;
+            case AnimationSwitch.MOVE_COLLISION:
+                animator.SetTrigger("Move Collision");
+                animeSwitch = AnimationSwitch.IDLE;
+                break;
+            case AnimationSwitch.UP_COLLISION:
+                animator.SetTrigger("Up Collision");
+                animeSwitch = AnimationSwitch.IDLE;
+                break;
+            case AnimationSwitch.UP_COLLISION_DOWN:
+                animator.SetTrigger("Up Collision Down");
+                animeSwitch = AnimationSwitch.IDLE;
+                break;
+            case AnimationSwitch.UP_COLLISION_END:
+                animator.SetTrigger("Up Collision End");
+                animeSwitch = AnimationSwitch.IDLE;
+                break;
             case AnimationSwitch.JUMP:
                 animator.SetTrigger("Jump");
                 animeSwitch = AnimationSwitch.IDLE;
@@ -5291,6 +6206,22 @@ public class PlayerMovement : MonoBehaviour
                 move.x = 0f;
                 move.y = 1f;
                 break;
+            case PlayerState.L_MOVE_COLLISION:
+                move.x = -1f;
+                move.y = 0f;
+                break;
+            case PlayerState.R_MOVE_COLLISION:
+                move.x = 1f;
+                move.y = 0f;
+                break;
+            case PlayerState.B_MOVE_COLLISION:
+                move.x = 0f;
+                move.y = -1f;
+                break;
+            case PlayerState.F_MOVE_COLLISION:
+                move.x = 0f;
+                move.y = 1f;
+                break;
             case PlayerState.R_INTERACTION_PULL:
             case PlayerState.R_INTERACTION_PULL_CLIMBING:
             case PlayerState.L_INTERACTION_PULL:
@@ -5338,7 +6269,8 @@ public class PlayerMovement : MonoBehaviour
     //-----------------------------------------------
     private void CheckDamage()
     {
-        Vector3 box;            // 박스 크기
+        Vector3 box;                // 박스 크기
+        RaycastHit rayHit;          // 레이 충돌한 물체
 
         // 이미 죽어있음
         if (isDeath)
@@ -5349,21 +6281,30 @@ public class PlayerMovement : MonoBehaviour
         box.x = 0.1f;
         box.y = 0.1f;
         box.z = 0.1f;
-
+        
         if (Physics.CheckBox(headTrans.position, box, Quaternion.identity, layerMaskCube))
         {
-            // 플레이어 캐릭터가 안죽었으면
-            if (!isDeath)
+            if (Physics.Raycast(centerTrans.position, Vector3.up, out rayHit, 1f, layerMaskCube))
             {
-                // 사망 플래그
-                isDeath = true;
-                // 플레이어 사망
-                playerState = PlayerState.CRUSHED_TO_DEATH;
-                // 애니메이션 압사
-                animeSwitch = AnimationSwitch.CRUSHED_TO_DEATH;
-                // 캐릭터 컨트롤러 비활성화
-                characterController.enabled = false;
-            }
+                // 위에서 큐브가 떨어지는 중이고 아래에 공간이 없음
+                if (rayHit.transform.GetComponent<CubeMovement>().cubeMoveState == CubeMoveState.DOWN &&
+                    characterController.isGrounded)
+                    //Physics.Raycast(centerTrans.position, Vector3.down, 0.5f, layerMaskCube))
+                {
+                    // 플레이어 캐릭터가 안죽었으면
+                    if (!isDeath)
+                    {
+                        // 사망 플래그
+                        isDeath = true;
+                        // 플레이어 사망
+                        playerState = PlayerState.CRUSHED_TO_DEATH;
+                        // 애니메이션 압사
+                        animeSwitch = AnimationSwitch.CRUSHED_TO_DEATH;
+                        // 캐릭터 컨트롤러 비활성화
+                        characterController.enabled = false;
+                    }
+                }
+            } 
         }
     }
 
