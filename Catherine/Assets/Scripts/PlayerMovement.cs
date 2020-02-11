@@ -4219,6 +4219,9 @@ public class PlayerMovement : MonoBehaviour
                     cubeObject.GetComponent<CubeMovement>().MoveRight();
                     // 밀기 애니메이션은 약간의 딜레이가 필요합니다
                     actionDelay = 0f;
+
+                    // 테스트
+                    gameManager.messageQueue.Enqueue(new GameManager.Undo(GameManager.msgType.UNDO, transform.position, cubeObject.transform.position));
                 }
                 break;
             case PlayerState.L_INTERACTION_PUSH:
