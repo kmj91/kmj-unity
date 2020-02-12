@@ -4221,7 +4221,7 @@ public class PlayerMovement : MonoBehaviour
                     actionDelay = 0f;
 
                     // 테스트
-                    gameManager.messageQueue.Enqueue(new GameManager.Undo(GameManager.msgType.UNDO, transform.position, cubeObject.transform.position));
+                    gameManager.messageQueue.Enqueue(new GameManager.UndoStackData(transform.position, cubeObject.transform.position));
                 }
                 break;
             case PlayerState.L_INTERACTION_PUSH:

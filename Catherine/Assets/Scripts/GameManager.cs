@@ -12,30 +12,25 @@ public class GameManager : MonoBehaviour
     private bool restartFlag;
 
     public enum msgType {
-        UNDO = 10
+        UNDO
     }
 
     public class GameMessage
     {
-        public GameMessage() { }
-
-        public msgType messageType;
-        public short messageSize;
+        public msgType messageType;     // 메시지 타입
     }
 
-    public class Undo : GameMessage
+    public class UndoStackData : GameMessage
     {
-        public Undo(msgType setMsgType, Vector3 setPlayerPos, Vector3 setCubePos)
+        public UndoStackData(in Vector3 setPlayerPos, in Stack<Vector3> setCubePosStack)
         {
-            cubePos = new Queue<Vector3>();
-
-            messageType = setMsgType;
+            cubePosStack = setCubePosStack;
             playerPos = setPlayerPos;
-            cubePos.Enqueue(setCubePos);
+            messageType = msgType.UNDO;
         }
 
         public Vector3 playerPos;
-        public Queue<Vector3> cubePos;
+        public Stack<Vector3> cubePosStack;
     }
 
     public class GameOver : GameMessage
@@ -52,14 +47,14 @@ public class GameManager : MonoBehaviour
         GameOverUI = GameObject.Find("Canvas").transform.Find("gameOverUI").gameObject;
         // 다시시작 플래그
         restartFlag = false;
-
-        // 테스트
+        // 메시지 큐 초기화
         messageQueue = new Queue<GameMessage>();
     }
 
     private void Update()
     {
         GameMessage gameMsg;
+        UndoStackData UndoStackMsg;
 
         if (restartFlag)
         {
@@ -78,6 +73,7 @@ public class GameManager : MonoBehaviour
             restartFlag = true;
         }
 
+        // 처리할 메시지
         if (messageQueue.Count != 0)
         {
             gameMsg = messageQueue.Peek() as GameMessage;
@@ -88,12 +84,12 @@ public class GameManager : MonoBehaviour
             {
                 case msgType.UNDO:
 
-                    var test = messageQueue.Dequeue() as Undo;
+                    UndoStackMsg = messageQueue.Dequeue() as UndoStackData;
 
-                    Debug.Log(test.playerPos);
-                    while (test.cubePos.Count != 0)
+                    Debug.Log(UndoStackMsg.playerPos);
+                    while (UndoStackMsg.cubePosStack.Count != 0)
                     {
-                        Debug.Log(test.cubePos.Dequeue());
+                        Debug.Log(UndoStackMsg.cubePosStack.Pop());
                     }
 
                     break;
