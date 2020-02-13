@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
+using GameMessageScript;
+
 public class GameManager : MonoBehaviour
 {
     public Queue<GameMessage> messageQueue;     // 게임 매니저 큐
@@ -10,33 +12,6 @@ public class GameManager : MonoBehaviour
     private PlayerMovement playerMovement;      // 플레이어 무브먼트
     private GameObject GameOverUI;
     private bool restartFlag;
-
-    public enum msgType {
-        UNDO
-    }
-
-    public class GameMessage
-    {
-        public msgType messageType;     // 메시지 타입
-    }
-
-    public class UndoStackData : GameMessage
-    {
-        public UndoStackData(in Vector3 setPlayerPos, in Stack<Vector3> setCubePosStack)
-        {
-            cubePosStack = setCubePosStack;
-            playerPos = setPlayerPos;
-            messageType = msgType.UNDO;
-        }
-
-        public Vector3 playerPos;
-        public Stack<Vector3> cubePosStack;
-    }
-
-    public class GameOver : GameMessage
-    {
-        public byte gameOverType;
-    }
 
 
     private void Start()
@@ -54,7 +29,8 @@ public class GameManager : MonoBehaviour
     private void Update()
     {
         GameMessage gameMsg;
-        UndoStackData UndoStackMsg;
+        UndoStackDataMsg UndoStackMsg;
+        CubePosData cubePosData;
 
         if (restartFlag)
         {
@@ -84,12 +60,14 @@ public class GameManager : MonoBehaviour
             {
                 case msgType.UNDO:
 
-                    UndoStackMsg = messageQueue.Dequeue() as UndoStackData;
+                    UndoStackMsg = messageQueue.Dequeue() as UndoStackDataMsg;
 
-                    Debug.Log(UndoStackMsg.playerPos);
+                    Debug.Log("player : " + UndoStackMsg.playerPos);
                     while (UndoStackMsg.cubePosStack.Count != 0)
                     {
-                        Debug.Log(UndoStackMsg.cubePosStack.Pop());
+                        cubePosData = UndoStackMsg.cubePosStack.Pop();
+                        Debug.Log("cube : " + cubePosData.cubeObject);
+                        Debug.Log("pos : " + cubePosData.CubePos);
                     }
 
                     break;
