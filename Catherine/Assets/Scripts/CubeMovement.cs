@@ -96,6 +96,13 @@ public class CubeMovement : MonoBehaviour
     // public 함수
     //--------------------------------
 
+    // 큐브 상태를 대기 상태로 변경
+    public void UpdateStateToIdle()
+    {
+        cubeMoveState = CubeMoveState.IDLE;
+    }
+
+
     // 아래로 떨어지기까지 남은 시간
     public float GetDownDelayTime()
     {

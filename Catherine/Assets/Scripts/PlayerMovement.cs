@@ -279,6 +279,16 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
+    // 플레이어 위치
+    public void setPlayerPostion(Vector3 setPostion)
+    {
+        // ㅋㅋㅋ 이게 말이되나
+        // 캐릭터 위치 변경
+        characterController.enabled = false;
+        transform.position = setPostion;
+        characterController.enabled = true;
+    }
+
     //--------------------------------
     // private 함수
     //--------------------------------
@@ -2656,6 +2666,9 @@ public class PlayerMovement : MonoBehaviour
                     playerState = PlayerState.R_INTERACTION_PUSH_READY;
                     // 애니메이션 밀기 대기
                     animeSwitch = AnimationSwitch.PUSH_IDLE;
+                    // 되돌리기 할 플레이어 위치 값
+                    destPos = transform.position;
+                    destPos.x = destPos.x - INTERACTION_MOVE_VALUE;
                 }
                 break;
             case PlayerState.L_IDLE_INTERACTION:
@@ -4232,7 +4245,7 @@ public class PlayerMovement : MonoBehaviour
                     // 밀기 애니메이션은 약간의 딜레이가 필요합니다
                     actionDelay = 0f;
                     // 테스트
-                    gameManager.messageQueue.Enqueue(new UndoDataMsg(transform.position, ref cubePosArray));
+                    gameManager.messageQueue.Enqueue(new UndoDataMsg(destPos, ref cubePosArray));
 
 
                 }

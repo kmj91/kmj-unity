@@ -35,6 +35,7 @@ public class GameManager : MonoBehaviour
         GameMessage gameMsg;
         UndoDataMsg UndoMsg;
         UndoData undoData;          // 되돌리기 정보
+        CubeMovement cubeMovement;
 
         if (restartFlag)
         {
@@ -56,18 +57,49 @@ public class GameManager : MonoBehaviour
         // 되돌리기 테스트
         if (Input.GetKeyDown(KeyCode.Tab))
         {
-            undoData = undoDeque.Pop_Back();
-
-            Debug.Log("---------------------------------------");
-            Debug.Log("player : " + undoData.playerPos);
-            for (int i = 0; i < undoArraySize; ++i)
+            // Deque가 비어있지 않으면 되돌리기
+            if (undoDeque.Count > 0)
             {
-                if (!undoData.cubePosArray[i].flag)
+                undoData = undoDeque.Pop_Back();
+
+                Debug.Log("---------------------------------------");
+                Debug.Log("player : " + undoData.playerPos);
+                for (int i = 0; i < undoArraySize; ++i)
                 {
-                    break;
+                    if (!undoData.cubePosArray[i].flag)
+                    {
+                        break;
+                    }
+                    Debug.Log("cube : " + undoData.cubePosArray[i].cubeObject);
+                    Debug.Log("pos : " + undoData.cubePosArray[i].CubePos);
                 }
-                Debug.Log("cube : " + undoData.cubePosArray[i].cubeObject);
-                Debug.Log("pos : " + undoData.cubePosArray[i].CubePos);
+
+                //-----------------------------------------------
+                // 1. 플레이어 애니메이션도 대기상태로 복구해야됨
+                //-----------------------------------------------
+
+                // 플레이어 위치 되돌리기
+                playerMovement.setPlayerPostion(undoData.playerPos);
+                // 플레이어 대기 상태로
+                playerMovement.UpdateStateToIdle();
+
+                // 큐브 되돌리기
+                for (int i = 0; i < undoArraySize; ++i)
+                {
+                    if (!undoData.cubePosArray[i].flag)
+                    {
+                        break;
+                    }
+
+                    cubeMovement = undoData.cubePosArray[i].cubeObject.GetComponent<CubeMovement>();
+
+                    // 큐브 위치 되돌리기
+                    //undoData.cubePosArray[i].cubeObject.transform.position = undoData.cubePosArray[i].CubePos;
+                    cubeMovement.transform.position = undoData.cubePosArray[i].CubePos;
+                    // 큐브 대기 상태로
+                    //undoData.cubePosArray[i].cubeObject.UpdateStateToIdle();
+                    cubeMovement.UpdateStateToIdle();
+                }
             }
         }
 
