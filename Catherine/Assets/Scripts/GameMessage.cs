@@ -25,12 +25,21 @@ namespace GameMessageScript
     {
         public CubePosData(GameObject setCubeObject, Vector3 setCubePos)
         {
+            flag = true;
             cubeObject = setCubeObject;
             CubePos = setCubePos;
         }
 
+        public bool flag;
         public GameObject cubeObject;
         public Vector3 CubePos;
+    }
+
+
+    public struct UndoData
+    {
+        public Vector3 playerPos;
+        public CubePosData[] cubePosArray;
     }
 
 
@@ -45,17 +54,17 @@ namespace GameMessageScript
     }
 
     // 되돌리기 스택 데이터 메시지 클래스
-    public class UndoStackDataMsg : GameMessage
+    public class UndoDataMsg : GameMessage
     {
-        public UndoStackDataMsg(Vector3 setPlayerPos, ref Stack<CubePosData> setCubePosStack)
+        public UndoDataMsg(Vector3 setPlayerPos, ref CubePosData[] setCubePosArray)
         {
-            cubePosStack = setCubePosStack;
+            cubePosArray = setCubePosArray;
             playerPos = setPlayerPos;
             messageType = msgType.UNDO;
         }
 
         public Vector3 playerPos;
-        public Stack<CubePosData> cubePosStack;
+        public CubePosData[] cubePosArray;
     }
 
     public class GameOver : GameMessage

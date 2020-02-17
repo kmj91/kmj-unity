@@ -232,7 +232,7 @@ public class CubeMovement : MonoBehaviour
 
 
     // 큐브 오른쪽 이동
-    public bool MoveRight(ref Stack<CubePosData> cubePosStack)
+    public bool MoveRight(ref CubePosData[] cubePosArray, int iIndex, int iMaxSize)
     {
         RaycastHit rayHit;      // 레이 충돌한 물체
 
@@ -265,7 +265,7 @@ public class CubeMovement : MonoBehaviour
             {
                 // 큐브 이동 처리
                 // 이동 불가?
-                if (!rayHit.transform.gameObject.GetComponent<CubeMovement>().MoveRight(ref cubePosStack))
+                if (!rayHit.transform.gameObject.GetComponent<CubeMovement>().MoveRight(ref cubePosArray, iIndex + 1, iMaxSize))
                 {
                     // 이동하지 않음
                     slideEvent = false;
@@ -304,7 +304,7 @@ public class CubeMovement : MonoBehaviour
         {
             // 큐브 이동 처리
             // 이동 불가?
-            if (!rayHit.transform.gameObject.GetComponent<CubeMovement>().MoveRight(ref cubePosStack))
+            if (!rayHit.transform.gameObject.GetComponent<CubeMovement>().MoveRight(ref cubePosArray, iIndex + 1, iMaxSize))
             {
                 // 이동하지 않음
                 slideEvent = false;
@@ -318,8 +318,12 @@ public class CubeMovement : MonoBehaviour
         // 오른쪽 이동
         cubeMoveState = CubeMoveState.RIGHT;
 
-        // 스택에 복원 위치 저장
-        cubePosStack.Push(new CubePosData(transform.gameObject, transform.position));
+        if (iMaxSize > iIndex)
+        {
+            // 배열에 저장
+            cubePosArray[iIndex] = (new CubePosData(transform.gameObject, transform.position));
+        }
+        
 
         return true;
     }

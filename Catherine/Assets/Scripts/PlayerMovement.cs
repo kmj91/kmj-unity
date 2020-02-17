@@ -55,7 +55,7 @@ public class PlayerMovement : MonoBehaviour
     private GameManager gameManager;                    // 게임 매니저 스크립트
     private LayerMask layerMaskCube;                    // 큐브 레이어 마스크
     private GameObject cubeObject;                      // 이동할 큐브 오브젝트
-    private Stack<CubePosData> cubePosStack;            // 이동되기전 큐브의 위치 스택
+    private CubePosData[] cubePosArray;                 // 이동되기전 큐브의 위치 배열
 
     // 값의 연속적인 변화량을 기록하기 위한 변수
     private float speedSmoothVelocity;
@@ -229,6 +229,8 @@ public class PlayerMovement : MonoBehaviour
     // 상수
     //--------------------------------
 
+    private const int CUBE_POS_ARRAY_SIZE = 10;
+
     private const float INTERACTION_MOVE_VALUE = 0.25f;
     private const float JUMP_DELAY = 0.15f;
     private const float PUSH_DELAY = 0.5f;
@@ -236,6 +238,7 @@ public class PlayerMovement : MonoBehaviour
     private const float CUBE_LENGTH = 1f;
     private const float CUBE_HALF_LENGTH = 0.5f;
     private const float CUBE_SHORT_LENGTH = 0.25f;
+
 
     //--------------------------------
     // public 함수
@@ -296,8 +299,8 @@ public class PlayerMovement : MonoBehaviour
 
         // 레이어 마스크
         layerMaskCube = 1 << LayerMask.NameToLayer("Cube");
-        // 이동되기전 큐브의 위치 스택
-        cubePosStack = new Stack<CubePosData>();
+        // 이동되기전 큐브의 위치 배열
+        cubePosArray = new CubePosData[CUBE_POS_ARRAY_SIZE];
         // 딜레이
         actionDelay = 0f;
         // 플레이어 상태
@@ -4219,16 +4222,19 @@ public class PlayerMovement : MonoBehaviour
                 {
                     // 밀기 상태
                     playerState = PlayerState.R_INTERACTION_PUSH_END;
-                    // 큐브 스택 초기화
-                    cubePosStack.Clear();
+                    // 큐브 배열 초기화
+                    for (int i = 0; i < CUBE_POS_ARRAY_SIZE; ++i)
+                    {
+                        cubePosArray[i].flag = false;
+                    }
                     // 큐브 오른쪽 이동 처리
-                    cubeObject.GetComponent<CubeMovement>().MoveRight(ref cubePosStack);
+                    cubeObject.GetComponent<CubeMovement>().MoveRight(ref cubePosArray, 0, CUBE_POS_ARRAY_SIZE);
                     // 밀기 애니메이션은 약간의 딜레이가 필요합니다
                     actionDelay = 0f;
                     // 테스트
-                    gameManager.messageQueue.Enqueue(new UndoStackDataMsg(transform.position, ref cubePosStack));
+                    gameManager.messageQueue.Enqueue(new UndoDataMsg(transform.position, ref cubePosArray));
 
-                    
+
                 }
                 break;
             case PlayerState.L_INTERACTION_PUSH:
