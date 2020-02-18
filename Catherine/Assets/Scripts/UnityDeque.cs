@@ -69,6 +69,7 @@ namespace UnityDequeScript
                 m_front = m_iBufferSize - 1;
                 // 데이터 입력
                 m_deque[m_front] = data;
+                // 사용중인 버퍼 카운트 증가
                 ++Count;
             }
             else
@@ -77,6 +78,7 @@ namespace UnityDequeScript
                 m_front = m_front - 1;
                 // 데이터 입력
                 m_deque[m_front] = data;
+                // 사용중인 버퍼 카운트 증가
                 ++Count;
             }
 
@@ -94,6 +96,7 @@ namespace UnityDequeScript
 
             // 데이터 입력
             m_deque[m_rear] = data;
+            // 사용중인 버퍼 카운트 증가
             ++Count;
             // 리어 한칸 오른쪽 이동
             m_rear = (m_rear + 1) % m_iBufferSize;
@@ -116,6 +119,8 @@ namespace UnityDequeScript
             iPopFront = m_front;
             // 프론트 한칸 오른쪽 이동
             m_front = (m_front + 1) % m_iBufferSize;
+            // 사용중인 버퍼 카운트 감소
+            --Count;
 
             return m_deque[iPopFront];
         }
@@ -133,11 +138,15 @@ namespace UnityDequeScript
             {
                 // 출력할 리어 인덱스
                 m_rear = m_iBufferSize - 1;
+                // 사용중인 버퍼 카운트 감소
+                --Count;
             }
             else
             {
                 // 출력할 리어 인덱스
                 --m_rear;
+                // 사용중인 버퍼 카운트 감소
+                --Count;
             }
 
             return m_deque[m_rear];

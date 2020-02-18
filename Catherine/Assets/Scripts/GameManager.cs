@@ -60,19 +60,8 @@ public class GameManager : MonoBehaviour
             // Deque가 비어있지 않으면 되돌리기
             if (undoDeque.Count > 0)
             {
+                // 뒤에서부터 데이터 하나 꺼내기
                 undoData = undoDeque.Pop_Back();
-
-                Debug.Log("---------------------------------------");
-                Debug.Log("player : " + undoData.playerPos);
-                for (int i = 0; i < undoArraySize; ++i)
-                {
-                    if (!undoData.cubePosArray[i].flag)
-                    {
-                        break;
-                    }
-                    Debug.Log("cube : " + undoData.cubePosArray[i].cubeObject);
-                    Debug.Log("pos : " + undoData.cubePosArray[i].CubePos);
-                }
 
                 //-----------------------------------------------
                 // 1. 플레이어 애니메이션도 대기상태로 복구해야됨
@@ -94,10 +83,8 @@ public class GameManager : MonoBehaviour
                     cubeMovement = undoData.cubePosArray[i].cubeObject.GetComponent<CubeMovement>();
 
                     // 큐브 위치 되돌리기
-                    //undoData.cubePosArray[i].cubeObject.transform.position = undoData.cubePosArray[i].CubePos;
                     cubeMovement.transform.position = undoData.cubePosArray[i].CubePos;
                     // 큐브 대기 상태로
-                    //undoData.cubePosArray[i].cubeObject.UpdateStateToIdle();
                     cubeMovement.UpdateStateToIdle();
                 }
             }
@@ -119,34 +106,19 @@ public class GameManager : MonoBehaviour
 
                     // 플레이어 위치
                     undoData.playerPos = UndoMsg.playerPos;
-                    // 큐브 위치들
-                    //for (int i = 0; i < UndoMsg.cubePosArray.Length; ++i)
-                    //{
-                    //    if (!UndoMsg.cubePosArray[i].flag)
-                    //    {
-                    //        break;
-                    //    }
-                    //    undoData.cubePosArray[i] = UndoMsg.cubePosArray[i];
-                    //}
 
                     // 배열 크기
                     undoArraySize = 20;
                     undoData.cubePosArray = new CubePosData[undoArraySize];
+                    // 배열 복사
                     UndoMsg.cubePosArray.CopyTo(undoData.cubePosArray, 0);
 
                     // 되돌리기 저장
-                    undoDeque.Push_Back(undoData);
-
-
-                    Debug.Log("player : " + UndoMsg.playerPos);
-                    for (int i = 0; i < UndoMsg.cubePosArray.Length; ++i)
+                    while (!undoDeque.Push_Back(undoData))
                     {
-                        if (!UndoMsg.cubePosArray[i].flag)
-                        {
-                            break;
-                        }
-                        Debug.Log("cube : " + UndoMsg.cubePosArray[i].cubeObject);
-                        Debug.Log("pos : " + UndoMsg.cubePosArray[i].CubePos);
+                        // 버퍼가 꽉참
+                        // 먼저 들어온 데이터부터 비우기
+                        undoDeque.Pop_Front();
                     }
 
                     break;
