@@ -80,6 +80,8 @@ public class PlayerMovement : MonoBehaviour
     private Vector3 destPos;
     // 큐브 이동 목표 좌표
     private Vector3 cubeDestPos;
+    // 되돌리기 플레이어 위치
+    private Vector3 undoPlayerPos;
     // 상하좌우 이동 값
     private Vector2 moveKeyValue;
 
@@ -2632,6 +2634,18 @@ public class PlayerMovement : MonoBehaviour
                             playerState = PlayerState.R_INTERACTION_PULL;
                             // 큐브 왼쪽으로 당겨짐
                             cubeObject.GetComponent<CubeMovement>().PullLeft(speed);
+                            // 되돌리기 할 플레이어 위치 값
+                            undoPlayerPos = transform.position;
+                            undoPlayerPos.x = undoPlayerPos.x - INTERACTION_MOVE_VALUE;
+                            // 큐브 배열 초기화
+                            for (int i = 0; i < CUBE_POS_ARRAY_SIZE; ++i)
+                            {
+                                cubePosArray[i].flag = false;
+                            }
+                            // 배열에 저장
+                            cubePosArray[0] = (new CubePosData(cubeObject, cubeObject.transform.position));
+                            // 되돌리기 메시지 담기
+                            gameManager.messageQueue.Enqueue(new UndoDataMsg(undoPlayerPos, ref cubePosArray));
                         }
                         // 없다
                         // 당기고 매달림
@@ -2643,6 +2657,18 @@ public class PlayerMovement : MonoBehaviour
                             destPos.y = destPos.y - 1f;
                             // 큐브 왼쪽으로 당겨짐
                             cubeObject.GetComponent<CubeMovement>().PullLeft(speed);
+                            // 되돌리기 할 플레이어 위치 값
+                            undoPlayerPos = transform.position;
+                            undoPlayerPos.x = undoPlayerPos.x - INTERACTION_MOVE_VALUE;
+                            // 큐브 배열 초기화
+                            for (int i = 0; i < CUBE_POS_ARRAY_SIZE; ++i)
+                            {
+                                cubePosArray[i].flag = false;
+                            }
+                            // 배열에 저장
+                            cubePosArray[0] = (new CubePosData(cubeObject, cubeObject.transform.position));
+                            // 되돌리기 메시지 담기
+                            gameManager.messageQueue.Enqueue(new UndoDataMsg(undoPlayerPos, ref cubePosArray));
                         }
 
                         // Move 함수에서 처리할 키 값
@@ -2667,8 +2693,8 @@ public class PlayerMovement : MonoBehaviour
                     // 애니메이션 밀기 대기
                     animeSwitch = AnimationSwitch.PUSH_IDLE;
                     // 되돌리기 할 플레이어 위치 값
-                    destPos = transform.position;
-                    destPos.x = destPos.x - INTERACTION_MOVE_VALUE;
+                    undoPlayerPos = transform.position;
+                    undoPlayerPos.x = undoPlayerPos.x - INTERACTION_MOVE_VALUE;
                 }
                 break;
             case PlayerState.L_IDLE_INTERACTION:
@@ -2709,6 +2735,9 @@ public class PlayerMovement : MonoBehaviour
                     playerState = PlayerState.L_INTERACTION_PUSH_READY;
                     // 애니메이션 밀기 대기
                     animeSwitch = AnimationSwitch.PUSH_IDLE;
+                    // 되돌리기 할 플레이어 위치 값
+                    undoPlayerPos = transform.position;
+                    undoPlayerPos.x = undoPlayerPos.x + INTERACTION_MOVE_VALUE;
                 }
                 // 입력 키 값 →
                 else if (moveInput.x >= 0.3)
@@ -2793,6 +2822,18 @@ public class PlayerMovement : MonoBehaviour
                             playerState = PlayerState.L_INTERACTION_PULL;
                             // 큐브 오른쪽으로 당겨짐
                             cubeObject.GetComponent<CubeMovement>().PullRight(speed);
+                            // 되돌리기 할 플레이어 위치 값
+                            undoPlayerPos = transform.position;
+                            undoPlayerPos.x = undoPlayerPos.x + INTERACTION_MOVE_VALUE;
+                            // 큐브 배열 초기화
+                            for (int i = 0; i < CUBE_POS_ARRAY_SIZE; ++i)
+                            {
+                                cubePosArray[i].flag = false;
+                            }
+                            // 배열에 저장
+                            cubePosArray[0] = (new CubePosData(cubeObject, cubeObject.transform.position));
+                            // 되돌리기 메시지 담기
+                            gameManager.messageQueue.Enqueue(new UndoDataMsg(undoPlayerPos, ref cubePosArray));
                         }
                         // 없다
                         // 당기고 매달림
@@ -2804,6 +2845,18 @@ public class PlayerMovement : MonoBehaviour
                             destPos.y = destPos.y - 1f;
                             // 큐브 오른쪽으로 당겨짐
                             cubeObject.GetComponent<CubeMovement>().PullRight(speed);
+                            // 되돌리기 할 플레이어 위치 값
+                            undoPlayerPos = transform.position;
+                            undoPlayerPos.x = undoPlayerPos.x + INTERACTION_MOVE_VALUE;
+                            // 큐브 배열 초기화
+                            for (int i = 0; i < CUBE_POS_ARRAY_SIZE; ++i)
+                            {
+                                cubePosArray[i].flag = false;
+                            }
+                            // 배열에 저장
+                            cubePosArray[0] = (new CubePosData(cubeObject, cubeObject.transform.position));
+                            // 되돌리기 메시지 담기
+                            gameManager.messageQueue.Enqueue(new UndoDataMsg(undoPlayerPos, ref cubePosArray));
                         }
 
                         // Move 함수에서 처리할 키 값
@@ -2849,6 +2902,9 @@ public class PlayerMovement : MonoBehaviour
                     playerState = PlayerState.F_INTERACTION_PUSH_READY;
                     // 애니메이션 밀기 대기
                     animeSwitch = AnimationSwitch.PUSH_IDLE;
+                    // 되돌리기 할 플레이어 위치 값
+                    undoPlayerPos = transform.position;
+                    undoPlayerPos.z = undoPlayerPos.z - INTERACTION_MOVE_VALUE;
                 }
                 // 입력 키 값 ↓
                 else if (moveInput.y <= -0.3)
@@ -2935,6 +2991,18 @@ public class PlayerMovement : MonoBehaviour
                             playerState = PlayerState.F_INTERACTION_PULL;
                             // 큐브 뒤쪽으로 당겨짐
                             cubeObject.GetComponent<CubeMovement>().PullBack(speed);
+                            // 되돌리기 할 플레이어 위치 값
+                            undoPlayerPos = transform.position;
+                            undoPlayerPos.z = undoPlayerPos.z - INTERACTION_MOVE_VALUE;
+                            // 큐브 배열 초기화
+                            for (int i = 0; i < CUBE_POS_ARRAY_SIZE; ++i)
+                            {
+                                cubePosArray[i].flag = false;
+                            }
+                            // 배열에 저장
+                            cubePosArray[0] = (new CubePosData(cubeObject, cubeObject.transform.position));
+                            // 되돌리기 메시지 담기
+                            gameManager.messageQueue.Enqueue(new UndoDataMsg(undoPlayerPos, ref cubePosArray));
                         }
                         // 없다
                         // 당기고 매달림
@@ -2946,6 +3014,18 @@ public class PlayerMovement : MonoBehaviour
                             destPos.y = destPos.y - 1f;
                             // 큐브 뒤쪽으로 당겨짐
                             cubeObject.GetComponent<CubeMovement>().PullBack(speed);
+                            // 되돌리기 할 플레이어 위치 값
+                            undoPlayerPos = transform.position;
+                            undoPlayerPos.z = undoPlayerPos.z - INTERACTION_MOVE_VALUE;
+                            // 큐브 배열 초기화
+                            for (int i = 0; i < CUBE_POS_ARRAY_SIZE; ++i)
+                            {
+                                cubePosArray[i].flag = false;
+                            }
+                            // 배열에 저장
+                            cubePosArray[0] = (new CubePosData(cubeObject, cubeObject.transform.position));
+                            // 되돌리기 메시지 담기
+                            gameManager.messageQueue.Enqueue(new UndoDataMsg(undoPlayerPos, ref cubePosArray));
                         }
 
                         // Move 함수에서 처리할 키 값
@@ -3058,6 +3138,18 @@ public class PlayerMovement : MonoBehaviour
                             playerState = PlayerState.B_INTERACTION_PULL;
                             // 큐브 앞쪽으로 당겨짐
                             cubeObject.GetComponent<CubeMovement>().PullForward(speed);
+                            // 되돌리기 할 플레이어 위치 값
+                            undoPlayerPos = transform.position;
+                            undoPlayerPos.z = undoPlayerPos.z + INTERACTION_MOVE_VALUE;
+                            // 큐브 배열 초기화
+                            for (int i = 0; i < CUBE_POS_ARRAY_SIZE; ++i)
+                            {
+                                cubePosArray[i].flag = false;
+                            }
+                            // 배열에 저장
+                            cubePosArray[0] = (new CubePosData(cubeObject, cubeObject.transform.position));
+                            // 되돌리기 메시지 담기
+                            gameManager.messageQueue.Enqueue(new UndoDataMsg(undoPlayerPos, ref cubePosArray));
                         }
                         // 없다
                         // 당기고 매달림
@@ -3069,6 +3161,18 @@ public class PlayerMovement : MonoBehaviour
                             destPos.y = destPos.y - 1f;
                             // 큐브 앞쪽으로 당겨짐
                             cubeObject.GetComponent<CubeMovement>().PullForward(speed);
+                            // 되돌리기 할 플레이어 위치 값
+                            undoPlayerPos = transform.position;
+                            undoPlayerPos.z = undoPlayerPos.z + INTERACTION_MOVE_VALUE;
+                            // 큐브 배열 초기화
+                            for (int i = 0; i < CUBE_POS_ARRAY_SIZE; ++i)
+                            {
+                                cubePosArray[i].flag = false;
+                            }
+                            // 배열에 저장
+                            cubePosArray[0] = (new CubePosData(cubeObject, cubeObject.transform.position));
+                            // 되돌리기 메시지 담기
+                            gameManager.messageQueue.Enqueue(new UndoDataMsg(undoPlayerPos, ref cubePosArray));
                         }
 
                         // Move 함수에서 처리할 키 값
@@ -3093,6 +3197,9 @@ public class PlayerMovement : MonoBehaviour
                     playerState = PlayerState.B_INTERACTION_PUSH_READY;
                     // 애니메이션 밀기 대기
                     animeSwitch = AnimationSwitch.PUSH_IDLE;
+                    // 되돌리기 할 플레이어 위치 값
+                    undoPlayerPos = transform.position;
+                    undoPlayerPos.z = undoPlayerPos.z + INTERACTION_MOVE_VALUE;
                 }
                 break;
             case PlayerState.R_MOVE:
@@ -4244,10 +4351,8 @@ public class PlayerMovement : MonoBehaviour
                     cubeObject.GetComponent<CubeMovement>().MoveRight(ref cubePosArray, 0, CUBE_POS_ARRAY_SIZE);
                     // 밀기 애니메이션은 약간의 딜레이가 필요합니다
                     actionDelay = 0f;
-                    // 테스트
-                    gameManager.messageQueue.Enqueue(new UndoDataMsg(destPos, ref cubePosArray));
-
-
+                    // 되돌리기 메시지 담기
+                    gameManager.messageQueue.Enqueue(new UndoDataMsg(undoPlayerPos, ref cubePosArray));
                 }
                 break;
             case PlayerState.L_INTERACTION_PUSH:
@@ -4263,10 +4368,17 @@ public class PlayerMovement : MonoBehaviour
                 {
                     // 밀기 상태
                     playerState = PlayerState.L_INTERACTION_PUSH_END;
+                    // 큐브 배열 초기화
+                    for (int i = 0; i < CUBE_POS_ARRAY_SIZE; ++i)
+                    {
+                        cubePosArray[i].flag = false;
+                    }
                     // 큐브 오른쪽 이동 처리
-                    cubeObject.GetComponent<CubeMovement>().MoveLeft();
+                    cubeObject.GetComponent<CubeMovement>().MoveLeft(ref cubePosArray, 0, CUBE_POS_ARRAY_SIZE);
                     // 밀기 애니메이션은 약간의 딜레이가 필요합니다
                     actionDelay = 0f;
+                    // 되돌리기 메시지 담기
+                    gameManager.messageQueue.Enqueue(new UndoDataMsg(undoPlayerPos, ref cubePosArray));
                 }
                 break;
             case PlayerState.F_INTERACTION_PUSH:
@@ -4282,10 +4394,17 @@ public class PlayerMovement : MonoBehaviour
                 {
                     // 밀기 상태
                     playerState = PlayerState.F_INTERACTION_PUSH_END;
+                    // 큐브 배열 초기화
+                    for (int i = 0; i < CUBE_POS_ARRAY_SIZE; ++i)
+                    {
+                        cubePosArray[i].flag = false;
+                    }
                     // 큐브 오른쪽 이동 처리
-                    cubeObject.GetComponent<CubeMovement>().MoveForward();
+                    cubeObject.GetComponent<CubeMovement>().MoveForward(ref cubePosArray, 0, CUBE_POS_ARRAY_SIZE);
                     // 밀기 애니메이션은 약간의 딜레이가 필요합니다
                     actionDelay = 0f;
+                    // 되돌리기 메시지 담기
+                    gameManager.messageQueue.Enqueue(new UndoDataMsg(undoPlayerPos, ref cubePosArray));
                 }
                 break;
             case PlayerState.B_INTERACTION_PUSH:
@@ -4301,10 +4420,17 @@ public class PlayerMovement : MonoBehaviour
                 {
                     // 밀기 상태
                     playerState = PlayerState.B_INTERACTION_PUSH_END;
+                    // 큐브 배열 초기화
+                    for (int i = 0; i < CUBE_POS_ARRAY_SIZE; ++i)
+                    {
+                        cubePosArray[i].flag = false;
+                    }
                     // 큐브 오른쪽 이동 처리
-                    cubeObject.GetComponent<CubeMovement>().MoveBack();
+                    cubeObject.GetComponent<CubeMovement>().MoveBack(ref cubePosArray, 0, CUBE_POS_ARRAY_SIZE);
                     // 밀기 애니메이션은 약간의 딜레이가 필요합니다
                     actionDelay = 0f;
+                    // 되돌리기 메시지 담기
+                    gameManager.messageQueue.Enqueue(new UndoDataMsg(undoPlayerPos, ref cubePosArray));
                 }
                 break;
             case PlayerState.R_INTERACTION_PUSH_END:

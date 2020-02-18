@@ -67,6 +67,7 @@ public class GameManager : MonoBehaviour
                 // 1. 플레이어 애니메이션도 대기상태로 복구해야됨
                 //-----------------------------------------------
 
+                Debug.Log("Undo PlayerPos : " + undoData.playerPos);
                 // 플레이어 위치 되돌리기
                 playerMovement.setPlayerPostion(undoData.playerPos);
                 // 플레이어 대기 상태로

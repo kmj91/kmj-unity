@@ -238,6 +238,321 @@ public class CubeMovement : MonoBehaviour
     }
 
 
+    // 큐브 미끄러짐 왼쪽 이동
+    public bool SlideLeft()
+    {
+        RaycastHit rayHit;      // 레이 충돌한 물체
+
+        // 움직이지 않는 큐브인가?
+        if (gameObject.CompareTag("StaticCube"))
+        {
+            // 해당 타입의 큐브는 움직일 수 없다
+            return false;
+        }
+        // 얼음 큐브인가?
+        else if (gameObject.CompareTag("IceCube"))
+        {
+            // 밀려나서 계속 미끄러지는 중인 경우
+
+            // 바닥 검사
+            // 없다
+            if (!Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskCube))
+            {
+                // 미끄러지지않음
+                slideEvent = false;
+                cubeMoveState = CubeMoveState.IDLE;
+                return false;
+            }
+
+            //-------------------------------------------
+            // 만약 왼쪽 이동 방향에 큐브가 있다면
+            // 같이 미끄러지는 큐브의 경우 이상 없음
+            // 정지한 큐브라면 부딪혀서 정지
+            //-------------------------------------------
+            // 왼쪽 검사
+            // 있다
+            if (Physics.Raycast(transform.position, Vector3.left, out rayHit, 1f, layerMaskCube))
+            {
+                // slideEvent 체크
+                if (!rayHit.transform.gameObject.GetComponent<CubeMovement>().slideEvent)
+                {
+                    // 정지한 큐브임
+                    // 미끄러지지않음
+                    slideEvent = false;
+                    cubeMoveState = CubeMoveState.IDLE;
+                    return false;
+                }
+            }
+
+            // 이동 좌표
+            destPos = transform.position;
+            destPos.x = destPos.x - 1f;
+
+            return true;
+        }
+
+
+        // 밀려나서 계속 미끄러지는 중인 경우
+
+        // 바닥 검사
+        // 있다
+        if (Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskCube))
+        {
+            // 바닥이 아이스 큐브가 아님
+            if (!rayHit.transform.gameObject.CompareTag("IceCube"))
+            {
+                // 미끄러지지않음
+                slideEvent = false;
+                cubeMoveState = CubeMoveState.IDLE;
+                return false;
+            }
+        }
+        else
+        {
+            // 미끄러지지않음
+            slideEvent = false;
+            cubeMoveState = CubeMoveState.IDLE;
+            return false;
+        }
+
+        //-------------------------------------------
+        // 만약 왼쪽 이동 방향에 큐브가 있다면
+        // 같이 미끄러지는 큐브의 경우 이상 없음
+        // 정지한 큐브라면 부딪혀서 정지
+        //-------------------------------------------
+        // 왼쪽 검사
+        // 있다
+        if (Physics.Raycast(transform.position, Vector3.left, out rayHit, 1f, layerMaskCube))
+        {
+            // slideEvent 체크
+            if (!rayHit.transform.gameObject.GetComponent<CubeMovement>().slideEvent)
+            {
+                // 정지한 큐브임
+                // 미끄러지지않음
+                slideEvent = false;
+                cubeMoveState = CubeMoveState.IDLE;
+                return false;
+            }
+        }
+
+        // 이동 좌표
+        destPos = transform.position;
+        destPos.x = destPos.x - 1f;
+
+        return true;
+    }
+
+
+    // 큐브 미끄러짐 앞쪽 이동
+    public bool SlideForward()
+    {
+        RaycastHit rayHit;      // 레이 충돌한 물체
+
+        // 움직이지 않는 큐브인가?
+        if (gameObject.CompareTag("StaticCube"))
+        {
+            // 해당 타입의 큐브는 움직일 수 없다
+            return false;
+        }
+        // 얼음 큐브인가?
+        else if (gameObject.CompareTag("IceCube"))
+        {
+            // 밀려나서 계속 미끄러지는 중인 경우
+
+            // 바닥 검사
+            // 없다
+            if (!Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskCube))
+            {
+                // 미끄러지지않음
+                slideEvent = false;
+                cubeMoveState = CubeMoveState.IDLE;
+                return false;
+            }
+
+            //-------------------------------------------
+            // 만약 앞쪽 이동 방향에 큐브가 있다면
+            // 같이 미끄러지는 큐브의 경우 이상 없음
+            // 정지한 큐브라면 부딪혀서 정지
+            //-------------------------------------------
+            // 앞쪽 검사
+            // 있다
+            if (Physics.Raycast(transform.position, Vector3.forward, out rayHit, 1f, layerMaskCube))
+            {
+                // slideEvent 체크
+                if (!rayHit.transform.gameObject.GetComponent<CubeMovement>().slideEvent)
+                {
+                    // 정지한 큐브임
+                    // 미끄러지지않음
+                    slideEvent = false;
+                    cubeMoveState = CubeMoveState.IDLE;
+                    return false;
+                }
+            }
+
+            // 이동 좌표
+            destPos = transform.position;
+            destPos.z = destPos.z + 1f;
+
+            return true;
+        }
+
+
+        // 밀려나서 계속 미끄러지는 중인 경우
+
+        // 바닥 검사
+        // 있다
+        if (Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskCube))
+        {
+            // 바닥이 아이스 큐브가 아님
+            if (!rayHit.transform.gameObject.CompareTag("IceCube"))
+            {
+                // 미끄러지지않음
+                slideEvent = false;
+                cubeMoveState = CubeMoveState.IDLE;
+                return false;
+            }
+        }
+        else
+        {
+            // 미끄러지지않음
+            slideEvent = false;
+            cubeMoveState = CubeMoveState.IDLE;
+            return false;
+        }
+
+        //-------------------------------------------
+        // 만약 앞쪽 이동 방향에 큐브가 있다면
+        // 같이 미끄러지는 큐브의 경우 이상 없음
+        // 정지한 큐브라면 부딪혀서 정지
+        //-------------------------------------------
+        // 앞쪽 검사
+        // 있다
+        if (Physics.Raycast(transform.position, Vector3.forward, out rayHit, 1f, layerMaskCube))
+        {
+            // slideEvent 체크
+            if (!rayHit.transform.gameObject.GetComponent<CubeMovement>().slideEvent)
+            {
+                // 정지한 큐브임
+                // 미끄러지지않음
+                slideEvent = false;
+                cubeMoveState = CubeMoveState.IDLE;
+                return false;
+            }
+        }
+
+        // 이동 좌표
+        destPos = transform.position;
+        destPos.z = destPos.z + 1f;
+
+        return true;
+    }
+
+
+    // 큐브 미끄러짐 뒤쪽 이동
+    public bool SlideBack()
+    {
+        RaycastHit rayHit;      // 레이 충돌한 물체
+
+        // 움직이지 않는 큐브인가?
+        if (gameObject.CompareTag("StaticCube"))
+        {
+            // 해당 타입의 큐브는 움직일 수 없다
+            return false;
+        }
+        // 얼음 큐브인가?
+        else if (gameObject.CompareTag("IceCube"))
+        {
+            // 밀려나서 계속 미끄러지는 중인 경우
+
+            // 바닥 검사
+            // 없다
+            if (!Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskCube))
+            {
+                // 미끄러지지않음
+                slideEvent = false;
+                cubeMoveState = CubeMoveState.IDLE;
+                return false;
+            }
+
+            //-------------------------------------------
+            // 만약 뒤쪽 이동 방향에 큐브가 있다면
+            // 같이 미끄러지는 큐브의 경우 이상 없음
+            // 정지한 큐브라면 부딪혀서 정지
+            //-------------------------------------------
+            // 뒤쪽 검사
+            // 있다
+            if (Physics.Raycast(transform.position, Vector3.back, out rayHit, 1f, layerMaskCube))
+            {
+                // slideEvent 체크
+                if (!rayHit.transform.gameObject.GetComponent<CubeMovement>().slideEvent)
+                {
+                    // 정지한 큐브임
+                    // 미끄러지지않음
+                    slideEvent = false;
+                    cubeMoveState = CubeMoveState.IDLE;
+                    return false;
+                }
+            }
+
+            // 이동 좌표
+            destPos = transform.position;
+            destPos.z = destPos.z - 1f;
+
+            return true;
+        }
+
+
+        // 밀려나서 계속 미끄러지는 중인 경우
+
+        // 바닥 검사
+        // 있다
+        if (Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskCube))
+        {
+            // 바닥이 아이스 큐브가 아님
+            if (!rayHit.transform.gameObject.CompareTag("IceCube"))
+            {
+                // 미끄러지지않음
+                slideEvent = false;
+                cubeMoveState = CubeMoveState.IDLE;
+                return false;
+            }
+        }
+        else
+        {
+            // 미끄러지지않음
+            slideEvent = false;
+            cubeMoveState = CubeMoveState.IDLE;
+            return false;
+        }
+
+        //-------------------------------------------
+        // 만약 뒤쪽 이동 방향에 큐브가 있다면
+        // 같이 미끄러지는 큐브의 경우 이상 없음
+        // 정지한 큐브라면 부딪혀서 정지
+        //-------------------------------------------
+        // 앞쪽 검사
+        // 있다
+        if (Physics.Raycast(transform.position, Vector3.back, out rayHit, 1f, layerMaskCube))
+        {
+            // slideEvent 체크
+            if (!rayHit.transform.gameObject.GetComponent<CubeMovement>().slideEvent)
+            {
+                // 정지한 큐브임
+                // 미끄러지지않음
+                slideEvent = false;
+                cubeMoveState = CubeMoveState.IDLE;
+                return false;
+            }
+        }
+
+        // 이동 좌표
+        destPos = transform.position;
+        destPos.z = destPos.z - 1f;
+
+        return true;
+    }
+
+
     // 큐브 오른쪽 이동
     public bool MoveRight(ref CubePosData[] cubePosArray, int iIndex, int iMaxSize)
     {
@@ -330,13 +645,12 @@ public class CubeMovement : MonoBehaviour
             // 배열에 저장
             cubePosArray[iIndex] = (new CubePosData(transform.gameObject, transform.position));
         }
-        
 
         return true;
     }
 
     // 큐브 왼쪽 이동
-    public bool MoveLeft()
+    public bool MoveLeft(ref CubePosData[] cubePosArray, int iIndex, int iMaxSize)
     {
         RaycastHit rayHit;      // 레이 충돌한 물체
 
@@ -349,147 +663,14 @@ public class CubeMovement : MonoBehaviour
         // 얼음 큐브인가?
         else if (gameObject.CompareTag("IceCube"))
         {
-            // 미끄러지는 중인가?
-            if (slideEvent)
-            {
-                // 밀려나서 계속 미끄러지는 중인 경우
-
-                // 바닥 검사
-                // 없다
-                if (!Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskCube))
-                {
-                    // 미끄러지지않음
-                    slideEvent = false;
-                    cubeMoveState = CubeMoveState.IDLE;
-                    return false;
-                }
-
-                //-------------------------------------------
-                // 만약 왼쪽 이동 방향에 큐브가 있다면
-                // 같이 미끄러지는 큐브의 경우 이상 없음
-                // 정지한 큐브라면 부딪혀서 정지
-                //-------------------------------------------
-                // 왼쪽 검사
-                // 있다
-                if (Physics.Raycast(transform.position, Vector3.left, out rayHit, 1f, layerMaskCube))
-                {
-                    // slideEvent 체크
-                    if (!rayHit.transform.gameObject.GetComponent<CubeMovement>().slideEvent)
-                    {
-                        // 정지한 큐브임
-                        // 미끄러지지않음
-                        slideEvent = false;
-                        cubeMoveState = CubeMoveState.IDLE;
-                        return false;
-                    }
-                }
-
-                // 이동 좌표
-                destPos = transform.position;
-                destPos.x = destPos.x - 1f;
-            }
-            else
-            {
-                // 처음 미는 중인 경우
-
-                // 바닥 검사
-                // 있다
-                if (Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskCube))
-                {
-                    // 미끄러짐
-                    slideEvent = true;
-                }
-
-                // 만약 왼쪽으로 이동이 불가능한 상황이면 이동하지 않아야함
-                // 왼쪽 검사
-                // 있다
-                if (Physics.Raycast(transform.position, Vector3.left, out rayHit, 1f, layerMaskCube))
-                {
-                    // 큐브 이동 처리
-                    // 이동 불가?
-                    if (!rayHit.transform.gameObject.GetComponent<CubeMovement>().MoveLeft())
-                    {
-                        // 이동하지 않음
-                        slideEvent = false;
-                        return false;
-                    }
-                }
-
-                // 이동 좌표
-                destPos = transform.position;
-                destPos.x = destPos.x - 1f;
-                // 왼쪽 이동
-                cubeMoveState = CubeMoveState.LEFT;
-            }
-
-            return true;
-        }
-
-
-        // 미끄러지는 중인가?
-        if (slideEvent)
-        {
-            // 밀려나서 계속 미끄러지는 중인 경우
-
-            // 바닥 검사
-            // 있다
-            if (Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskCube))
-            {
-                // 바닥이 아이스 큐브가 아님
-                if (!rayHit.transform.gameObject.CompareTag("IceCube"))
-                {
-                    // 미끄러지지않음
-                    slideEvent = false;
-                    cubeMoveState = CubeMoveState.IDLE;
-                    return false;
-                }
-            }
-            else
-            {
-                // 미끄러지지않음
-                slideEvent = false;
-                cubeMoveState = CubeMoveState.IDLE;
-                return false;
-            }
-
-            //-------------------------------------------
-            // 만약 왼쪽 이동 방향에 큐브가 있다면
-            // 같이 미끄러지는 큐브의 경우 이상 없음
-            // 정지한 큐브라면 부딪혀서 정지
-            //-------------------------------------------
-            // 왼쪽 검사
-            // 있다
-            if (Physics.Raycast(transform.position, Vector3.left, out rayHit, 1f, layerMaskCube))
-            {
-                // slideEvent 체크
-                if (!rayHit.transform.gameObject.GetComponent<CubeMovement>().slideEvent)
-                {
-                    // 정지한 큐브임
-                    // 미끄러지지않음
-                    slideEvent = false;
-                    cubeMoveState = CubeMoveState.IDLE;
-                    return false;
-                }
-            }
-
-            // 이동 좌표
-            destPos = transform.position;
-            destPos.x = destPos.x - 1f;
-        }
-        else
-        {
             // 처음 미는 중인 경우
 
             // 바닥 검사
             // 있다
             if (Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskCube))
             {
-                // 바닥이 아이스 큐브임
-                if (rayHit.transform.gameObject.CompareTag("IceCube"))
-                {
-                    // 미끄러짐
-                    slideEvent = true;
-                }
+                // 미끄러짐
+                slideEvent = true;
             }
 
             // 만약 왼쪽으로 이동이 불가능한 상황이면 이동하지 않아야함
@@ -499,7 +680,7 @@ public class CubeMovement : MonoBehaviour
             {
                 // 큐브 이동 처리
                 // 이동 불가?
-                if (!rayHit.transform.gameObject.GetComponent<CubeMovement>().MoveLeft())
+                if (!rayHit.transform.gameObject.GetComponent<CubeMovement>().MoveLeft(ref cubePosArray, iIndex + 1, iMaxSize))
                 {
                     // 이동하지 않음
                     slideEvent = false;
@@ -512,13 +693,57 @@ public class CubeMovement : MonoBehaviour
             destPos.x = destPos.x - 1f;
             // 왼쪽 이동
             cubeMoveState = CubeMoveState.LEFT;
+
+            return true;
+        }
+
+
+        // 처음 미는 중인 경우
+
+        // 바닥 검사
+        // 있다
+        if (Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskCube))
+        {
+            // 바닥이 아이스 큐브임
+            if (rayHit.transform.gameObject.CompareTag("IceCube"))
+            {
+                // 미끄러짐
+                slideEvent = true;
+            }
+        }
+
+        // 만약 왼쪽으로 이동이 불가능한 상황이면 이동하지 않아야함
+        // 왼쪽 검사
+        // 있다
+        if (Physics.Raycast(transform.position, Vector3.left, out rayHit, 1f, layerMaskCube))
+        {
+            // 큐브 이동 처리
+            // 이동 불가?
+            if (!rayHit.transform.gameObject.GetComponent<CubeMovement>().MoveLeft(ref cubePosArray, iIndex + 1, iMaxSize))
+            {
+                // 이동하지 않음
+                slideEvent = false;
+                return false;
+            }
+        }
+
+        // 이동 좌표
+        destPos = transform.position;
+        destPos.x = destPos.x - 1f;
+        // 왼쪽 이동
+        cubeMoveState = CubeMoveState.LEFT;
+
+        if (iMaxSize > iIndex)
+        {
+            // 배열에 저장
+            cubePosArray[iIndex] = (new CubePosData(transform.gameObject, transform.position));
         }
 
         return true;
     }
 
     // 큐브 앞쪽 이동
-    public bool MoveForward()
+    public bool MoveForward(ref CubePosData[] cubePosArray, int iIndex, int iMaxSize)
     {
         RaycastHit rayHit;      // 레이 충돌한 물체
 
@@ -531,147 +756,14 @@ public class CubeMovement : MonoBehaviour
         // 얼음 큐브인가?
         else if (gameObject.CompareTag("IceCube"))
         {
-            // 미끄러지는 중인가?
-            if (slideEvent)
-            {
-                // 밀려나서 계속 미끄러지는 중인 경우
-
-                // 바닥 검사
-                // 없다
-                if (!Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskCube))
-                {
-                    // 미끄러지지않음
-                    slideEvent = false;
-                    cubeMoveState = CubeMoveState.IDLE;
-                    return false;
-                }
-
-                //-------------------------------------------
-                // 만약 앞쪽 이동 방향에 큐브가 있다면
-                // 같이 미끄러지는 큐브의 경우 이상 없음
-                // 정지한 큐브라면 부딪혀서 정지
-                //-------------------------------------------
-                // 앞쪽 검사
-                // 있다
-                if (Physics.Raycast(transform.position, Vector3.forward, out rayHit, 1f, layerMaskCube))
-                {
-                    // slideEvent 체크
-                    if (!rayHit.transform.gameObject.GetComponent<CubeMovement>().slideEvent)
-                    {
-                        // 정지한 큐브임
-                        // 미끄러지지않음
-                        slideEvent = false;
-                        cubeMoveState = CubeMoveState.IDLE;
-                        return false;
-                    }
-                }
-
-                // 이동 좌표
-                destPos = transform.position;
-                destPos.z = destPos.z + 1f;
-            }
-            else
-            {
-                // 처음 미는 중인 경우
-
-                // 바닥 검사
-                // 있다
-                if (Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskCube))
-                {
-                    // 미끄러짐
-                    slideEvent = true;
-                }
-
-                // 만약 앞쪽으로 이동이 불가능한 상황이면 이동하지 않아야함
-                // 앞쪽 검사
-                // 있다
-                if (Physics.Raycast(transform.position, Vector3.forward, out rayHit, 1f, layerMaskCube))
-                {
-                    // 큐브 이동 처리
-                    // 이동 불가?
-                    if (!rayHit.transform.gameObject.GetComponent<CubeMovement>().MoveForward())
-                    {
-                        // 이동하지 않음
-                        slideEvent = false;
-                        return false;
-                    }
-                }
-
-                // 이동 좌표
-                destPos = transform.position;
-                destPos.z = destPos.z + 1f;
-                // 앞쪽 이동
-                cubeMoveState = CubeMoveState.FORWARD;
-            }
-
-            return true;
-        }
-
-
-        // 미끄러지는 중인가?
-        if (slideEvent)
-        {
-            // 밀려나서 계속 미끄러지는 중인 경우
-
-            // 바닥 검사
-            // 있다
-            if (Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskCube))
-            {
-                // 바닥이 아이스 큐브가 아님
-                if (!rayHit.transform.gameObject.CompareTag("IceCube"))
-                {
-                    // 미끄러지지않음
-                    slideEvent = false;
-                    cubeMoveState = CubeMoveState.IDLE;
-                    return false;
-                }
-            }
-            else
-            {
-                // 미끄러지지않음
-                slideEvent = false;
-                cubeMoveState = CubeMoveState.IDLE;
-                return false;
-            }
-
-            //-------------------------------------------
-            // 만약 앞쪽 이동 방향에 큐브가 있다면
-            // 같이 미끄러지는 큐브의 경우 이상 없음
-            // 정지한 큐브라면 부딪혀서 정지
-            //-------------------------------------------
-            // 앞쪽 검사
-            // 있다
-            if (Physics.Raycast(transform.position, Vector3.forward, out rayHit, 1f, layerMaskCube))
-            {
-                // slideEvent 체크
-                if (!rayHit.transform.gameObject.GetComponent<CubeMovement>().slideEvent)
-                {
-                    // 정지한 큐브임
-                    // 미끄러지지않음
-                    slideEvent = false;
-                    cubeMoveState = CubeMoveState.IDLE;
-                    return false;
-                }
-            }
-
-            // 이동 좌표
-            destPos = transform.position;
-            destPos.z = destPos.z + 1f;
-        }
-        else
-        {
             // 처음 미는 중인 경우
 
             // 바닥 검사
             // 있다
             if (Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskCube))
             {
-                // 바닥이 아이스 큐브임
-                if (rayHit.transform.gameObject.CompareTag("IceCube"))
-                {
-                    // 미끄러짐
-                    slideEvent = true;
-                }
+                // 미끄러짐
+                slideEvent = true;
             }
 
             // 만약 앞쪽으로 이동이 불가능한 상황이면 이동하지 않아야함
@@ -681,7 +773,7 @@ public class CubeMovement : MonoBehaviour
             {
                 // 큐브 이동 처리
                 // 이동 불가?
-                if (!rayHit.transform.gameObject.GetComponent<CubeMovement>().MoveForward())
+                if (!rayHit.transform.gameObject.GetComponent<CubeMovement>().MoveForward(ref cubePosArray, iIndex + 1, iMaxSize))
                 {
                     // 이동하지 않음
                     slideEvent = false;
@@ -694,13 +786,57 @@ public class CubeMovement : MonoBehaviour
             destPos.z = destPos.z + 1f;
             // 앞쪽 이동
             cubeMoveState = CubeMoveState.FORWARD;
+
+            return true;
+        }
+
+
+        // 처음 미는 중인 경우
+
+        // 바닥 검사
+        // 있다
+        if (Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskCube))
+        {
+            // 바닥이 아이스 큐브임
+            if (rayHit.transform.gameObject.CompareTag("IceCube"))
+            {
+                // 미끄러짐
+                slideEvent = true;
+            }
+        }
+
+        // 만약 앞쪽으로 이동이 불가능한 상황이면 이동하지 않아야함
+        // 앞쪽 검사
+        // 있다
+        if (Physics.Raycast(transform.position, Vector3.forward, out rayHit, 1f, layerMaskCube))
+        {
+            // 큐브 이동 처리
+            // 이동 불가?
+            if (!rayHit.transform.gameObject.GetComponent<CubeMovement>().MoveForward(ref cubePosArray, iIndex + 1, iMaxSize))
+            {
+                // 이동하지 않음
+                slideEvent = false;
+                return false;
+            }
+        }
+
+        // 이동 좌표
+        destPos = transform.position;
+        destPos.z = destPos.z + 1f;
+        // 앞쪽 이동
+        cubeMoveState = CubeMoveState.FORWARD;
+
+        if (iMaxSize > iIndex)
+        {
+            // 배열에 저장
+            cubePosArray[iIndex] = (new CubePosData(transform.gameObject, transform.position));
         }
 
         return true;
     }
 
     // 큐브 뒤쪽 이동
-    public bool MoveBack()
+    public bool MoveBack(ref CubePosData[] cubePosArray, int iIndex, int iMaxSize)
     {
         RaycastHit rayHit;      // 레이 충돌한 물체
 
@@ -713,147 +849,14 @@ public class CubeMovement : MonoBehaviour
         // 얼음 큐브인가?
         else if (gameObject.CompareTag("IceCube"))
         {
-            // 미끄러지는 중인가?
-            if (slideEvent)
-            {
-                // 밀려나서 계속 미끄러지는 중인 경우
-
-                // 바닥 검사
-                // 없다
-                if (!Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskCube))
-                {
-                    // 미끄러지지않음
-                    slideEvent = false;
-                    cubeMoveState = CubeMoveState.IDLE;
-                    return false;
-                }
-
-                //-------------------------------------------
-                // 만약 뒤쪽 이동 방향에 큐브가 있다면
-                // 같이 미끄러지는 큐브의 경우 이상 없음
-                // 정지한 큐브라면 부딪혀서 정지
-                //-------------------------------------------
-                // 뒤쪽 검사
-                // 있다
-                if (Physics.Raycast(transform.position, Vector3.back, out rayHit, 1f, layerMaskCube))
-                {
-                    // slideEvent 체크
-                    if (!rayHit.transform.gameObject.GetComponent<CubeMovement>().slideEvent)
-                    {
-                        // 정지한 큐브임
-                        // 미끄러지지않음
-                        slideEvent = false;
-                        cubeMoveState = CubeMoveState.IDLE;
-                        return false;
-                    }
-                }
-
-                // 이동 좌표
-                destPos = transform.position;
-                destPos.z = destPos.z - 1f;
-            }
-            else
-            {
-                // 처음 미는 중인 경우
-
-                // 바닥 검사
-                // 있다
-                if (Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskCube))
-                {
-                    // 미끄러짐
-                    slideEvent = true;
-                }
-
-                // 만약 뒤쪽으로 이동이 불가능한 상황이면 이동하지 않아야함
-                // 뒤쪽 검사
-                // 있다
-                if (Physics.Raycast(transform.position, Vector3.back, out rayHit, 1f, layerMaskCube))
-                {
-                    // 큐브 이동 처리
-                    // 이동 불가?
-                    if (!rayHit.transform.gameObject.GetComponent<CubeMovement>().MoveBack())
-                    {
-                        // 이동하지 않음
-                        slideEvent = false;
-                        return false;
-                    }
-                }
-
-                // 이동 좌표
-                destPos = transform.position;
-                destPos.z = destPos.z - 1f;
-                // 뒤쪽 이동
-                cubeMoveState = CubeMoveState.BACK;
-            }
-
-            return true;
-        }
-
-
-        // 미끄러지는 중인가?
-        if (slideEvent)
-        {
-            // 밀려나서 계속 미끄러지는 중인 경우
-
-            // 바닥 검사
-            // 있다
-            if (Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskCube))
-            {
-                // 바닥이 아이스 큐브가 아님
-                if (!rayHit.transform.gameObject.CompareTag("IceCube"))
-                {
-                    // 미끄러지지않음
-                    slideEvent = false;
-                    cubeMoveState = CubeMoveState.IDLE;
-                    return false;
-                }
-            }
-            else
-            {
-                // 미끄러지지않음
-                slideEvent = false;
-                cubeMoveState = CubeMoveState.IDLE;
-                return false;
-            }
-
-            //-------------------------------------------
-            // 만약 뒤쪽 이동 방향에 큐브가 있다면
-            // 같이 미끄러지는 큐브의 경우 이상 없음
-            // 정지한 큐브라면 부딪혀서 정지
-            //-------------------------------------------
-            // 앞쪽 검사
-            // 있다
-            if (Physics.Raycast(transform.position, Vector3.back, out rayHit, 1f, layerMaskCube))
-            {
-                // slideEvent 체크
-                if (!rayHit.transform.gameObject.GetComponent<CubeMovement>().slideEvent)
-                {
-                    // 정지한 큐브임
-                    // 미끄러지지않음
-                    slideEvent = false;
-                    cubeMoveState = CubeMoveState.IDLE;
-                    return false;
-                }
-            }
-
-            // 이동 좌표
-            destPos = transform.position;
-            destPos.z = destPos.z - 1f;
-        }
-        else
-        {
             // 처음 미는 중인 경우
 
             // 바닥 검사
             // 있다
             if (Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskCube))
             {
-                // 바닥이 아이스 큐브임
-                if (rayHit.transform.gameObject.CompareTag("IceCube"))
-                {
-                    // 미끄러짐
-                    slideEvent = true;
-                }
+                // 미끄러짐
+                slideEvent = true;
             }
 
             // 만약 뒤쪽으로 이동이 불가능한 상황이면 이동하지 않아야함
@@ -863,7 +866,7 @@ public class CubeMovement : MonoBehaviour
             {
                 // 큐브 이동 처리
                 // 이동 불가?
-                if (!rayHit.transform.gameObject.GetComponent<CubeMovement>().MoveBack())
+                if (!rayHit.transform.gameObject.GetComponent<CubeMovement>().MoveBack(ref cubePosArray, iIndex + 1, iMaxSize))
                 {
                     // 이동하지 않음
                     slideEvent = false;
@@ -876,6 +879,50 @@ public class CubeMovement : MonoBehaviour
             destPos.z = destPos.z - 1f;
             // 뒤쪽 이동
             cubeMoveState = CubeMoveState.BACK;
+
+            return true;
+        }
+
+
+        // 처음 미는 중인 경우
+
+        // 바닥 검사
+        // 있다
+        if (Physics.Raycast(transform.position, Vector3.down, out rayHit, 1f, layerMaskCube))
+        {
+            // 바닥이 아이스 큐브임
+            if (rayHit.transform.gameObject.CompareTag("IceCube"))
+            {
+                // 미끄러짐
+                slideEvent = true;
+            }
+        }
+
+        // 만약 뒤쪽으로 이동이 불가능한 상황이면 이동하지 않아야함
+        // 뒤쪽 검사
+        // 있다
+        if (Physics.Raycast(transform.position, Vector3.back, out rayHit, 1f, layerMaskCube))
+        {
+            // 큐브 이동 처리
+            // 이동 불가?
+            if (!rayHit.transform.gameObject.GetComponent<CubeMovement>().MoveBack(ref cubePosArray, iIndex + 1, iMaxSize))
+            {
+                // 이동하지 않음
+                slideEvent = false;
+                return false;
+            }
+        }
+
+        // 이동 좌표
+        destPos = transform.position;
+        destPos.z = destPos.z - 1f;
+        // 뒤쪽 이동
+        cubeMoveState = CubeMoveState.BACK;
+
+        if (iMaxSize > iIndex)
+        {
+            // 배열에 저장
+            cubePosArray[iIndex] = (new CubePosData(transform.gameObject, transform.position));
         }
 
         return true;
@@ -1575,7 +1622,7 @@ public class CubeMovement : MonoBehaviour
                     // 미끄러지는 중임
                     if (slideEvent)
                     {
-                        MoveLeft();
+                        SlideLeft();
                     }
                     else
                     {
@@ -1589,7 +1636,7 @@ public class CubeMovement : MonoBehaviour
                             {
                                 // 미끄러짐
                                 slideEvent = true;
-                                MoveLeft();
+                                SlideLeft();
                                 break;
                             }
                         }
@@ -1614,7 +1661,7 @@ public class CubeMovement : MonoBehaviour
                     // 미끄러지는 중임
                     if (slideEvent)
                     {
-                        MoveForward();
+                        SlideForward();
                     }
                     else
                     {
@@ -1628,7 +1675,7 @@ public class CubeMovement : MonoBehaviour
                             {
                                 // 미끄러짐
                                 slideEvent = true;
-                                MoveForward();
+                                SlideForward();
                                 break;
                             }
                         }
@@ -1653,7 +1700,7 @@ public class CubeMovement : MonoBehaviour
                     // 미끄러지는 중임
                     if (slideEvent)
                     {
-                        MoveBack();
+                        SlideBack();
                     }
                     else
                     {
@@ -1667,7 +1714,7 @@ public class CubeMovement : MonoBehaviour
                             {
                                 // 미끄러짐
                                 slideEvent = true;
-                                MoveBack();
+                                SlideBack();
                                 break;
                             }
                         }
