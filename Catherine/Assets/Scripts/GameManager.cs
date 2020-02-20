@@ -30,7 +30,7 @@ public class GameManager : MonoBehaviour
         undoDeque = new UnityDeque<UndoData>();
     }
 
-    private void Update()
+    private void FixedUpdate()
     {
         GameMessage gameMsg;
         UndoDataMsg UndoMsg;
@@ -70,8 +70,8 @@ public class GameManager : MonoBehaviour
                 Debug.Log("Undo PlayerPos : " + undoData.playerPos);
                 // 플레이어 위치 되돌리기
                 playerMovement.setPlayerPostion(undoData.playerPos);
-                // 플레이어 대기 상태로
-                playerMovement.UpdateStateToIdle();
+                // 플레이어 상태 되돌리기
+                playerMovement.UndoProcess();
 
                 // 큐브 되돌리기
                 for (int i = 0; i < undoArraySize; ++i)

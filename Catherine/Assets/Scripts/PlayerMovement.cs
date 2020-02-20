@@ -105,13 +105,13 @@ public class PlayerMovement : MonoBehaviour
         F_MOVE,                     // 앞쪽 이동
         B_MOVE,                     // 뒤쪽 이동
         MOVE_FLINCH,                // 이동 움찔
-        R_MOVE_COLLISION,           // 오른쪽 이동 충돌
-        R_MOVE_COLLISION_END,       // 오른쪽 이동 충돌 끝
+        R_MOVE_COLLISION,           // 오른쪽 이동 충돌 
         L_MOVE_COLLISION,           // 왼쪽 이동 충돌
-        L_MOVE_COLLISION_END,       // 왼쪽 이동 충돌 끝
         F_MOVE_COLLISION,           // 앞쪽 이동 충돌
-        F_MOVE_COLLISION_END,       // 앞쪽 이동 충돌 끝
         B_MOVE_COLLISION,           // 뒤쪽 이동 충돌
+        R_MOVE_COLLISION_END,       // 오른쪽 이동 충돌 끝
+        L_MOVE_COLLISION_END,       // 왼쪽 이동 충돌 끝
+        F_MOVE_COLLISION_END,       // 앞쪽 이동 충돌 끝
         B_MOVE_COLLISION_END,       // 뒤쪽 이동 충돌 끝
         R_SLIDE,                    // 오른쪽 미끄러짐
         L_SLIDE,                    // 왼쪽 미끄러짐
@@ -123,12 +123,12 @@ public class PlayerMovement : MonoBehaviour
         B_UP,                       // 뒤쪽 위
         UP_FLINCH,                  // 점프 움찔
         R_UP_COLLISION,             // 오른쪽 위 충돌
-        R_UP_COLLISION_END,         // 오른쪽 위 충돌 끝
         L_UP_COLLISION,             // 왼쪽 위 충돌
-        L_UP_COLLISION_END,         // 왼쪽 위 충돌 끝
         F_UP_COLLISION,             // 앞쪽 위 충돌
-        F_UP_COLLISION_END,         // 앞쪽 위 충돌 끝
         B_UP_COLLISION,             // 뒤쪽 위 충돌
+        R_UP_COLLISION_END,         // 오른쪽 위 충돌 끝
+        L_UP_COLLISION_END,         // 왼쪽 위 충돌 끝
+        F_UP_COLLISION_END,         // 앞쪽 위 충돌 끝
         B_UP_COLLISION_END,         // 뒤쪽 위 충돌 끝
         R_DOWN,                     // 오른쪽 아래
         L_DOWN,                     // 왼쪽 아래
@@ -147,12 +147,12 @@ public class PlayerMovement : MonoBehaviour
         F_INTERACTION_PUSH_END,     // 앞쪽 밀기 끝
         B_INTERACTION_PUSH_END,     // 뒤쪽 밀기 끝
         R_INTERACTION_PULL,         // 오른쪽 당김
-        R_INTERACTION_PULL_CLIMBING, // 오른쪽 당기고 매달림
         L_INTERACTION_PULL,         // 왼쪽 당김
-        L_INTERACTION_PULL_CLIMBING, // 왼쪽 당기고 매달림
         F_INTERACTION_PULL,         // 앞쪽 당김
-        F_INTERACTION_PULL_CLIMBING, // 앞쪽 당기고 매달림
         B_INTERACTION_PULL,         // 뒤쪽 당김
+        R_INTERACTION_PULL_CLIMBING, // 오른쪽 당기고 매달림
+        L_INTERACTION_PULL_CLIMBING, // 왼쪽 당기고 매달림
+        F_INTERACTION_PULL_CLIMBING, // 앞쪽 당기고 매달림
         B_INTERACTION_PULL_CLIMBING, // 뒤쪽 당기고 매달림
         R_CLIMBING,                 // 오른쪽 등반
         L_CLIMBING,                 // 왼쪽 등반
@@ -224,7 +224,8 @@ public class PlayerMovement : MonoBehaviour
         DROP_LOW_END,
         DROP_CLIMBING,
         CRUSHED_TO_DEATH,
-        DROP_TO_DEATH
+        DROP_TO_DEATH,
+        UNDO
     }
 
     //--------------------------------
@@ -243,6 +244,15 @@ public class PlayerMovement : MonoBehaviour
 
 
     //--------------------------------
+    // delegate
+    //--------------------------------
+
+    private delegate void UndoFunc();
+
+    private UndoFunc[] undoFunc;
+
+
+    //--------------------------------
     // public 함수
     //--------------------------------
 
@@ -250,6 +260,12 @@ public class PlayerMovement : MonoBehaviour
     public void UpdateStateToIdle()
     {
         playerState = PlayerState.IDLE;
+    }
+
+    // 되돌리기
+    public void UndoProcess()
+    {
+        undoFunc[(int)playerState]();
     }
 
     // 캐릭터 키 입력을 바라보는 곳 기준 뒤 방향으로
@@ -294,6 +310,40 @@ public class PlayerMovement : MonoBehaviour
     //--------------------------------
     // private 함수
     //--------------------------------
+
+    private void Awake()
+    {
+        undoFunc = new UndoFunc[] { new UndoFunc(Undo_Idle),
+            new UndoFunc(Undo_Idle_Climbing), new UndoFunc(Undo_Idle_Climbing), new UndoFunc(Undo_Idle_Climbing), new UndoFunc(Undo_Idle_Climbing),
+            new UndoFunc(Undo_Idle_Interaction), new UndoFunc(Undo_Idle_Interaction), new UndoFunc(Undo_Idle_Interaction), new UndoFunc(Undo_Idle_Interaction),
+            new UndoFunc(Undo_Move), new UndoFunc(Undo_Move), new UndoFunc(Undo_Move), new UndoFunc(Undo_Move),
+            new UndoFunc(Undo_Move_Flinch),
+            new UndoFunc(Undo_Move_Collision), new UndoFunc(Undo_Move_Collision), new UndoFunc(Undo_Move_Collision), new UndoFunc(Undo_Move_Collision),
+            new UndoFunc(Undo_Move_Collision_End), new UndoFunc(Undo_Move_Collision_End), new UndoFunc(Undo_Move_Collision_End), new UndoFunc(Undo_Move_Collision_End),
+            new UndoFunc(Undo_Slide), new UndoFunc(Undo_Slide), new UndoFunc(Undo_Slide), new UndoFunc(Undo_Slide),
+            new UndoFunc(Undo_Up), new UndoFunc(Undo_Up), new UndoFunc(Undo_Up), new UndoFunc(Undo_Up),
+            new UndoFunc(Undo_Up_Flinch),
+            new UndoFunc(Undo_Up_Collision), new UndoFunc(Undo_Up_Collision), new UndoFunc(Undo_Up_Collision), new UndoFunc(Undo_Up_Collision),
+            new UndoFunc(Undo_Up_Collision_End), new UndoFunc(Undo_Up_Collision_End), new UndoFunc(Undo_Up_Collision_End), new UndoFunc(Undo_Up_Collision_End),
+            new UndoFunc(Undo_Down), new UndoFunc(Undo_Down), new UndoFunc(Undo_Down), new UndoFunc(Undo_Down),
+            new UndoFunc(Undo_Push_Ready), new UndoFunc(Undo_Push_Ready), new UndoFunc(Undo_Push_Ready), new UndoFunc(Undo_Push_Ready),
+            new UndoFunc(Undo_Push), new UndoFunc(Undo_Push), new UndoFunc(Undo_Push), new UndoFunc(Undo_Push),
+            new UndoFunc(Undo_Push_End), new UndoFunc(Undo_Push_End), new UndoFunc(Undo_Push_End), new UndoFunc(Undo_Push_End),
+            new UndoFunc(Undo_Pull), new UndoFunc(Undo_Pull), new UndoFunc(Undo_Pull), new UndoFunc(Undo_Pull),
+            new UndoFunc(Undo_Pull_Climbing), new UndoFunc(Undo_Pull_Climbing), new UndoFunc(Undo_Pull_Climbing), new UndoFunc(Undo_Pull_Climbing),
+            new UndoFunc(Undo_Climbing), new UndoFunc(Undo_Climbing), new UndoFunc(Undo_Climbing), new UndoFunc(Undo_Climbing),
+            new UndoFunc(Undo_Climbing_Move), new UndoFunc(Undo_Climbing_Move), new UndoFunc(Undo_Climbing_Move), new UndoFunc(Undo_Climbing_Move), new UndoFunc(Undo_Climbing_Move), new UndoFunc(Undo_Climbing_Move), new UndoFunc(Undo_Climbing_Move), new UndoFunc(Undo_Climbing_Move),
+            new UndoFunc(Undo_Change_Climbing), new UndoFunc(Undo_Change_Climbing), new UndoFunc(Undo_Change_Climbing), new UndoFunc(Undo_Change_Climbing), new UndoFunc(Undo_Change_Climbing), new UndoFunc(Undo_Change_Climbing), new UndoFunc(Undo_Change_Climbing), new UndoFunc(Undo_Change_Climbing),
+            new UndoFunc(Undo_Drop), new UndoFunc(Undo_Drop), new UndoFunc(Undo_Drop), new UndoFunc(Undo_Drop),
+            new UndoFunc(Undo_Drop_High), new UndoFunc(Undo_Drop_High), new UndoFunc(Undo_Drop_High), new UndoFunc(Undo_Drop_High),
+            new UndoFunc(Undo_Drop_Low), new UndoFunc(Undo_Drop_Low), new UndoFunc(Undo_Drop_Low), new UndoFunc(Undo_Drop_Low),
+            new UndoFunc(Undo_Drop_Cling), new UndoFunc(Undo_Drop_Cling), new UndoFunc(Undo_Drop_Cling), new UndoFunc(Undo_Drop_Cling),
+            new UndoFunc(Undo_Drop_CLIMBING), new UndoFunc(Undo_Drop_CLIMBING), new UndoFunc(Undo_Drop_CLIMBING), new UndoFunc(Undo_Drop_CLIMBING),
+            new UndoFunc(Undo_Crushed_To_Death),
+            new UndoFunc(Undo_Death),
+            new UndoFunc(Undo_Empty)
+            };
+    }
 
     private void Start()
     {
@@ -3897,6 +3947,7 @@ public class PlayerMovement : MonoBehaviour
                 // 머리가 부딪힘
                 if (Physics.Raycast(headTrans.position, Vector3.up, 0.2f, layerMaskCube))
                 {
+                    // 애니메이션 클립에서 함수를 호출해서 캐릭터를 뒤로 이동 시킴 UpdateMoveBack()
                     // 충돌 끝
                     playerState = PlayerState.R_UP_COLLISION_END;
                     // 애니메이션 점프 충돌 다운
@@ -3970,6 +4021,7 @@ public class PlayerMovement : MonoBehaviour
                 // 머리가 부딪힘
                 if (Physics.Raycast(headTrans.position, Vector3.up, 0.2f, layerMaskCube))
                 {
+                    // 애니메이션 클립에서 함수를 호출해서 캐릭터를 뒤로 이동 시킴 UpdateMoveBack()
                     // 충돌 끝
                     playerState = PlayerState.L_UP_COLLISION_END;
                     // 애니메이션 점프 충돌 다운
@@ -4043,6 +4095,7 @@ public class PlayerMovement : MonoBehaviour
                 // 머리가 부딪힘
                 if (Physics.Raycast(headTrans.position, Vector3.up, 0.2f, layerMaskCube))
                 {
+                    // 애니메이션 클립에서 함수를 호출해서 캐릭터를 뒤로 이동 시킴 UpdateMoveBack()
                     // 충돌 끝
                     playerState = PlayerState.F_UP_COLLISION_END;
                     // 애니메이션 점프 충돌 다운
@@ -4116,6 +4169,7 @@ public class PlayerMovement : MonoBehaviour
                 // 머리가 부딪힘
                 if (Physics.Raycast(headTrans.position, Vector3.up, 0.2f, layerMaskCube))
                 {
+                    // 애니메이션 클립에서 함수를 호출해서 캐릭터를 뒤로 이동 시킴 UpdateMoveBack()
                     // 충돌 끝
                     playerState = PlayerState.B_UP_COLLISION_END;
                     // 애니메이션 점프 충돌 다운
@@ -6339,6 +6393,10 @@ public class PlayerMovement : MonoBehaviour
                 animator.SetTrigger("Drop to Death");
                 animeSwitch = AnimationSwitch.IDLE;
                 break;
+            case AnimationSwitch.UNDO:
+                animator.SetTrigger("Undo");
+                animeSwitch = AnimationSwitch.IDLE;
+                break;
             default:
                 break;
         }
@@ -6518,8 +6576,300 @@ public class PlayerMovement : MonoBehaviour
         return false;
     }
 
-    private void OnControllerColliderHit(ControllerColliderHit hit)
+
+    // 되돌리기 대기 상태
+    private void Undo_Idle()
     {
-        //Debug.Log(hit.gameObject.layer);
+
     }
+    
+    // 되돌리기 매달림 대기
+    private void Undo_Idle_Climbing()
+    {
+        // 플레이어 대기 상태로 되돌리기
+        playerState = PlayerState.IDLE;
+        // 애니메이션 대기 상태로 되돌리기
+        animeSwitch = AnimationSwitch.UNDO;
+        // 매달림 상태 해제
+        climbingFlag = false;
+    }
+
+    // 되돌리기 상호작용 대기
+    private void Undo_Idle_Interaction()
+    {
+        // 플레이어 대기 상태로 되돌리기
+        playerState = PlayerState.IDLE;
+        // 애니메이션 대기 상태로 되돌리기
+        animeSwitch = AnimationSwitch.UNDO;
+    }
+
+    // 되돌리기 이동
+    private void Undo_Move()
+    {
+        // 플레이어 대기 상태로 되돌리기
+        playerState = PlayerState.IDLE;
+        // 멈춤
+        moveKeyValue = Vector2.zero;
+    }
+
+    // 되돌리기 이동 움찔
+    private void Undo_Move_Flinch()
+    {
+        // 플레이어 대기 상태로 되돌리기
+        playerState = PlayerState.IDLE;
+    }
+
+    // 되돌리기 이동 충돌
+    private void Undo_Move_Collision()
+    {
+        // 플레이어 대기 상태로 되돌리기
+        playerState = PlayerState.IDLE;
+        // 멈춤
+        moveKeyValue = Vector2.zero;
+    }
+    
+    // 되돌리기 이동 충돌 끝
+    private void Undo_Move_Collision_End()
+    {
+        // 플레이어 대기 상태로 되돌리기
+        playerState = PlayerState.IDLE;
+        // 애니메이션 대기 상태로 되돌리기
+        animeSwitch = AnimationSwitch.UNDO;
+        // 멈춤
+        moveKeyValue = Vector2.zero;
+        // 속도 되돌리기
+        speed = saveSpeed;
+    }
+
+    // 되돌리기 미끄러짐
+    private void Undo_Slide()
+    {
+        // 플레이어 대기 상태로 되돌리기
+        playerState = PlayerState.IDLE;
+        // 애니메이션 대기 상태로 되돌리기
+        animeSwitch = AnimationSwitch.UNDO;
+        // 멈춤
+        moveKeyValue = Vector2.zero;
+        // 속도 되돌리기
+        speed = saveSpeed;
+    }
+
+    // 되돌리기 위로 이동
+    private void Undo_Up()
+    {
+        // 플레이어 대기 상태로 되돌리기
+        playerState = PlayerState.IDLE;
+        // 애니메이션 대기 상태로 되돌리기
+        animeSwitch = AnimationSwitch.UNDO;
+        // 멈춤
+        moveKeyValue = Vector2.zero;
+        // 속도 되돌리기
+        speed = saveSpeed;
+    }
+
+    // 되돌리기 위로 이동 움찔
+    private void Undo_Up_Flinch()
+    {
+        // 플레이어 대기 상태로 되돌리기
+        playerState = PlayerState.IDLE;
+    }
+
+    // 되돌리기 위로 이동 충돌
+    private void Undo_Up_Collision()
+    {
+        // 플레이어 대기 상태로 되돌리기
+        playerState = PlayerState.IDLE;
+        // 애니메이션 대기 상태로 되돌리기
+        animeSwitch = AnimationSwitch.UNDO;
+        // 멈춤
+        moveKeyValue = Vector2.zero;
+        // 속도 되돌리기
+        speed = saveSpeed;
+    }
+
+    // 되돌리기 위로 이동 충돌 끝
+    private void Undo_Up_Collision_End()
+    {
+        // 플레이어 대기 상태로 되돌리기
+        playerState = PlayerState.IDLE;
+        // 애니메이션 대기 상태로 되돌리기
+        animeSwitch = AnimationSwitch.UNDO;
+        // 멈춤
+        moveKeyValue = Vector2.zero;
+        // 속도 되돌리기
+        speed = saveSpeed;
+    }
+
+    // 되돌리기 아래 이동
+    private void Undo_Down()
+    {
+        // 플레이어 대기 상태로 되돌리기
+        playerState = PlayerState.IDLE;
+        // 애니메이션 대기 상태로 되돌리기
+        animeSwitch = AnimationSwitch.UNDO;
+        // 멈춤
+        moveKeyValue = Vector2.zero;
+        // 속도 되돌리기
+        speed = saveSpeed;
+    }
+
+    // 되돌리기 밀기 준비
+    private void Undo_Push_Ready()
+    {
+        // 플레이어 대기 상태로 되돌리기
+        playerState = PlayerState.IDLE;
+        // 애니메이션 대기 상태로 되돌리기
+        animeSwitch = AnimationSwitch.UNDO;
+    }
+
+    // 되돌리기 밀기
+    private void Undo_Push()
+    {
+        // 플레이어 대기 상태로 되돌리기
+        playerState = PlayerState.IDLE;
+        // 애니메이션 대기 상태로 되돌리기
+        animeSwitch = AnimationSwitch.UNDO;
+    }
+
+    // 되돌리기 밀기 끝
+    private void Undo_Push_End()
+    {
+        // 플레이어 대기 상태로 되돌리기
+        playerState = PlayerState.IDLE;
+        // 애니메이션 대기 상태로 되돌리기
+        animeSwitch = AnimationSwitch.UNDO;
+    }
+
+    // 되돌리기 당기기
+    private void Undo_Pull()
+    {
+        // 플레이어 대기 상태로 되돌리기
+        playerState = PlayerState.IDLE;
+        // 애니메이션 대기 상태로 되돌리기
+        animeSwitch = AnimationSwitch.UNDO;
+        // 멈춤
+        moveKeyValue = Vector2.zero;
+    }
+
+    // 되돌리기 당기고 등반
+    private void Undo_Pull_Climbing()
+    {
+        // 플레이어 대기 상태로 되돌리기
+        playerState = PlayerState.IDLE;
+        // 애니메이션 대기 상태로 되돌리기
+        animeSwitch = AnimationSwitch.UNDO;
+        // 멈춤
+        moveKeyValue = Vector2.zero;
+    }
+
+    // 되돌리기 등반
+    private void Undo_Climbing()
+    {
+        // 플레이어 대기 상태로 되돌리기
+        playerState = PlayerState.IDLE;
+        // 애니메이션 대기 상태로 되돌리기
+        animeSwitch = AnimationSwitch.UNDO;
+    }
+
+    // 되돌리기 등반 이동
+    private void Undo_Climbing_Move()
+    {
+        // 플레이어 대기 상태로 되돌리기
+        playerState = PlayerState.IDLE;
+        // 애니메이션 대기 상태로 되돌리기
+        animeSwitch = AnimationSwitch.UNDO;
+        // 멈춤
+        moveKeyValue = Vector2.zero;
+        // 매달림 상태 해제
+        climbingFlag = false;
+    }
+
+    // 되돌리기 등반 방향 전환
+    private void Undo_Change_Climbing()
+    {
+        // 플레이어 대기 상태로 되돌리기
+        playerState = PlayerState.IDLE;
+        // 애니메이션 대기 상태로 되돌리기
+        animeSwitch = AnimationSwitch.UNDO;
+        // 멈춤
+        moveKeyValue = Vector2.zero;
+        // 매달림 상태 해제
+        climbingFlag = false;
+    }
+
+    // 되돌리기 떨어짐
+    private void Undo_Drop()
+    {
+        // 플레이어 대기 상태로 되돌리기
+        playerState = PlayerState.IDLE;
+        // 애니메이션 대기 상태로 되돌리기
+        animeSwitch = AnimationSwitch.UNDO;
+    }
+
+    // 되돌리기 높은 떨어짐
+    private void Undo_Drop_High()
+    {
+        // 플레이어 대기 상태로 되돌리기
+        playerState = PlayerState.IDLE;
+        // 애니메이션 대기 상태로 되돌리기
+        animeSwitch = AnimationSwitch.UNDO;
+        // 멈춤
+        moveKeyValue = Vector2.zero;
+        // 속도 되돌리기
+        speed = saveSpeed;
+    }
+
+    // 되돌리기 낮은 떨어짐
+    private void Undo_Drop_Low()
+    {
+        // 플레이어 대기 상태로 되돌리기
+        playerState = PlayerState.IDLE;
+        // 애니메이션 대기 상태로 되돌리기
+        animeSwitch = AnimationSwitch.UNDO;
+        // 멈춤
+        moveKeyValue = Vector2.zero;
+        // 속도 되돌리기
+        speed = saveSpeed;
+    }
+
+    // 되돌리기 떨어짐 매달림
+    private void Undo_Drop_Cling()
+    {
+        // 플레이어 대기 상태로 되돌리기
+        playerState = PlayerState.IDLE;
+        // 애니메이션 대기 상태로 되돌리기
+        animeSwitch = AnimationSwitch.UNDO;
+    }
+
+    // 되돌리기 떨어짐 등반
+    private void Undo_Drop_CLIMBING()
+    {
+        // 플레이어 대기 상태로 되돌리기
+        playerState = PlayerState.IDLE;
+        // 애니메이션 대기 상태로 되돌리기
+        animeSwitch = AnimationSwitch.UNDO;
+    }
+
+    // 되돌리기 깔려 죽음
+    private void Undo_Crushed_To_Death()
+    {
+
+    }
+
+    // 되돌리기 사망
+    private void Undo_Death()
+    {
+
+    }
+
+    // 되돌리기 대기 상태
+    private void Undo_Empty()
+    {
+        // 플레이어 대기 상태로 되돌리기
+        playerState = PlayerState.IDLE;
+        // 애니메이션 대기 상태로 되돌리기
+        animeSwitch = AnimationSwitch.UNDO;
+    }
+
+    
 }
