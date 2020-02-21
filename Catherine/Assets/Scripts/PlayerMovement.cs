@@ -2695,7 +2695,7 @@ public class PlayerMovement : MonoBehaviour
                             // 배열에 저장
                             cubePosArray[0] = (new CubePosData(cubeObject, cubeObject.transform.position));
                             // 되돌리기 메시지 담기
-                            gameManager.messageQueue.Enqueue(new UndoDataMsg(undoPlayerPos, ref cubePosArray));
+                            gameManager.messageQueue.Enqueue(new UndoPointDataMsg(undoPlayerPos, ref cubePosArray));
                         }
                         // 없다
                         // 당기고 매달림
@@ -2718,7 +2718,7 @@ public class PlayerMovement : MonoBehaviour
                             // 배열에 저장
                             cubePosArray[0] = (new CubePosData(cubeObject, cubeObject.transform.position));
                             // 되돌리기 메시지 담기
-                            gameManager.messageQueue.Enqueue(new UndoDataMsg(undoPlayerPos, ref cubePosArray));
+                            gameManager.messageQueue.Enqueue(new UndoPointDataMsg(undoPlayerPos, ref cubePosArray));
                         }
 
                         // Move 함수에서 처리할 키 값
@@ -2883,7 +2883,7 @@ public class PlayerMovement : MonoBehaviour
                             // 배열에 저장
                             cubePosArray[0] = (new CubePosData(cubeObject, cubeObject.transform.position));
                             // 되돌리기 메시지 담기
-                            gameManager.messageQueue.Enqueue(new UndoDataMsg(undoPlayerPos, ref cubePosArray));
+                            gameManager.messageQueue.Enqueue(new UndoPointDataMsg(undoPlayerPos, ref cubePosArray));
                         }
                         // 없다
                         // 당기고 매달림
@@ -2906,7 +2906,7 @@ public class PlayerMovement : MonoBehaviour
                             // 배열에 저장
                             cubePosArray[0] = (new CubePosData(cubeObject, cubeObject.transform.position));
                             // 되돌리기 메시지 담기
-                            gameManager.messageQueue.Enqueue(new UndoDataMsg(undoPlayerPos, ref cubePosArray));
+                            gameManager.messageQueue.Enqueue(new UndoPointDataMsg(undoPlayerPos, ref cubePosArray));
                         }
 
                         // Move 함수에서 처리할 키 값
@@ -3052,7 +3052,7 @@ public class PlayerMovement : MonoBehaviour
                             // 배열에 저장
                             cubePosArray[0] = (new CubePosData(cubeObject, cubeObject.transform.position));
                             // 되돌리기 메시지 담기
-                            gameManager.messageQueue.Enqueue(new UndoDataMsg(undoPlayerPos, ref cubePosArray));
+                            gameManager.messageQueue.Enqueue(new UndoPointDataMsg(undoPlayerPos, ref cubePosArray));
                         }
                         // 없다
                         // 당기고 매달림
@@ -3075,7 +3075,7 @@ public class PlayerMovement : MonoBehaviour
                             // 배열에 저장
                             cubePosArray[0] = (new CubePosData(cubeObject, cubeObject.transform.position));
                             // 되돌리기 메시지 담기
-                            gameManager.messageQueue.Enqueue(new UndoDataMsg(undoPlayerPos, ref cubePosArray));
+                            gameManager.messageQueue.Enqueue(new UndoPointDataMsg(undoPlayerPos, ref cubePosArray));
                         }
 
                         // Move 함수에서 처리할 키 값
@@ -3199,7 +3199,7 @@ public class PlayerMovement : MonoBehaviour
                             // 배열에 저장
                             cubePosArray[0] = (new CubePosData(cubeObject, cubeObject.transform.position));
                             // 되돌리기 메시지 담기
-                            gameManager.messageQueue.Enqueue(new UndoDataMsg(undoPlayerPos, ref cubePosArray));
+                            gameManager.messageQueue.Enqueue(new UndoPointDataMsg(undoPlayerPos, ref cubePosArray));
                         }
                         // 없다
                         // 당기고 매달림
@@ -3222,7 +3222,7 @@ public class PlayerMovement : MonoBehaviour
                             // 배열에 저장
                             cubePosArray[0] = (new CubePosData(cubeObject, cubeObject.transform.position));
                             // 되돌리기 메시지 담기
-                            gameManager.messageQueue.Enqueue(new UndoDataMsg(undoPlayerPos, ref cubePosArray));
+                            gameManager.messageQueue.Enqueue(new UndoPointDataMsg(undoPlayerPos, ref cubePosArray));
                         }
 
                         // Move 함수에서 처리할 키 값
@@ -4406,7 +4406,7 @@ public class PlayerMovement : MonoBehaviour
                     // 밀기 애니메이션은 약간의 딜레이가 필요합니다
                     actionDelay = 0f;
                     // 되돌리기 메시지 담기
-                    gameManager.messageQueue.Enqueue(new UndoDataMsg(undoPlayerPos, ref cubePosArray));
+                    gameManager.messageQueue.Enqueue(new UndoPointDataMsg(undoPlayerPos, ref cubePosArray));
                 }
                 break;
             case PlayerState.L_INTERACTION_PUSH:
@@ -4432,7 +4432,7 @@ public class PlayerMovement : MonoBehaviour
                     // 밀기 애니메이션은 약간의 딜레이가 필요합니다
                     actionDelay = 0f;
                     // 되돌리기 메시지 담기
-                    gameManager.messageQueue.Enqueue(new UndoDataMsg(undoPlayerPos, ref cubePosArray));
+                    gameManager.messageQueue.Enqueue(new UndoPointDataMsg(undoPlayerPos, ref cubePosArray));
                 }
                 break;
             case PlayerState.F_INTERACTION_PUSH:
@@ -4458,7 +4458,7 @@ public class PlayerMovement : MonoBehaviour
                     // 밀기 애니메이션은 약간의 딜레이가 필요합니다
                     actionDelay = 0f;
                     // 되돌리기 메시지 담기
-                    gameManager.messageQueue.Enqueue(new UndoDataMsg(undoPlayerPos, ref cubePosArray));
+                    gameManager.messageQueue.Enqueue(new UndoPointDataMsg(undoPlayerPos, ref cubePosArray));
                 }
                 break;
             case PlayerState.B_INTERACTION_PUSH:
@@ -4484,7 +4484,7 @@ public class PlayerMovement : MonoBehaviour
                     // 밀기 애니메이션은 약간의 딜레이가 필요합니다
                     actionDelay = 0f;
                     // 되돌리기 메시지 담기
-                    gameManager.messageQueue.Enqueue(new UndoDataMsg(undoPlayerPos, ref cubePosArray));
+                    gameManager.messageQueue.Enqueue(new UndoPointDataMsg(undoPlayerPos, ref cubePosArray));
                 }
                 break;
             case PlayerState.R_INTERACTION_PUSH_END:

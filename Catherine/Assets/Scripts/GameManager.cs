@@ -33,7 +33,7 @@ public class GameManager : MonoBehaviour
     private void FixedUpdate()
     {
         GameMessage gameMsg;
-        UndoDataMsg UndoMsg;
+        UndoPointDataMsg UndoMsg;
         UndoData undoData;          // 되돌리기 정보
         CubeMovement cubeMovement;
 
@@ -101,9 +101,9 @@ public class GameManager : MonoBehaviour
 
             switch (gameMsg.messageType)
             {
-                case msgType.UNDO:
+                case msgType.UNDO_POINT:
 
-                    UndoMsg = messageQueue.Dequeue() as UndoDataMsg;
+                    UndoMsg = messageQueue.Dequeue() as UndoPointDataMsg;
 
                     // 플레이어 위치
                     undoData.playerPos = UndoMsg.playerPos;

@@ -12,7 +12,8 @@ namespace GameMessageScript
     // 메시지 타입
     public enum msgType
     {
-        UNDO
+        UNDO_POINT,
+        UNDO_CUBE
     }
 
 
@@ -53,18 +54,32 @@ namespace GameMessageScript
         public msgType messageType;     // 메시지 타입
     }
 
-    // 되돌리기 스택 데이터 메시지 클래스
-    public class UndoDataMsg : GameMessage
+    // 되돌리기 지점 데이터 메시지 클래스
+    public class UndoPointDataMsg : GameMessage
     {
-        public UndoDataMsg(Vector3 setPlayerPos, ref CubePosData[] setCubePosArray)
+        public UndoPointDataMsg(Vector3 setPlayerPos, ref CubePosData[] setCubePosArray)
         {
             cubePosArray = setCubePosArray;
             playerPos = setPlayerPos;
-            messageType = msgType.UNDO;
+            messageType = msgType.UNDO_POINT;
         }
 
         public Vector3 playerPos;
         public CubePosData[] cubePosArray;
+    }
+
+    // 되돌리기 지점에 추가적으로 저장될 큐브 위치
+    public class UndoCubeDataMsg : GameMessage
+    {
+        public UndoCubeDataMsg(GameObject setCubeObject, Vector3 setCubePos)
+        {
+            cubeObject = setCubeObject;
+            CubePos = setCubePos;
+            messageType = msgType.UNDO_CUBE;
+        }
+
+        public GameObject cubeObject;
+        public Vector3 CubePos;
     }
 
     public class GameOver : GameMessage

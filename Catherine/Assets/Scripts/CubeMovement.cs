@@ -62,6 +62,8 @@ public class CubeMovement : MonoBehaviour
     private ParticleSystem.MinMaxCurve originalEffectGravityModifier;
     // 원본 크기
     private ParticleSystem.MinMaxCurve originalEffectStartSize;
+    // 되돌리기 플래그
+    private bool undoFlag;
 
 
     //--------------------------------
