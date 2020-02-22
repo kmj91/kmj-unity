@@ -67,7 +67,6 @@ public class GameManager : MonoBehaviour
                 // 1. 플레이어 애니메이션도 대기상태로 복구해야됨
                 //-----------------------------------------------
 
-                Debug.Log("Undo PlayerPos : " + undoData.playerPos);
                 // 플레이어 위치 되돌리기
                 playerMovement.setPlayerPostion(undoData.playerPos);
                 // 플레이어 상태 되돌리기
@@ -89,6 +88,8 @@ public class GameManager : MonoBehaviour
                     cubeMovement.UpdateStateToIdle();
                 }
             }
+
+            Debug.Log("undoDeque Count : " + undoDeque.Count);
         }
 
 
@@ -117,10 +118,14 @@ public class GameManager : MonoBehaviour
                     // 되돌리기 저장
                     while (!undoDeque.Push_Back(undoData))
                     {
+                        Debug.Log("buffer full");
+
                         // 버퍼가 꽉참
                         // 먼저 들어온 데이터부터 비우기
                         undoDeque.Pop_Front();
                     }
+
+                    Debug.Log("undoDeque Count : " + undoDeque.Count);
 
                     break;
             }

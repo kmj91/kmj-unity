@@ -101,7 +101,10 @@ public class CubeMovement : MonoBehaviour
     // 큐브 상태를 대기 상태로 변경
     public void UpdateStateToIdle()
     {
+        // 큐브 상태
         cubeMoveState = CubeMoveState.IDLE;
+        // 큐브 기울기
+        transform.eulerAngles = Vector3.zero;
     }
 
 
@@ -603,6 +606,12 @@ public class CubeMovement : MonoBehaviour
             // 오른쪽 이동
             cubeMoveState = CubeMoveState.RIGHT;
 
+            if (iMaxSize > iIndex)
+            {
+                // 배열에 저장
+                cubePosArray[iIndex] = (new CubePosData(transform.gameObject, transform.position));
+            }
+
             return true;
         }
 
@@ -695,6 +704,12 @@ public class CubeMovement : MonoBehaviour
             destPos.x = destPos.x - 1f;
             // 왼쪽 이동
             cubeMoveState = CubeMoveState.LEFT;
+
+            if (iMaxSize > iIndex)
+            {
+                // 배열에 저장
+                cubePosArray[iIndex] = (new CubePosData(transform.gameObject, transform.position));
+            }
 
             return true;
         }
@@ -789,6 +804,12 @@ public class CubeMovement : MonoBehaviour
             // 앞쪽 이동
             cubeMoveState = CubeMoveState.FORWARD;
 
+            if (iMaxSize > iIndex)
+            {
+                // 배열에 저장
+                cubePosArray[iIndex] = (new CubePosData(transform.gameObject, transform.position));
+            }
+
             return true;
         }
 
@@ -881,6 +902,12 @@ public class CubeMovement : MonoBehaviour
             destPos.z = destPos.z - 1f;
             // 뒤쪽 이동
             cubeMoveState = CubeMoveState.BACK;
+
+            if (iMaxSize > iIndex)
+            {
+                // 배열에 저장
+                cubePosArray[iIndex] = (new CubePosData(transform.gameObject, transform.position));
+            }
 
             return true;
         }
