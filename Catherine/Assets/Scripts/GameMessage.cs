@@ -12,8 +12,8 @@ namespace GameMessageScript
     // 메시지 타입
     public enum msgType
     {
-        UNDO_POINT,
-        UNDO_CUBE
+        CREATE_UNDO_POINT,
+        UPDATE_UNDO_CUBE
     }
 
 
@@ -61,7 +61,7 @@ namespace GameMessageScript
         {
             cubePosArray = setCubePosArray;
             playerPos = setPlayerPos;
-            messageType = msgType.UNDO_POINT;
+            messageType = msgType.CREATE_UNDO_POINT;
         }
 
         public Vector3 playerPos;
@@ -73,13 +73,13 @@ namespace GameMessageScript
     {
         public UndoCubeDataMsg(GameObject setCubeObject, Vector3 setCubePos)
         {
+            cubePos = setCubePos;
             cubeObject = setCubeObject;
-            CubePos = setCubePos;
-            messageType = msgType.UNDO_CUBE;
+            messageType = msgType.UPDATE_UNDO_CUBE;
         }
 
-        public GameObject cubeObject;
-        public Vector3 CubePos;
+        public GameObject cubeObject;   // 큐브 오브젝트
+        public Vector3 cubePos;         // 큐브 위치
     }
 
     public class GameOver : GameMessage
