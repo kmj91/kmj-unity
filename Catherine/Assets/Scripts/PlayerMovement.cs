@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using Cinemachine;
 
+using GameMessageScript;
+
 using static CubeMovement;
 
 public class PlayerMovement : MonoBehaviour
@@ -53,7 +55,7 @@ public class PlayerMovement : MonoBehaviour
     private GameManager gameManager;                    // 게임 매니저 스크립트
     private LayerMask layerMaskCube;                    // 큐브 레이어 마스크
     private GameObject cubeObject;                      // 이동할 큐브 오브젝트
-
+    private CubePosData[] cubePosArray;                 // 이동되기전 큐브의 위치 배열
 
     // 값의 연속적인 변화량을 기록하기 위한 변수
     private float speedSmoothVelocity;
@@ -78,6 +80,8 @@ public class PlayerMovement : MonoBehaviour
     private Vector3 destPos;
     // 큐브 이동 목표 좌표
     private Vector3 cubeDestPos;
+    // 되돌리기 플레이어 위치
+    private Vector3 undoPlayerPos;
     // 상하좌우 이동 값
     private Vector2 moveKeyValue;
 
@@ -101,13 +105,13 @@ public class PlayerMovement : MonoBehaviour
         F_MOVE,                     // 앞쪽 이동
         B_MOVE,                     // 뒤쪽 이동
         MOVE_FLINCH,                // 이동 움찔
-        R_MOVE_COLLISION,           // 오른쪽 이동 충돌
-        R_MOVE_COLLISION_END,       // 오른쪽 이동 충돌 끝
+        R_MOVE_COLLISION,           // 오른쪽 이동 충돌 
         L_MOVE_COLLISION,           // 왼쪽 이동 충돌
-        L_MOVE_COLLISION_END,       // 왼쪽 이동 충돌 끝
         F_MOVE_COLLISION,           // 앞쪽 이동 충돌
-        F_MOVE_COLLISION_END,       // 앞쪽 이동 충돌 끝
         B_MOVE_COLLISION,           // 뒤쪽 이동 충돌
+        R_MOVE_COLLISION_END,       // 오른쪽 이동 충돌 끝
+        L_MOVE_COLLISION_END,       // 왼쪽 이동 충돌 끝
+        F_MOVE_COLLISION_END,       // 앞쪽 이동 충돌 끝
         B_MOVE_COLLISION_END,       // 뒤쪽 이동 충돌 끝
         R_SLIDE,                    // 오른쪽 미끄러짐
         L_SLIDE,                    // 왼쪽 미끄러짐
@@ -119,12 +123,12 @@ public class PlayerMovement : MonoBehaviour
         B_UP,                       // 뒤쪽 위
         UP_FLINCH,                  // 점프 움찔
         R_UP_COLLISION,             // 오른쪽 위 충돌
-        R_UP_COLLISION_END,         // 오른쪽 위 충돌 끝
         L_UP_COLLISION,             // 왼쪽 위 충돌
-        L_UP_COLLISION_END,         // 왼쪽 위 충돌 끝
         F_UP_COLLISION,             // 앞쪽 위 충돌
-        F_UP_COLLISION_END,         // 앞쪽 위 충돌 끝
         B_UP_COLLISION,             // 뒤쪽 위 충돌
+        R_UP_COLLISION_END,         // 오른쪽 위 충돌 끝
+        L_UP_COLLISION_END,         // 왼쪽 위 충돌 끝
+        F_UP_COLLISION_END,         // 앞쪽 위 충돌 끝
         B_UP_COLLISION_END,         // 뒤쪽 위 충돌 끝
         R_DOWN,                     // 오른쪽 아래
         L_DOWN,                     // 왼쪽 아래
@@ -143,12 +147,12 @@ public class PlayerMovement : MonoBehaviour
         F_INTERACTION_PUSH_END,     // 앞쪽 밀기 끝
         B_INTERACTION_PUSH_END,     // 뒤쪽 밀기 끝
         R_INTERACTION_PULL,         // 오른쪽 당김
-        R_INTERACTION_PULL_CLIMBING, // 오른쪽 당기고 매달림
         L_INTERACTION_PULL,         // 왼쪽 당김
-        L_INTERACTION_PULL_CLIMBING, // 왼쪽 당기고 매달림
         F_INTERACTION_PULL,         // 앞쪽 당김
-        F_INTERACTION_PULL_CLIMBING, // 앞쪽 당기고 매달림
         B_INTERACTION_PULL,         // 뒤쪽 당김
+        R_INTERACTION_PULL_CLIMBING, // 오른쪽 당기고 매달림
+        L_INTERACTION_PULL_CLIMBING, // 왼쪽 당기고 매달림
+        F_INTERACTION_PULL_CLIMBING, // 앞쪽 당기고 매달림
         B_INTERACTION_PULL_CLIMBING, // 뒤쪽 당기고 매달림
         R_CLIMBING,                 // 오른쪽 등반
         L_CLIMBING,                 // 왼쪽 등반
@@ -220,12 +224,15 @@ public class PlayerMovement : MonoBehaviour
         DROP_LOW_END,
         DROP_CLIMBING,
         CRUSHED_TO_DEATH,
-        DROP_TO_DEATH
+        DROP_TO_DEATH,
+        UNDO
     }
 
     //--------------------------------
     // 상수
     //--------------------------------
+
+    private const int CUBE_POS_ARRAY_SIZE = 10;
 
     private const float INTERACTION_MOVE_VALUE = 0.25f;
     private const float JUMP_DELAY = 0.15f;
@@ -235,6 +242,16 @@ public class PlayerMovement : MonoBehaviour
     private const float CUBE_HALF_LENGTH = 0.5f;
     private const float CUBE_SHORT_LENGTH = 0.25f;
 
+
+    //--------------------------------
+    // delegate
+    //--------------------------------
+
+    private delegate void UndoFunc();
+
+    private UndoFunc[] undoFunc;
+
+
     //--------------------------------
     // public 함수
     //--------------------------------
@@ -243,6 +260,12 @@ public class PlayerMovement : MonoBehaviour
     public void UpdateStateToIdle()
     {
         playerState = PlayerState.IDLE;
+    }
+
+    // 되돌리기
+    public void UndoProcess()
+    {
+        undoFunc[(int)playerState]();
     }
 
     // 캐릭터 키 입력을 바라보는 곳 기준 뒤 방향으로
@@ -274,9 +297,53 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
+    // 플레이어 위치
+    public void setPlayerPostion(Vector3 setPostion)
+    {
+        // ㅋㅋㅋ 이게 말이되나
+        // 캐릭터 위치 변경
+        characterController.enabled = false;
+        transform.position = setPostion;
+        characterController.enabled = true;
+    }
+
     //--------------------------------
     // private 함수
     //--------------------------------
+
+    private void Awake()
+    {
+        undoFunc = new UndoFunc[] { new UndoFunc(Undo_Idle),
+            new UndoFunc(Undo_Idle_Climbing), new UndoFunc(Undo_Idle_Climbing), new UndoFunc(Undo_Idle_Climbing), new UndoFunc(Undo_Idle_Climbing),
+            new UndoFunc(Undo_Idle_Interaction), new UndoFunc(Undo_Idle_Interaction), new UndoFunc(Undo_Idle_Interaction), new UndoFunc(Undo_Idle_Interaction),
+            new UndoFunc(Undo_Move), new UndoFunc(Undo_Move), new UndoFunc(Undo_Move), new UndoFunc(Undo_Move),
+            new UndoFunc(Undo_Move_Flinch),
+            new UndoFunc(Undo_Move_Collision), new UndoFunc(Undo_Move_Collision), new UndoFunc(Undo_Move_Collision), new UndoFunc(Undo_Move_Collision),
+            new UndoFunc(Undo_Move_Collision_End), new UndoFunc(Undo_Move_Collision_End), new UndoFunc(Undo_Move_Collision_End), new UndoFunc(Undo_Move_Collision_End),
+            new UndoFunc(Undo_Slide), new UndoFunc(Undo_Slide), new UndoFunc(Undo_Slide), new UndoFunc(Undo_Slide),
+            new UndoFunc(Undo_Up), new UndoFunc(Undo_Up), new UndoFunc(Undo_Up), new UndoFunc(Undo_Up),
+            new UndoFunc(Undo_Up_Flinch),
+            new UndoFunc(Undo_Up_Collision), new UndoFunc(Undo_Up_Collision), new UndoFunc(Undo_Up_Collision), new UndoFunc(Undo_Up_Collision),
+            new UndoFunc(Undo_Up_Collision_End), new UndoFunc(Undo_Up_Collision_End), new UndoFunc(Undo_Up_Collision_End), new UndoFunc(Undo_Up_Collision_End),
+            new UndoFunc(Undo_Down), new UndoFunc(Undo_Down), new UndoFunc(Undo_Down), new UndoFunc(Undo_Down),
+            new UndoFunc(Undo_Push_Ready), new UndoFunc(Undo_Push_Ready), new UndoFunc(Undo_Push_Ready), new UndoFunc(Undo_Push_Ready),
+            new UndoFunc(Undo_Push), new UndoFunc(Undo_Push), new UndoFunc(Undo_Push), new UndoFunc(Undo_Push),
+            new UndoFunc(Undo_Push_End), new UndoFunc(Undo_Push_End), new UndoFunc(Undo_Push_End), new UndoFunc(Undo_Push_End),
+            new UndoFunc(Undo_Pull), new UndoFunc(Undo_Pull), new UndoFunc(Undo_Pull), new UndoFunc(Undo_Pull),
+            new UndoFunc(Undo_Pull_Climbing), new UndoFunc(Undo_Pull_Climbing), new UndoFunc(Undo_Pull_Climbing), new UndoFunc(Undo_Pull_Climbing),
+            new UndoFunc(Undo_Climbing), new UndoFunc(Undo_Climbing), new UndoFunc(Undo_Climbing), new UndoFunc(Undo_Climbing),
+            new UndoFunc(Undo_Climbing_Move), new UndoFunc(Undo_Climbing_Move), new UndoFunc(Undo_Climbing_Move), new UndoFunc(Undo_Climbing_Move), new UndoFunc(Undo_Climbing_Move), new UndoFunc(Undo_Climbing_Move), new UndoFunc(Undo_Climbing_Move), new UndoFunc(Undo_Climbing_Move),
+            new UndoFunc(Undo_Change_Climbing), new UndoFunc(Undo_Change_Climbing), new UndoFunc(Undo_Change_Climbing), new UndoFunc(Undo_Change_Climbing), new UndoFunc(Undo_Change_Climbing), new UndoFunc(Undo_Change_Climbing), new UndoFunc(Undo_Change_Climbing), new UndoFunc(Undo_Change_Climbing),
+            new UndoFunc(Undo_Drop), new UndoFunc(Undo_Drop), new UndoFunc(Undo_Drop), new UndoFunc(Undo_Drop),
+            new UndoFunc(Undo_Drop_High), new UndoFunc(Undo_Drop_High), new UndoFunc(Undo_Drop_High), new UndoFunc(Undo_Drop_High),
+            new UndoFunc(Undo_Drop_Low), new UndoFunc(Undo_Drop_Low), new UndoFunc(Undo_Drop_Low), new UndoFunc(Undo_Drop_Low),
+            new UndoFunc(Undo_Drop_Cling), new UndoFunc(Undo_Drop_Cling), new UndoFunc(Undo_Drop_Cling), new UndoFunc(Undo_Drop_Cling),
+            new UndoFunc(Undo_Drop_CLIMBING), new UndoFunc(Undo_Drop_CLIMBING), new UndoFunc(Undo_Drop_CLIMBING), new UndoFunc(Undo_Drop_CLIMBING),
+            new UndoFunc(Undo_Crushed_To_Death),
+            new UndoFunc(Undo_Death),
+            new UndoFunc(Undo_Empty)
+            };
+    }
 
     private void Start()
     {
@@ -294,6 +361,8 @@ public class PlayerMovement : MonoBehaviour
 
         // 레이어 마스크
         layerMaskCube = 1 << LayerMask.NameToLayer("Cube");
+        // 이동되기전 큐브의 위치 배열
+        cubePosArray = new CubePosData[CUBE_POS_ARRAY_SIZE];
         // 딜레이
         actionDelay = 0f;
         // 플레이어 상태
@@ -2615,6 +2684,18 @@ public class PlayerMovement : MonoBehaviour
                             playerState = PlayerState.R_INTERACTION_PULL;
                             // 큐브 왼쪽으로 당겨짐
                             cubeObject.GetComponent<CubeMovement>().PullLeft(speed);
+                            // 되돌리기 할 플레이어 위치 값
+                            undoPlayerPos = transform.position;
+                            undoPlayerPos.x = undoPlayerPos.x - INTERACTION_MOVE_VALUE;
+                            // 큐브 배열 초기화
+                            for (int i = 0; i < CUBE_POS_ARRAY_SIZE; ++i)
+                            {
+                                cubePosArray[i].flag = false;
+                            }
+                            // 배열에 저장
+                            cubePosArray[0] = (new CubePosData(cubeObject, cubeObject.transform.position));
+                            // 되돌리기 메시지 담기
+                            gameManager.messageQueue.Enqueue(new UndoPointDataMsg(undoPlayerPos, ref cubePosArray));
                         }
                         // 없다
                         // 당기고 매달림
@@ -2626,6 +2707,18 @@ public class PlayerMovement : MonoBehaviour
                             destPos.y = destPos.y - 1f;
                             // 큐브 왼쪽으로 당겨짐
                             cubeObject.GetComponent<CubeMovement>().PullLeft(speed);
+                            // 되돌리기 할 플레이어 위치 값
+                            undoPlayerPos = transform.position;
+                            undoPlayerPos.x = undoPlayerPos.x - INTERACTION_MOVE_VALUE;
+                            // 큐브 배열 초기화
+                            for (int i = 0; i < CUBE_POS_ARRAY_SIZE; ++i)
+                            {
+                                cubePosArray[i].flag = false;
+                            }
+                            // 배열에 저장
+                            cubePosArray[0] = (new CubePosData(cubeObject, cubeObject.transform.position));
+                            // 되돌리기 메시지 담기
+                            gameManager.messageQueue.Enqueue(new UndoPointDataMsg(undoPlayerPos, ref cubePosArray));
                         }
 
                         // Move 함수에서 처리할 키 값
@@ -2649,6 +2742,9 @@ public class PlayerMovement : MonoBehaviour
                     playerState = PlayerState.R_INTERACTION_PUSH_READY;
                     // 애니메이션 밀기 대기
                     animeSwitch = AnimationSwitch.PUSH_IDLE;
+                    // 되돌리기 할 플레이어 위치 값
+                    undoPlayerPos = transform.position;
+                    undoPlayerPos.x = undoPlayerPos.x - INTERACTION_MOVE_VALUE;
                 }
                 break;
             case PlayerState.L_IDLE_INTERACTION:
@@ -2689,6 +2785,9 @@ public class PlayerMovement : MonoBehaviour
                     playerState = PlayerState.L_INTERACTION_PUSH_READY;
                     // 애니메이션 밀기 대기
                     animeSwitch = AnimationSwitch.PUSH_IDLE;
+                    // 되돌리기 할 플레이어 위치 값
+                    undoPlayerPos = transform.position;
+                    undoPlayerPos.x = undoPlayerPos.x + INTERACTION_MOVE_VALUE;
                 }
                 // 입력 키 값 →
                 else if (moveInput.x >= 0.3)
@@ -2773,6 +2872,18 @@ public class PlayerMovement : MonoBehaviour
                             playerState = PlayerState.L_INTERACTION_PULL;
                             // 큐브 오른쪽으로 당겨짐
                             cubeObject.GetComponent<CubeMovement>().PullRight(speed);
+                            // 되돌리기 할 플레이어 위치 값
+                            undoPlayerPos = transform.position;
+                            undoPlayerPos.x = undoPlayerPos.x + INTERACTION_MOVE_VALUE;
+                            // 큐브 배열 초기화
+                            for (int i = 0; i < CUBE_POS_ARRAY_SIZE; ++i)
+                            {
+                                cubePosArray[i].flag = false;
+                            }
+                            // 배열에 저장
+                            cubePosArray[0] = (new CubePosData(cubeObject, cubeObject.transform.position));
+                            // 되돌리기 메시지 담기
+                            gameManager.messageQueue.Enqueue(new UndoPointDataMsg(undoPlayerPos, ref cubePosArray));
                         }
                         // 없다
                         // 당기고 매달림
@@ -2784,6 +2895,18 @@ public class PlayerMovement : MonoBehaviour
                             destPos.y = destPos.y - 1f;
                             // 큐브 오른쪽으로 당겨짐
                             cubeObject.GetComponent<CubeMovement>().PullRight(speed);
+                            // 되돌리기 할 플레이어 위치 값
+                            undoPlayerPos = transform.position;
+                            undoPlayerPos.x = undoPlayerPos.x + INTERACTION_MOVE_VALUE;
+                            // 큐브 배열 초기화
+                            for (int i = 0; i < CUBE_POS_ARRAY_SIZE; ++i)
+                            {
+                                cubePosArray[i].flag = false;
+                            }
+                            // 배열에 저장
+                            cubePosArray[0] = (new CubePosData(cubeObject, cubeObject.transform.position));
+                            // 되돌리기 메시지 담기
+                            gameManager.messageQueue.Enqueue(new UndoPointDataMsg(undoPlayerPos, ref cubePosArray));
                         }
 
                         // Move 함수에서 처리할 키 값
@@ -2829,6 +2952,9 @@ public class PlayerMovement : MonoBehaviour
                     playerState = PlayerState.F_INTERACTION_PUSH_READY;
                     // 애니메이션 밀기 대기
                     animeSwitch = AnimationSwitch.PUSH_IDLE;
+                    // 되돌리기 할 플레이어 위치 값
+                    undoPlayerPos = transform.position;
+                    undoPlayerPos.z = undoPlayerPos.z - INTERACTION_MOVE_VALUE;
                 }
                 // 입력 키 값 ↓
                 else if (moveInput.y <= -0.3)
@@ -2915,6 +3041,18 @@ public class PlayerMovement : MonoBehaviour
                             playerState = PlayerState.F_INTERACTION_PULL;
                             // 큐브 뒤쪽으로 당겨짐
                             cubeObject.GetComponent<CubeMovement>().PullBack(speed);
+                            // 되돌리기 할 플레이어 위치 값
+                            undoPlayerPos = transform.position;
+                            undoPlayerPos.z = undoPlayerPos.z - INTERACTION_MOVE_VALUE;
+                            // 큐브 배열 초기화
+                            for (int i = 0; i < CUBE_POS_ARRAY_SIZE; ++i)
+                            {
+                                cubePosArray[i].flag = false;
+                            }
+                            // 배열에 저장
+                            cubePosArray[0] = (new CubePosData(cubeObject, cubeObject.transform.position));
+                            // 되돌리기 메시지 담기
+                            gameManager.messageQueue.Enqueue(new UndoPointDataMsg(undoPlayerPos, ref cubePosArray));
                         }
                         // 없다
                         // 당기고 매달림
@@ -2926,6 +3064,18 @@ public class PlayerMovement : MonoBehaviour
                             destPos.y = destPos.y - 1f;
                             // 큐브 뒤쪽으로 당겨짐
                             cubeObject.GetComponent<CubeMovement>().PullBack(speed);
+                            // 되돌리기 할 플레이어 위치 값
+                            undoPlayerPos = transform.position;
+                            undoPlayerPos.z = undoPlayerPos.z - INTERACTION_MOVE_VALUE;
+                            // 큐브 배열 초기화
+                            for (int i = 0; i < CUBE_POS_ARRAY_SIZE; ++i)
+                            {
+                                cubePosArray[i].flag = false;
+                            }
+                            // 배열에 저장
+                            cubePosArray[0] = (new CubePosData(cubeObject, cubeObject.transform.position));
+                            // 되돌리기 메시지 담기
+                            gameManager.messageQueue.Enqueue(new UndoPointDataMsg(undoPlayerPos, ref cubePosArray));
                         }
 
                         // Move 함수에서 처리할 키 값
@@ -3038,6 +3188,18 @@ public class PlayerMovement : MonoBehaviour
                             playerState = PlayerState.B_INTERACTION_PULL;
                             // 큐브 앞쪽으로 당겨짐
                             cubeObject.GetComponent<CubeMovement>().PullForward(speed);
+                            // 되돌리기 할 플레이어 위치 값
+                            undoPlayerPos = transform.position;
+                            undoPlayerPos.z = undoPlayerPos.z + INTERACTION_MOVE_VALUE;
+                            // 큐브 배열 초기화
+                            for (int i = 0; i < CUBE_POS_ARRAY_SIZE; ++i)
+                            {
+                                cubePosArray[i].flag = false;
+                            }
+                            // 배열에 저장
+                            cubePosArray[0] = (new CubePosData(cubeObject, cubeObject.transform.position));
+                            // 되돌리기 메시지 담기
+                            gameManager.messageQueue.Enqueue(new UndoPointDataMsg(undoPlayerPos, ref cubePosArray));
                         }
                         // 없다
                         // 당기고 매달림
@@ -3049,6 +3211,18 @@ public class PlayerMovement : MonoBehaviour
                             destPos.y = destPos.y - 1f;
                             // 큐브 앞쪽으로 당겨짐
                             cubeObject.GetComponent<CubeMovement>().PullForward(speed);
+                            // 되돌리기 할 플레이어 위치 값
+                            undoPlayerPos = transform.position;
+                            undoPlayerPos.z = undoPlayerPos.z + INTERACTION_MOVE_VALUE;
+                            // 큐브 배열 초기화
+                            for (int i = 0; i < CUBE_POS_ARRAY_SIZE; ++i)
+                            {
+                                cubePosArray[i].flag = false;
+                            }
+                            // 배열에 저장
+                            cubePosArray[0] = (new CubePosData(cubeObject, cubeObject.transform.position));
+                            // 되돌리기 메시지 담기
+                            gameManager.messageQueue.Enqueue(new UndoPointDataMsg(undoPlayerPos, ref cubePosArray));
                         }
 
                         // Move 함수에서 처리할 키 값
@@ -3073,6 +3247,9 @@ public class PlayerMovement : MonoBehaviour
                     playerState = PlayerState.B_INTERACTION_PUSH_READY;
                     // 애니메이션 밀기 대기
                     animeSwitch = AnimationSwitch.PUSH_IDLE;
+                    // 되돌리기 할 플레이어 위치 값
+                    undoPlayerPos = transform.position;
+                    undoPlayerPos.z = undoPlayerPos.z + INTERACTION_MOVE_VALUE;
                 }
                 break;
             case PlayerState.R_MOVE:
@@ -3770,6 +3947,7 @@ public class PlayerMovement : MonoBehaviour
                 // 머리가 부딪힘
                 if (Physics.Raycast(headTrans.position, Vector3.up, 0.2f, layerMaskCube))
                 {
+                    // 애니메이션 클립에서 함수를 호출해서 캐릭터를 뒤로 이동 시킴 UpdateMoveBack()
                     // 충돌 끝
                     playerState = PlayerState.R_UP_COLLISION_END;
                     // 애니메이션 점프 충돌 다운
@@ -3843,6 +4021,7 @@ public class PlayerMovement : MonoBehaviour
                 // 머리가 부딪힘
                 if (Physics.Raycast(headTrans.position, Vector3.up, 0.2f, layerMaskCube))
                 {
+                    // 애니메이션 클립에서 함수를 호출해서 캐릭터를 뒤로 이동 시킴 UpdateMoveBack()
                     // 충돌 끝
                     playerState = PlayerState.L_UP_COLLISION_END;
                     // 애니메이션 점프 충돌 다운
@@ -3916,6 +4095,7 @@ public class PlayerMovement : MonoBehaviour
                 // 머리가 부딪힘
                 if (Physics.Raycast(headTrans.position, Vector3.up, 0.2f, layerMaskCube))
                 {
+                    // 애니메이션 클립에서 함수를 호출해서 캐릭터를 뒤로 이동 시킴 UpdateMoveBack()
                     // 충돌 끝
                     playerState = PlayerState.F_UP_COLLISION_END;
                     // 애니메이션 점프 충돌 다운
@@ -3989,6 +4169,7 @@ public class PlayerMovement : MonoBehaviour
                 // 머리가 부딪힘
                 if (Physics.Raycast(headTrans.position, Vector3.up, 0.2f, layerMaskCube))
                 {
+                    // 애니메이션 클립에서 함수를 호출해서 캐릭터를 뒤로 이동 시킴 UpdateMoveBack()
                     // 충돌 끝
                     playerState = PlayerState.B_UP_COLLISION_END;
                     // 애니메이션 점프 충돌 다운
@@ -4215,10 +4396,17 @@ public class PlayerMovement : MonoBehaviour
                 {
                     // 밀기 상태
                     playerState = PlayerState.R_INTERACTION_PUSH_END;
+                    // 큐브 배열 초기화
+                    for (int i = 0; i < CUBE_POS_ARRAY_SIZE; ++i)
+                    {
+                        cubePosArray[i].flag = false;
+                    }
                     // 큐브 오른쪽 이동 처리
-                    cubeObject.GetComponent<CubeMovement>().MoveRight();
+                    cubeObject.GetComponent<CubeMovement>().MoveRight(ref cubePosArray, 0, CUBE_POS_ARRAY_SIZE);
                     // 밀기 애니메이션은 약간의 딜레이가 필요합니다
                     actionDelay = 0f;
+                    // 되돌리기 메시지 담기
+                    gameManager.messageQueue.Enqueue(new UndoPointDataMsg(undoPlayerPos, ref cubePosArray));
                 }
                 break;
             case PlayerState.L_INTERACTION_PUSH:
@@ -4234,10 +4422,17 @@ public class PlayerMovement : MonoBehaviour
                 {
                     // 밀기 상태
                     playerState = PlayerState.L_INTERACTION_PUSH_END;
+                    // 큐브 배열 초기화
+                    for (int i = 0; i < CUBE_POS_ARRAY_SIZE; ++i)
+                    {
+                        cubePosArray[i].flag = false;
+                    }
                     // 큐브 오른쪽 이동 처리
-                    cubeObject.GetComponent<CubeMovement>().MoveLeft();
+                    cubeObject.GetComponent<CubeMovement>().MoveLeft(ref cubePosArray, 0, CUBE_POS_ARRAY_SIZE);
                     // 밀기 애니메이션은 약간의 딜레이가 필요합니다
                     actionDelay = 0f;
+                    // 되돌리기 메시지 담기
+                    gameManager.messageQueue.Enqueue(new UndoPointDataMsg(undoPlayerPos, ref cubePosArray));
                 }
                 break;
             case PlayerState.F_INTERACTION_PUSH:
@@ -4253,10 +4448,17 @@ public class PlayerMovement : MonoBehaviour
                 {
                     // 밀기 상태
                     playerState = PlayerState.F_INTERACTION_PUSH_END;
+                    // 큐브 배열 초기화
+                    for (int i = 0; i < CUBE_POS_ARRAY_SIZE; ++i)
+                    {
+                        cubePosArray[i].flag = false;
+                    }
                     // 큐브 오른쪽 이동 처리
-                    cubeObject.GetComponent<CubeMovement>().MoveForward();
+                    cubeObject.GetComponent<CubeMovement>().MoveForward(ref cubePosArray, 0, CUBE_POS_ARRAY_SIZE);
                     // 밀기 애니메이션은 약간의 딜레이가 필요합니다
                     actionDelay = 0f;
+                    // 되돌리기 메시지 담기
+                    gameManager.messageQueue.Enqueue(new UndoPointDataMsg(undoPlayerPos, ref cubePosArray));
                 }
                 break;
             case PlayerState.B_INTERACTION_PUSH:
@@ -4272,10 +4474,17 @@ public class PlayerMovement : MonoBehaviour
                 {
                     // 밀기 상태
                     playerState = PlayerState.B_INTERACTION_PUSH_END;
+                    // 큐브 배열 초기화
+                    for (int i = 0; i < CUBE_POS_ARRAY_SIZE; ++i)
+                    {
+                        cubePosArray[i].flag = false;
+                    }
                     // 큐브 오른쪽 이동 처리
-                    cubeObject.GetComponent<CubeMovement>().MoveBack();
+                    cubeObject.GetComponent<CubeMovement>().MoveBack(ref cubePosArray, 0, CUBE_POS_ARRAY_SIZE);
                     // 밀기 애니메이션은 약간의 딜레이가 필요합니다
                     actionDelay = 0f;
+                    // 되돌리기 메시지 담기
+                    gameManager.messageQueue.Enqueue(new UndoPointDataMsg(undoPlayerPos, ref cubePosArray));
                 }
                 break;
             case PlayerState.R_INTERACTION_PUSH_END:
@@ -6184,6 +6393,10 @@ public class PlayerMovement : MonoBehaviour
                 animator.SetTrigger("Drop to Death");
                 animeSwitch = AnimationSwitch.IDLE;
                 break;
+            case AnimationSwitch.UNDO:
+                animator.SetTrigger("Undo");
+                animeSwitch = AnimationSwitch.IDLE;
+                break;
             default:
                 break;
         }
@@ -6363,8 +6576,300 @@ public class PlayerMovement : MonoBehaviour
         return false;
     }
 
-    private void OnControllerColliderHit(ControllerColliderHit hit)
+
+    // 되돌리기 대기 상태
+    private void Undo_Idle()
     {
-        //Debug.Log(hit.gameObject.layer);
+
     }
+    
+    // 되돌리기 매달림 대기
+    private void Undo_Idle_Climbing()
+    {
+        // 플레이어 대기 상태로 되돌리기
+        playerState = PlayerState.IDLE;
+        // 애니메이션 대기 상태로 되돌리기
+        animeSwitch = AnimationSwitch.UNDO;
+        // 매달림 상태 해제
+        climbingFlag = false;
+    }
+
+    // 되돌리기 상호작용 대기
+    private void Undo_Idle_Interaction()
+    {
+        // 플레이어 대기 상태로 되돌리기
+        playerState = PlayerState.IDLE;
+        // 애니메이션 대기 상태로 되돌리기
+        animeSwitch = AnimationSwitch.UNDO;
+    }
+
+    // 되돌리기 이동
+    private void Undo_Move()
+    {
+        // 플레이어 대기 상태로 되돌리기
+        playerState = PlayerState.IDLE;
+        // 멈춤
+        moveKeyValue = Vector2.zero;
+    }
+
+    // 되돌리기 이동 움찔
+    private void Undo_Move_Flinch()
+    {
+        // 플레이어 대기 상태로 되돌리기
+        playerState = PlayerState.IDLE;
+    }
+
+    // 되돌리기 이동 충돌
+    private void Undo_Move_Collision()
+    {
+        // 플레이어 대기 상태로 되돌리기
+        playerState = PlayerState.IDLE;
+        // 멈춤
+        moveKeyValue = Vector2.zero;
+    }
+    
+    // 되돌리기 이동 충돌 끝
+    private void Undo_Move_Collision_End()
+    {
+        // 플레이어 대기 상태로 되돌리기
+        playerState = PlayerState.IDLE;
+        // 애니메이션 대기 상태로 되돌리기
+        animeSwitch = AnimationSwitch.UNDO;
+        // 멈춤
+        moveKeyValue = Vector2.zero;
+        // 속도 되돌리기
+        speed = saveSpeed;
+    }
+
+    // 되돌리기 미끄러짐
+    private void Undo_Slide()
+    {
+        // 플레이어 대기 상태로 되돌리기
+        playerState = PlayerState.IDLE;
+        // 애니메이션 대기 상태로 되돌리기
+        animeSwitch = AnimationSwitch.UNDO;
+        // 멈춤
+        moveKeyValue = Vector2.zero;
+        // 속도 되돌리기
+        speed = saveSpeed;
+    }
+
+    // 되돌리기 위로 이동
+    private void Undo_Up()
+    {
+        // 플레이어 대기 상태로 되돌리기
+        playerState = PlayerState.IDLE;
+        // 애니메이션 대기 상태로 되돌리기
+        animeSwitch = AnimationSwitch.UNDO;
+        // 멈춤
+        moveKeyValue = Vector2.zero;
+        // 속도 되돌리기
+        speed = saveSpeed;
+    }
+
+    // 되돌리기 위로 이동 움찔
+    private void Undo_Up_Flinch()
+    {
+        // 플레이어 대기 상태로 되돌리기
+        playerState = PlayerState.IDLE;
+    }
+
+    // 되돌리기 위로 이동 충돌
+    private void Undo_Up_Collision()
+    {
+        // 플레이어 대기 상태로 되돌리기
+        playerState = PlayerState.IDLE;
+        // 애니메이션 대기 상태로 되돌리기
+        animeSwitch = AnimationSwitch.UNDO;
+        // 멈춤
+        moveKeyValue = Vector2.zero;
+        // 속도 되돌리기
+        speed = saveSpeed;
+    }
+
+    // 되돌리기 위로 이동 충돌 끝
+    private void Undo_Up_Collision_End()
+    {
+        // 플레이어 대기 상태로 되돌리기
+        playerState = PlayerState.IDLE;
+        // 애니메이션 대기 상태로 되돌리기
+        animeSwitch = AnimationSwitch.UNDO;
+        // 멈춤
+        moveKeyValue = Vector2.zero;
+        // 속도 되돌리기
+        speed = saveSpeed;
+    }
+
+    // 되돌리기 아래 이동
+    private void Undo_Down()
+    {
+        // 플레이어 대기 상태로 되돌리기
+        playerState = PlayerState.IDLE;
+        // 애니메이션 대기 상태로 되돌리기
+        animeSwitch = AnimationSwitch.UNDO;
+        // 멈춤
+        moveKeyValue = Vector2.zero;
+        // 속도 되돌리기
+        speed = saveSpeed;
+    }
+
+    // 되돌리기 밀기 준비
+    private void Undo_Push_Ready()
+    {
+        // 플레이어 대기 상태로 되돌리기
+        playerState = PlayerState.IDLE;
+        // 애니메이션 대기 상태로 되돌리기
+        animeSwitch = AnimationSwitch.UNDO;
+    }
+
+    // 되돌리기 밀기
+    private void Undo_Push()
+    {
+        // 플레이어 대기 상태로 되돌리기
+        playerState = PlayerState.IDLE;
+        // 애니메이션 대기 상태로 되돌리기
+        animeSwitch = AnimationSwitch.UNDO;
+    }
+
+    // 되돌리기 밀기 끝
+    private void Undo_Push_End()
+    {
+        // 플레이어 대기 상태로 되돌리기
+        playerState = PlayerState.IDLE;
+        // 애니메이션 대기 상태로 되돌리기
+        animeSwitch = AnimationSwitch.UNDO;
+    }
+
+    // 되돌리기 당기기
+    private void Undo_Pull()
+    {
+        // 플레이어 대기 상태로 되돌리기
+        playerState = PlayerState.IDLE;
+        // 애니메이션 대기 상태로 되돌리기
+        animeSwitch = AnimationSwitch.UNDO;
+        // 멈춤
+        moveKeyValue = Vector2.zero;
+    }
+
+    // 되돌리기 당기고 등반
+    private void Undo_Pull_Climbing()
+    {
+        // 플레이어 대기 상태로 되돌리기
+        playerState = PlayerState.IDLE;
+        // 애니메이션 대기 상태로 되돌리기
+        animeSwitch = AnimationSwitch.UNDO;
+        // 멈춤
+        moveKeyValue = Vector2.zero;
+    }
+
+    // 되돌리기 등반
+    private void Undo_Climbing()
+    {
+        // 플레이어 대기 상태로 되돌리기
+        playerState = PlayerState.IDLE;
+        // 애니메이션 대기 상태로 되돌리기
+        animeSwitch = AnimationSwitch.UNDO;
+    }
+
+    // 되돌리기 등반 이동
+    private void Undo_Climbing_Move()
+    {
+        // 플레이어 대기 상태로 되돌리기
+        playerState = PlayerState.IDLE;
+        // 애니메이션 대기 상태로 되돌리기
+        animeSwitch = AnimationSwitch.UNDO;
+        // 멈춤
+        moveKeyValue = Vector2.zero;
+        // 매달림 상태 해제
+        climbingFlag = false;
+    }
+
+    // 되돌리기 등반 방향 전환
+    private void Undo_Change_Climbing()
+    {
+        // 플레이어 대기 상태로 되돌리기
+        playerState = PlayerState.IDLE;
+        // 애니메이션 대기 상태로 되돌리기
+        animeSwitch = AnimationSwitch.UNDO;
+        // 멈춤
+        moveKeyValue = Vector2.zero;
+        // 매달림 상태 해제
+        climbingFlag = false;
+    }
+
+    // 되돌리기 떨어짐
+    private void Undo_Drop()
+    {
+        // 플레이어 대기 상태로 되돌리기
+        playerState = PlayerState.IDLE;
+        // 애니메이션 대기 상태로 되돌리기
+        animeSwitch = AnimationSwitch.UNDO;
+    }
+
+    // 되돌리기 높은 떨어짐
+    private void Undo_Drop_High()
+    {
+        // 플레이어 대기 상태로 되돌리기
+        playerState = PlayerState.IDLE;
+        // 애니메이션 대기 상태로 되돌리기
+        animeSwitch = AnimationSwitch.UNDO;
+        // 멈춤
+        moveKeyValue = Vector2.zero;
+        // 속도 되돌리기
+        speed = saveSpeed;
+    }
+
+    // 되돌리기 낮은 떨어짐
+    private void Undo_Drop_Low()
+    {
+        // 플레이어 대기 상태로 되돌리기
+        playerState = PlayerState.IDLE;
+        // 애니메이션 대기 상태로 되돌리기
+        animeSwitch = AnimationSwitch.UNDO;
+        // 멈춤
+        moveKeyValue = Vector2.zero;
+        // 속도 되돌리기
+        speed = saveSpeed;
+    }
+
+    // 되돌리기 떨어짐 매달림
+    private void Undo_Drop_Cling()
+    {
+        // 플레이어 대기 상태로 되돌리기
+        playerState = PlayerState.IDLE;
+        // 애니메이션 대기 상태로 되돌리기
+        animeSwitch = AnimationSwitch.UNDO;
+    }
+
+    // 되돌리기 떨어짐 등반
+    private void Undo_Drop_CLIMBING()
+    {
+        // 플레이어 대기 상태로 되돌리기
+        playerState = PlayerState.IDLE;
+        // 애니메이션 대기 상태로 되돌리기
+        animeSwitch = AnimationSwitch.UNDO;
+    }
+
+    // 되돌리기 깔려 죽음
+    private void Undo_Crushed_To_Death()
+    {
+
+    }
+
+    // 되돌리기 사망
+    private void Undo_Death()
+    {
+
+    }
+
+    // 되돌리기 대기 상태
+    private void Undo_Empty()
+    {
+        // 플레이어 대기 상태로 되돌리기
+        playerState = PlayerState.IDLE;
+        // 애니메이션 대기 상태로 되돌리기
+        animeSwitch = AnimationSwitch.UNDO;
+    }
+
+    
 }
