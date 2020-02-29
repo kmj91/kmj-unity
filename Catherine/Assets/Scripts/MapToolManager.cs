@@ -43,6 +43,7 @@ public class MapToolManager : MonoBehaviour
     private void Start()
     {
         // 오브젝트 배열 생성
+        // Y, Z, X
         arrMapObject = new ObjectData[100, 10, 10];
 
         // 노말 큐브 프리팹
@@ -143,6 +144,7 @@ public class MapToolManager : MonoBehaviour
 
             objectData.objectType = MenuElementType.NORMAL_CUBE;
             objectData.gameObject = Instantiate<GameObject>(normalCubePrefab);
+            objectData.color = objectData.gameObject.GetComponent<MeshRenderer>().material.color;
             objectData.gameObject.transform.position = position;
             objectData.gameObject.transform.parent = gameStage.transform;
 
@@ -173,6 +175,8 @@ public class MapToolManager : MonoBehaviour
                 guideLine.transform.position = new Vector3(0f, height, 0f);
                 // 카메라 아래로
                 screenCamera.transform.position = screenCamera.transform.position + new Vector3(0f, -1f, 0f);
+                // 현제 층과 위 아래 오브젝트 색상 변경
+                updateColor();
             }
         }
     }
@@ -184,19 +188,69 @@ public class MapToolManager : MonoBehaviour
         int iY;
         int iX;
         int iZ;
+        Color color;
 
-        iY = height - 1;
-        //while()
+        if (height - 1 >= 0)
+        {
+            iY = height - 1;
+            iZ = 0;
+            while (iZ < 10)
+            {
+                iX = 0;
+                while (iX < 10)
+                {
+                    if (arrMapObject[iY, iZ, iX].objectType != MenuElementType.EMPTY)
+                    {
+                        color = arrMapObject[iY, iZ, iX].color;
+                        color.a = 0.8f;
+                        // 알파값 변경
+                        arrMapObject[iY, iZ, iX].gameObject.GetComponent<MeshRenderer>().material.color = color;
+                    }
+                    ++iX;
+                }
+                ++iZ;
+            }
+        }
 
-        //---------------------------------------------------------
-        // 오브젝트 배열돌면서 해당 배열안에 있는 오브젝트들
-        // 스크립트 만들어서 호출해서 바꿔야
-        //---------------------------------------------------------
+        iY = height;
+        iZ = 0;
+        while (iZ < 10)
+        {
+            iX = 0;
+            while (iX < 10)
+            {
+                if (arrMapObject[iY, iZ, iX].objectType != MenuElementType.EMPTY)
+                {
+                    color = arrMapObject[iY, iZ, iX].color;
+                    color.a = 1f;
+                    // 알파값 변경
+                    arrMapObject[iY, iZ, iX].gameObject.GetComponent<MeshRenderer>().material.color = color;
+                }
+                ++iX;
+            }
+            ++iZ;
+        }
 
-        // 알파값 변경
-        //var color = objectData.gameObject.GetComponent<MeshRenderer>().material.color;
-        //color.a = 0.5f;
-        //objectData.gameObject.GetComponent<MeshRenderer>().material.color = color;
-
+        if (height + 1 < 100)
+        {
+            iY = height + 1;
+            iZ = 0;
+            while (iZ < 10)
+            {
+                iX = 0;
+                while (iX < 10)
+                {
+                    if (arrMapObject[iY, iZ, iX].objectType != MenuElementType.EMPTY)
+                    {
+                        color = arrMapObject[iY, iZ, iX].color;
+                        color.a = 0.2f;
+                        // 알파값 변경
+                        arrMapObject[iY, iZ, iX].gameObject.GetComponent<MeshRenderer>().material.color = color;
+                    }
+                    ++iX;
+                }
+                ++iZ;
+            }
+        }
     }
 }

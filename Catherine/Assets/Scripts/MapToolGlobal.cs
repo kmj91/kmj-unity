@@ -25,5 +25,6 @@ namespace MapToolGlobalScript
     {
         public MenuElementType objectType;
         public GameObject gameObject;
+        public Color color;
     }
 }
