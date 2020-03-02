@@ -3,24 +3,29 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 
+using System.IO;
+using System.Runtime.Serialization.Formatters.Binary;
+
 using MapToolGlobalScript;
 
+
+[System.Serializable]
 public class MapToolManager : MonoBehaviour
 {
+    public ObjectData[,,] arrMapObject;             // 맵 오브젝트 배열
+    public GameObject gameStage;                    // 생성된 게임 오브젝트가 자식으로 들어갈 부모
+    public GameObject guideLine;                    // 맵툴 격자
+    public GameObject normalCubePrefab;             // 일반 큐브 프리팹
+    public GameObject cameraTarget;                 // 카메라가 바라보는 곳
 
-    public GameObject gameStage;
-    public GameObject guideLine;
-    public GameObject normalCubePrefab;
-
-    private int height;
+    private int height;                             // 오브젝트 배열의 Y축
     private int selectElement;                      // 선택된 요소
-    private ObjectData[,,] arrMapObject;            // 맵 오브젝트 배열
     private bool mouseFlag;
 
-    private Camera screenCamera;
-    private GameObject normalCube;
-    private GameObject createObject;
-    private LayerMask layerMaskFloor;
+    private Camera screenCamera;                    // 메인 카메라
+    private GameObject normalCube;                  // 마우스 포인터용 일반 큐브
+    private GameObject createObject;                // 만들어질 게임 오브젝트
+    private LayerMask layerMaskFloor;               // 레이어 마스크
 
     public void MousePointerChange(int element)
     {
@@ -179,6 +184,51 @@ public class MapToolManager : MonoBehaviour
                 updateColor();
             }
         }
+
+        // 왼쪽 키 누르고 있음
+        if (Input.GetKey(KeyCode.A))
+        {
+            var angle = cameraTarget.transform.eulerAngles;
+            angle.y = angle.y - 1f;
+            cameraTarget.transform.eulerAngles = angle;
+        }
+
+        // 오른쪽 키 누르고 있음
+        if (Input.GetKey(KeyCode.D))
+        {
+            var angle = cameraTarget.transform.eulerAngles;
+            angle.y = angle.y + 1f;
+            cameraTarget.transform.eulerAngles = angle;
+        }
+
+        // 파일 내보내기
+        if (Input.GetKeyDown(KeyCode.Tab))
+        {
+            Stream ws = new FileStream("a.dat", FileMode.Create);
+            BinaryFormatter serializer = new BinaryFormatter();
+
+            serializer.Serialize(ws, arrMapObject);
+            ws.Close();
+
+            //---------------------------------
+            // 전달할 다른 정보 생각해보기
+            //---------------------------------
+        }
+
+        // 파일 불러오기
+        if (Input.GetKeyDown(KeyCode.L))
+        {
+            Stream rs = new FileStream("a.dat", FileMode.Open);
+            BinaryFormatter deserializer = new BinaryFormatter();
+
+            arrMapObject = (ObjectData[,,])deserializer.Deserialize(rs);
+            rs.Close();
+
+            Debug.Log(arrMapObject[0, 0, 0].objectType);
+            Debug.Log(arrMapObject[0, 0, 1].objectType);
+            Debug.Log(arrMapObject[0, 0, 2].objectType);
+        }
+        
     }
 
 
@@ -202,9 +252,8 @@ public class MapToolManager : MonoBehaviour
                     if (arrMapObject[iY, iZ, iX].objectType != MenuElementType.EMPTY)
                     {
                         color = arrMapObject[iY, iZ, iX].color;
-                        color.a = 0.8f;
                         // 알파값 변경
-                        arrMapObject[iY, iZ, iX].gameObject.GetComponent<MeshRenderer>().material.color = color;
+                        arrMapObject[iY, iZ, iX].gameObject.GetComponent<MeshRenderer>().material.color = new Color(color.r, color.g / 2, color.b / 2, 0.8f);
                     }
                     ++iX;
                 }
@@ -221,10 +270,8 @@ public class MapToolManager : MonoBehaviour
             {
                 if (arrMapObject[iY, iZ, iX].objectType != MenuElementType.EMPTY)
                 {
-                    color = arrMapObject[iY, iZ, iX].color;
-                    color.a = 1f;
                     // 알파값 변경
-                    arrMapObject[iY, iZ, iX].gameObject.GetComponent<MeshRenderer>().material.color = color;
+                    arrMapObject[iY, iZ, iX].gameObject.GetComponent<MeshRenderer>().material.color = arrMapObject[iY, iZ, iX].color;
                 }
                 ++iX;
             }
@@ -243,9 +290,8 @@ public class MapToolManager : MonoBehaviour
                     if (arrMapObject[iY, iZ, iX].objectType != MenuElementType.EMPTY)
                     {
                         color = arrMapObject[iY, iZ, iX].color;
-                        color.a = 0.2f;
                         // 알파값 변경
-                        arrMapObject[iY, iZ, iX].gameObject.GetComponent<MeshRenderer>().material.color = color;
+                        arrMapObject[iY, iZ, iX].gameObject.GetComponent<MeshRenderer>().material.color = new Color(color.r / 2, color.g / 2, color.b, 0.5f);
                     }
                     ++iX;
                 }

@@ -21,10 +21,13 @@ namespace MapToolGlobalScript
     //--------------------------------
 
     // 오브젝트 정보
+    [System.Serializable]
     public struct ObjectData 
     {
         public MenuElementType objectType;
+        [System.NonSerialized]
         public GameObject gameObject;
+        [System.NonSerialized]
         public Color color;
     }
 }
