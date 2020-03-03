@@ -127,7 +127,11 @@ public class MapToolManager : MonoBehaviour
     // 키 처리
     private void KeyProc()
     {
+        int iY;
+        int iX;
+        int iZ;
         ObjectData objectData;
+
 
         if (Input.GetMouseButton(0))
         {
@@ -213,6 +217,7 @@ public class MapToolManager : MonoBehaviour
             //---------------------------------
             // 전달할 다른 정보 생각해보기
             //---------------------------------
+            Debug.Log("저장");
         }
 
         // 파일 불러오기
@@ -224,9 +229,32 @@ public class MapToolManager : MonoBehaviour
             arrMapObject = (ObjectData[,,])deserializer.Deserialize(rs);
             rs.Close();
 
-            Debug.Log(arrMapObject[0, 0, 0].objectType);
-            Debug.Log(arrMapObject[0, 0, 1].objectType);
-            Debug.Log(arrMapObject[0, 0, 2].objectType);
+
+            iY = 0;
+            while (iY < 100)
+            {
+                iZ = 0;
+                while (iZ < 10)
+                {
+                    iX = 0;
+                    while (iX < 10)
+                    {
+                        switch (arrMapObject[iY, iZ, iX].objectType)
+                        {
+                            case MenuElementType.NORMAL_CUBE:
+                                arrMapObject[iY, iZ, iX].gameObject = Instantiate<GameObject>(normalCubePrefab);
+                                arrMapObject[iY, iZ, iX].color = arrMapObject[iY, iZ, iX].gameObject.GetComponent<MeshRenderer>().material.color;
+                                arrMapObject[iY, iZ, iX].gameObject.transform.position = new Vector3(iX, iY, iZ);
+                                arrMapObject[iY, iZ, iX].gameObject.transform.parent = gameStage.transform;
+                                break;
+                        }
+
+                        ++iX;
+                    }
+                    ++iZ;
+                }
+                ++iY;
+            }
         }
         
     }
