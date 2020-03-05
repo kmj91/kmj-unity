@@ -127,9 +127,6 @@ public class MapToolManager : MonoBehaviour
     // 키 처리
     private void KeyProc()
     {
-        int iY;
-        int iX;
-        int iZ;
         ObjectData objectData;
 
 
@@ -153,6 +150,7 @@ public class MapToolManager : MonoBehaviour
 
             objectData.objectType = MenuElementType.NORMAL_CUBE;
             objectData.gameObject = Instantiate<GameObject>(normalCubePrefab);
+            objectData.gameObject.name = "NormalCube [" + (int)position.y + ", " + (int)position.z + ", " + (int)position.x + "]";
             objectData.color = objectData.gameObject.GetComponent<MeshRenderer>().material.color;
             objectData.gameObject.transform.position = position;
             objectData.gameObject.transform.parent = gameStage.transform;
@@ -223,38 +221,7 @@ public class MapToolManager : MonoBehaviour
         // 파일 불러오기
         if (Input.GetKeyDown(KeyCode.L))
         {
-            Stream rs = new FileStream("a.dat", FileMode.Open);
-            BinaryFormatter deserializer = new BinaryFormatter();
-
-            arrMapObject = (ObjectData[,,])deserializer.Deserialize(rs);
-            rs.Close();
-
-
-            iY = 0;
-            while (iY < 100)
-            {
-                iZ = 0;
-                while (iZ < 10)
-                {
-                    iX = 0;
-                    while (iX < 10)
-                    {
-                        switch (arrMapObject[iY, iZ, iX].objectType)
-                        {
-                            case MenuElementType.NORMAL_CUBE:
-                                arrMapObject[iY, iZ, iX].gameObject = Instantiate<GameObject>(normalCubePrefab);
-                                arrMapObject[iY, iZ, iX].color = arrMapObject[iY, iZ, iX].gameObject.GetComponent<MeshRenderer>().material.color;
-                                arrMapObject[iY, iZ, iX].gameObject.transform.position = new Vector3(iX, iY, iZ);
-                                arrMapObject[iY, iZ, iX].gameObject.transform.parent = gameStage.transform;
-                                break;
-                        }
-
-                        ++iX;
-                    }
-                    ++iZ;
-                }
-                ++iY;
-            }
+            Load();
         }
         
     }
@@ -266,7 +233,6 @@ public class MapToolManager : MonoBehaviour
         int iY;
         int iX;
         int iZ;
-        Color color;
 
         if (height - 1 >= 0)
         {
@@ -279,9 +245,8 @@ public class MapToolManager : MonoBehaviour
                 {
                     if (arrMapObject[iY, iZ, iX].objectType != MenuElementType.EMPTY)
                     {
-                        color = arrMapObject[iY, iZ, iX].color;
-                        // 알파값 변경
-                        arrMapObject[iY, iZ, iX].gameObject.GetComponent<MeshRenderer>().material.color = new Color(color.r, color.g / 2, color.b / 2, 0.8f);
+                        // 색깔, 알파값 변경
+                        arrMapObject[iY, iZ, iX].gameObject.GetComponent<MeshRenderer>().material.color = new Color(arrMapObject[iY, iZ, iX].color.r, arrMapObject[iY, iZ, iX].color.g / 2, arrMapObject[iY, iZ, iX].color.b / 2, 0.8f);
                     }
                     ++iX;
                 }
@@ -298,7 +263,7 @@ public class MapToolManager : MonoBehaviour
             {
                 if (arrMapObject[iY, iZ, iX].objectType != MenuElementType.EMPTY)
                 {
-                    // 알파값 변경
+                    // 원래 색깔로 변경
                     arrMapObject[iY, iZ, iX].gameObject.GetComponent<MeshRenderer>().material.color = arrMapObject[iY, iZ, iX].color;
                 }
                 ++iX;
@@ -317,14 +282,89 @@ public class MapToolManager : MonoBehaviour
                 {
                     if (arrMapObject[iY, iZ, iX].objectType != MenuElementType.EMPTY)
                     {
-                        color = arrMapObject[iY, iZ, iX].color;
-                        // 알파값 변경
-                        arrMapObject[iY, iZ, iX].gameObject.GetComponent<MeshRenderer>().material.color = new Color(color.r / 2, color.g / 2, color.b, 0.5f);
+                        // 색깔, 알파값 변경
+                        arrMapObject[iY, iZ, iX].gameObject.GetComponent<MeshRenderer>().material.color = new Color(arrMapObject[iY, iZ, iX].color.r / 2, arrMapObject[iY, iZ, iX].color.g / 2, arrMapObject[iY, iZ, iX].color.b, 0.5f);
                     }
                     ++iX;
                 }
                 ++iZ;
             }
+        }
+    }
+
+
+    private void Load()
+    {
+        int iY;
+        int iX;
+        int iZ;
+        Color color;
+
+        // 기존에 있던 오브젝트 삭제
+        iY = 0;
+        while (iY < 100)
+        {
+            iZ = 0;
+            while (iZ < 10)
+            {
+                iX = 0;
+                while (iX < 10)
+                {
+                    if (arrMapObject[iY, iZ, iX].gameObject != null)
+                    {
+                        Destroy(arrMapObject[iY, iZ, iX].gameObject);
+                    }
+                    ++iX;
+                }
+                ++iZ;
+            }
+            ++iY;
+        }
+
+        Stream rs = new FileStream("a.dat", FileMode.Open);
+        BinaryFormatter deserializer = new BinaryFormatter();
+
+        arrMapObject = (ObjectData[,,])deserializer.Deserialize(rs);
+        rs.Close();
+
+        // 불러오기 오브젝트 생성
+        iY = 0;
+        while (iY < 100)
+        {
+            iZ = 0;
+            while (iZ < 10)
+            {
+                iX = 0;
+                while (iX < 10)
+                {
+                    switch (arrMapObject[iY, iZ, iX].objectType)
+                    {
+                        case MenuElementType.NORMAL_CUBE:
+                            arrMapObject[iY, iZ, iX].gameObject = Instantiate<GameObject>(normalCubePrefab);
+                            arrMapObject[iY, iZ, iX].gameObject.name = "NormalCube [" + iY + ", " + iZ + ", " + iX + "]";
+                            arrMapObject[iY, iZ, iX].color = arrMapObject[iY, iZ, iX].gameObject.GetComponent<MeshRenderer>().material.color;
+                            arrMapObject[iY, iZ, iX].gameObject.transform.position = new Vector3(iX, iY, iZ);
+                            arrMapObject[iY, iZ, iX].gameObject.transform.parent = gameStage.transform;
+
+                            if (height > iY)
+                            {
+                                // 알파값 변경
+                                arrMapObject[iY, iZ, iX].gameObject.GetComponent<MeshRenderer>().material.color = new Color(arrMapObject[iY, iZ, iX].color.r, arrMapObject[iY, iZ, iX].color.g / 2, arrMapObject[iY, iZ, iX].color.b / 2, 0.8f);
+                            }
+                            else if (height < iY)
+                            {
+                                // 알파값 변경
+                                arrMapObject[iY, iZ, iX].gameObject.GetComponent<MeshRenderer>().material.color = new Color(arrMapObject[iY, iZ, iX].color.r / 2, arrMapObject[iY, iZ, iX].color.g / 2, arrMapObject[iY, iZ, iX].color.b, 0.5f);
+                            }
+
+                            break;
+                    }
+
+                    ++iX;
+                }
+                ++iZ;
+            }
+            ++iY;
         }
     }
 }
