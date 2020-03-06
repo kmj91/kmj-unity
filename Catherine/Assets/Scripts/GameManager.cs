@@ -3,8 +3,12 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
+using System.IO;
+using System.Runtime.Serialization.Formatters.Binary;
+
 using GameMessageScript;
 using UnityDequeScript;
+using MapToolGlobalScript;
 
 public class GameManager : MonoBehaviour
 {
@@ -15,7 +19,10 @@ public class GameManager : MonoBehaviour
     public int undoToken;                       // 복원 지점 토큰
     public Queue<GameMessage> messageQueue;     // 게임 매니저 큐
     public UnityDeque<UndoData> undoDeque;
-
+    public GameObject gameStage;                    // 생성된 게임 오브젝트가 자식으로 들어갈 부모
+    public GameObject playerPrefab;                 // 플레이어 프리팹
+    public GameObject normalCubePrefab;             // 일반 큐브 프리팹
+    public GameObject iceCubePrefab;                // 얼음 큐브 프리팹
 
     //--------------------------------
     // private 변수
@@ -24,6 +31,7 @@ public class GameManager : MonoBehaviour
     private int undoArraySize;                  // 배열 크기
     private PlayerMovement playerMovement;      // 플레이어 무브먼트
     private GameObject GameOverUI;
+    private ObjectData[,,] arrMapObject;        // 맵 오브젝트 배열
     private bool restartFlag;
 
 
@@ -44,13 +52,15 @@ public class GameManager : MonoBehaviour
     private void Awake()
     {
         arrMsgProc = new MsgProc[] { new MsgProc(CreateUndoPoint), new MsgProc(UpdateUndoCube) };
+
+        InitGame();
     }
 
 
     private void Start()
     {
         // 플레이어 무브먼트
-        playerMovement = GameObject.Find("Player").GetComponent<PlayerMovement>();
+        //playerMovement = GameObject.Find("Player").GetComponent<PlayerMovement>();
         // UI
         GameOverUI = GameObject.Find("Canvas").transform.Find("gameOverUI").gameObject;
         // 다시시작 플래그
@@ -76,13 +86,13 @@ public class GameManager : MonoBehaviour
             }
         }
 
-        if (playerMovement.isDeath)
-        {
-            // 게임오버
-            GameOverUI.SetActive(true);
-            // 다시 시작
-            restartFlag = true;
-        }
+        //if (playerMovement.isDeath)
+        //{
+        //    // 게임오버
+        //    GameOverUI.SetActive(true);
+        //    // 다시 시작
+        //    restartFlag = true;
+        //}
 
         // 되돌리기 테스트
         if (Input.GetKeyDown(KeyCode.Tab))
@@ -132,6 +142,55 @@ public class GameManager : MonoBehaviour
 
             // 메시지 처리
             arrMsgProc[(int)gameMsg.messageType]();
+        }
+    }
+
+
+    // 게임 초기화
+    private void InitGame()
+    {
+        int iY;
+        int iX;
+        int iZ;
+
+        // 오브젝트 배열 생성
+        // Y, Z, X
+        arrMapObject = new ObjectData[100, 10, 10];
+
+
+        Stream rs = new FileStream("a.dat", FileMode.Open);
+        BinaryFormatter deserializer = new BinaryFormatter();
+
+        arrMapObject = (ObjectData[,,])deserializer.Deserialize(rs);
+        rs.Close();
+
+        // 불러오기 오브젝트 생성
+        iY = 0;
+        while (iY < 100)
+        {
+            iZ = 0;
+            while (iZ < 10)
+            {
+                iX = 0;
+                while (iX < 10)
+                {
+                    switch (arrMapObject[iY, iZ, iX].objectType)
+                    {
+                        case MenuElementType.NORMAL_CUBE:
+                            arrMapObject[iY, iZ, iX].gameObject = Instantiate<GameObject>(normalCubePrefab);
+                            arrMapObject[iY, iZ, iX].gameObject.name = "NormalCube [" + iY + ", " + iZ + ", " + iX + "]";
+                            arrMapObject[iY, iZ, iX].color = arrMapObject[iY, iZ, iX].gameObject.GetComponent<MeshRenderer>().material.color;
+                            arrMapObject[iY, iZ, iX].gameObject.transform.position = new Vector3(iX, iY, iZ);
+                            arrMapObject[iY, iZ, iX].gameObject.transform.parent = gameStage.transform;
+                            arrMapObject[iY, iZ, iX].gameObject.AddComponent<CubeMovement>();
+                            break;
+                    }
+
+                    ++iX;
+                }
+                ++iZ;
+            }
+            ++iY;
         }
     }
 

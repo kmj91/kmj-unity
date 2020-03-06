@@ -1055,6 +1055,16 @@ public class CubeMovement : MonoBehaviour
     // private 함수
     //--------------------------------
 
+    private void Awake()
+    {
+        horizontalSpeed = 4f;
+        verticalSpeed = 2f;
+        downDelay = 1.2f;
+        iceEffectGravity = 1.2f;
+        iceEffectSize = 1.5f;
+    }
+
+
     private void Start()
     {
         ParticleSystem.MainModule particleMain;     // 파티클 메인

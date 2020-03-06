@@ -13,7 +13,9 @@ namespace MapToolGlobalScript
     public enum MenuElementType
     {
         EMPTY,
-        NORMAL_CUBE
+        PLAYER,
+        NORMAL_CUBE,
+        ICE_CUBE
     }
 
     //--------------------------------
