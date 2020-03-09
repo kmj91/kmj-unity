@@ -23,6 +23,7 @@ public class MapToolManager : MonoBehaviour
     private int height;                             // 오브젝트 배열의 Y축
     private int selectElement;                      // 선택된 요소
     private bool mouseFlag;
+    private bool controlToggle;                     // 컨트롤 키 토글
 
     private Camera screenCamera;                    // 메인 카메라
     private GameObject player;                      // 선택 영역 표시용 플레이어
@@ -31,6 +32,11 @@ public class MapToolManager : MonoBehaviour
     private GameObject createObject;                // 만들어질 게임 오브젝트
     private GameObject selectField;                 // 선택 영역
     private LayerMask layerMaskFloor;               // 레이어 마스크
+    private Dictionary<KeyCode, Action> keyDown;            // 키 다운 딕셔너리
+    private Dictionary<KeyCode, Action> keyAuto;            // 키 오토 딕셔너리
+    private Dictionary<KeyCode, Action> keyUp;              // 키 업 딕셔너리
+    private Dictionary<KeyCode, Action> keyCombination;     // 조합 키 딕셔너리
+
 
     public void MousePointerChange(int element)
     {
@@ -118,13 +124,44 @@ public class MapToolManager : MonoBehaviour
         iceCube.transform.parent = selectField.transform;
         iceCube.SetActive(false);
 
-        
-
-
         screenCamera = Camera.main;
 
         // 레이어 마스크
         layerMaskFloor = 1 << LayerMask.NameToLayer("Floor");
+
+        // 키 값
+        // 입력키, 호출 함수
+        // 키 다운
+        keyDown = new Dictionary<KeyCode, Action>
+        {
+            { KeyCode.W, Up},
+            { KeyCode.UpArrow, Up},
+            { KeyCode.S, Down},
+            { KeyCode.DownArrow, Down}
+        };
+
+        // 키 오토
+        keyAuto = new Dictionary<KeyCode, Action>
+        {
+            { KeyCode.A, Left},
+            { KeyCode.LeftArrow, Left},
+            { KeyCode.D, Right},
+            { KeyCode.RightArrow, Right},
+            { KeyCode.LeftControl, LeftControl}
+        };
+
+        // 키 업
+        keyUp = new Dictionary<KeyCode, Action>
+        {
+            { KeyCode.LeftControl, LeftControl}
+        };
+
+        // 조합 키
+        keyCombination = new Dictionary<KeyCode, Action>
+        {
+            { KeyCode.S, Save},
+            { KeyCode.L, Load}
+        };
     }
 
 
@@ -192,9 +229,55 @@ public class MapToolManager : MonoBehaviour
     // 키 처리
     private void KeyProc()
     {
-        ObjectData objectData;
+        //ObjectData objectData;
+
+        // 키 다운
+        if (Input.anyKeyDown)
+        {
+            // 조합 키
+            if (controlToggle)
+            {
+                foreach (var pair in keyCombination)
+                {
+                    if (Input.GetKeyDown(pair.Key))
+                    {
+                        pair.Value();
+                    }
+                }
+            }
+            // 단일 키
+            else
+            {
+                foreach (var pair in keyDown)
+                {
+                    if (Input.GetKeyDown(pair.Key))
+                    {
+                        pair.Value();
+                    }
+                }
+            }
+        }
+
+        // 키 오토
+        foreach (var pair in keyAuto)
+        {
+            if (Input.GetKey(pair.Key))
+            {
+                pair.Value();
+            }
+        }
+
+        // 키 업
+        foreach (var pair in keyUp)
+        {
+            if (Input.GetKey(pair.Key))
+            {
+                pair.Value();
+            }
+        }
 
 
+        /*
         // 마우스 왼쪽 클릭
         if (Input.GetMouseButton(0))
         {
@@ -328,7 +411,7 @@ public class MapToolManager : MonoBehaviour
         {
             Load();
         }
-        
+        */
     }
 
 
@@ -397,7 +480,80 @@ public class MapToolManager : MonoBehaviour
         }
     }
 
+    
+    // 카메라 위로 이동
+    private void Up()
+    {
+        if (height + 1 < 100)
+        {
+            ++height;
+            guideLine.transform.position = new Vector3(0f, height, 0f);
+            // 카메라 위로
+            screenCamera.transform.position = screenCamera.transform.position + new Vector3(0f, 1f, 0f);
+            // 현제 층과 위 아래 오브젝트 색상 변경
+            updateColor();
+        }
+    }
 
+    // 카메라 아래로 이동
+    private void Down()
+    {
+        if (height - 1 >= 0)
+        {
+            --height;
+            guideLine.transform.position = new Vector3(0f, height, 0f);
+            // 카메라 아래로
+            screenCamera.transform.position = screenCamera.transform.position + new Vector3(0f, -1f, 0f);
+            // 현제 층과 위 아래 오브젝트 색상 변경
+            updateColor();
+        }
+    }
+
+    // 카메라 왼쪽 회전
+    private void Left()
+    {
+        var angle = cameraTarget.transform.eulerAngles;
+        angle.y = angle.y - 1f;
+        cameraTarget.transform.eulerAngles = angle;
+    }
+
+    // 카메라 오른쪽 회전
+    private void Right()
+    {
+        var angle = cameraTarget.transform.eulerAngles;
+        angle.y = angle.y + 1f;
+        cameraTarget.transform.eulerAngles = angle;
+    }
+
+    // 왼쪽 컨트롤 키
+    private void LeftControl()
+    {
+        if (controlToggle)
+        {
+            controlToggle = false;
+        }
+        else
+        {
+            controlToggle = true;
+        }
+    }
+
+    // 세이브
+    private void Save()
+    {
+        Stream ws = new FileStream("a.dat", FileMode.Create);
+        BinaryFormatter serializer = new BinaryFormatter();
+
+        serializer.Serialize(ws, arrMapObject);
+        ws.Close();
+
+        //---------------------------------
+        // 전달할 다른 정보 생각해보기
+        //---------------------------------
+        Debug.Log("저장");
+    }
+
+    // 로드
     private void Load()
     {
         int iY;
@@ -471,4 +627,6 @@ public class MapToolManager : MonoBehaviour
             ++iY;
         }
     }
+
+
 }
