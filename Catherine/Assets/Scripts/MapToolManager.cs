@@ -34,29 +34,59 @@ public class MapToolManager : MonoBehaviour
 
     public void MousePointerChange(int element)
     {
-        mouseFlag = true;
+        
         selectElement = element;
-        selectField.SetActive(true);
 
-        player.SetActive(false);
-        normalCube.SetActive(false);
-        iceCube.SetActive(false);
+        
 
         // 선택된 요소
         switch ((MenuElementType)element)
         {
+            case MenuElementType.EMPTY:
+                // 빈 상태
+                // Update에서 마우스 처리 false
+                mouseFlag = false;
+                // 선택 영역
+                selectField.SetActive(false);
+                // 없음
+                player.SetActive(false);
+                normalCube.SetActive(false);
+                iceCube.SetActive(false);
+                createObject = null;
+                break;
             case MenuElementType.PLAYER:
                 // 플레이어
+                // Update에서 마우스 처리 true
+                mouseFlag = true;
+                // 선택 영역
+                selectField.SetActive(true);
+                // 플레이어 보이기
                 player.SetActive(true);
+                normalCube.SetActive(false);
+                iceCube.SetActive(false);
                 createObject = player;
                 break;
             case MenuElementType.NORMAL_CUBE:
                 // 노말 큐브
+                // Update에서 마우스 처리 true
+                mouseFlag = true;
+                // 선택 영역
+                selectField.SetActive(true);
+                // 노말 큐브 보이기
+                player.SetActive(false);
                 normalCube.SetActive(true);
+                iceCube.SetActive(false);
                 createObject = normalCube;
                 break;
             case MenuElementType.ICE_CUBE:
                 // 얼음 큐브
+                // Update에서 마우스 처리 true
+                mouseFlag = true;
+                // 선택 영역
+                selectField.SetActive(true);
+                // 얼음 큐브 보이기
+                player.SetActive(false);
+                normalCube.SetActive(false);
                 iceCube.SetActive(true);
                 createObject = iceCube;
                 break;
