@@ -23,15 +23,19 @@ public class MapToolManager : MonoBehaviour
     private int height;                             // 오브젝트 배열의 Y축
     private int selectElement;                      // 선택된 요소
     private Vector3 MouseFieldPoint;                // 현제 맵툴 필드위에서의 마우스 위치
+    private Vector3 palyerPostion;                  // 맵툴에 생성된 플레이어 오브젝트 위치
+    private Vector3 destPostion;                    // 맵툴에 생성된 목적지 오브젝트 위치
+    private bool checkPlayer;                       // 플레이어 생성 확인
+    private bool checkDest;                         // 목적지 생성 확인
     private bool controlToggle;                     // 컨트롤 키 토글
     private bool onFieldMouse;                      // 맵툴 필드 위에 마우스가 있나 없나
 
     private Camera screenCamera;                    // 메인 카메라
+    private GameObject selectField;                 // 선택 영역
     private GameObject player;                      // 선택 영역 표시용 플레이어
     private GameObject normalCube;                  // 선택 영역 표시용 일반 큐브
     private GameObject iceCube;                     // 선택 영역 표시용 얼음 큐브
     private GameObject createObject;                // 만들어질 게임 오브젝트
-    private GameObject selectField;                 // 선택 영역
     private LayerMask layerMaskFloor;               // 레이어 마스크
     private Dictionary<KeyCode, Action> keyDown;            // 키 다운 딕셔너리
     private Dictionary<KeyCode, Action> keyAuto;            // 키 오토 딕셔너리
@@ -61,6 +65,16 @@ public class MapToolManager : MonoBehaviour
                 break;
             case MenuElementType.PLAYER:
                 // 플레이어
+                // 선택 영역
+                selectField.SetActive(true);
+                // 플레이어 보이기
+                player.SetActive(true);
+                normalCube.SetActive(false);
+                iceCube.SetActive(false);
+                createObject = player;
+                break;
+            case MenuElementType.DEST:
+                // 목적지
                 // 선택 영역
                 selectField.SetActive(true);
                 // 플레이어 보이기
@@ -292,7 +306,9 @@ public class MapToolManager : MonoBehaviour
                 iX = 0;
                 while (iX < 10)
                 {
-                    if (arrMapObject[iY, iZ, iX].objectType != MenuElementType.EMPTY && arrMapObject[iY, iZ, iX].objectType != MenuElementType.PLAYER)
+                    if (arrMapObject[iY, iZ, iX].objectType != MenuElementType.EMPTY &&
+                        arrMapObject[iY, iZ, iX].objectType != MenuElementType.PLAYER &&
+                        arrMapObject[iY, iZ, iX].objectType != MenuElementType.DEST)
                     {
                         // 색깔, 알파값 변경
                         arrMapObject[iY, iZ, iX].gameObject.GetComponent<MeshRenderer>().material.color = new Color(arrMapObject[iY, iZ, iX].color.r, arrMapObject[iY, iZ, iX].color.g / 2, arrMapObject[iY, iZ, iX].color.b / 2, 0.8f);
@@ -310,7 +326,9 @@ public class MapToolManager : MonoBehaviour
             iX = 0;
             while (iX < 10)
             {
-                if (arrMapObject[iY, iZ, iX].objectType != MenuElementType.EMPTY && arrMapObject[iY, iZ, iX].objectType != MenuElementType.PLAYER)
+                if (arrMapObject[iY, iZ, iX].objectType != MenuElementType.EMPTY &&
+                    arrMapObject[iY, iZ, iX].objectType != MenuElementType.PLAYER &&
+                    arrMapObject[iY, iZ, iX].objectType != MenuElementType.DEST)
                 {
                     // 원래 색깔로 변경
                     arrMapObject[iY, iZ, iX].gameObject.GetComponent<MeshRenderer>().material.color = arrMapObject[iY, iZ, iX].color;
@@ -329,7 +347,9 @@ public class MapToolManager : MonoBehaviour
                 iX = 0;
                 while (iX < 10)
                 {
-                    if (arrMapObject[iY, iZ, iX].objectType != MenuElementType.EMPTY && arrMapObject[iY, iZ, iX].objectType != MenuElementType.PLAYER)
+                    if (arrMapObject[iY, iZ, iX].objectType != MenuElementType.EMPTY &&
+                        arrMapObject[iY, iZ, iX].objectType != MenuElementType.PLAYER &&
+                        arrMapObject[iY, iZ, iX].objectType != MenuElementType.DEST)
                     {
                         // 색깔, 알파값 변경
                         arrMapObject[iY, iZ, iX].gameObject.GetComponent<MeshRenderer>().material.color = new Color(arrMapObject[iY, iZ, iX].color.r / 2, arrMapObject[iY, iZ, iX].color.g / 2, arrMapObject[iY, iZ, iX].color.b, 0.5f);
@@ -413,6 +433,19 @@ public class MapToolManager : MonoBehaviour
                     return;
                 }
 
+                // 플레이어 오브젝트가 이미 맵툴에 생성된 적이 있음
+                if (checkPlayer == true)
+                {
+                    // 기존의 플레이어 오브젝트를 제거함
+                    arrMapObject[(int)palyerPostion.y, (int)palyerPostion.z, (int)palyerPostion.x].objectType = MenuElementType.EMPTY;
+                    Destroy(arrMapObject[(int)palyerPostion.y, (int)palyerPostion.z, (int)palyerPostion.x].gameObject);
+                }
+
+                // 플레이어 생성 위치 저장
+                palyerPostion = position;
+                // 플레이어 생성 확인 true
+                checkPlayer = true;
+
                 objectData.objectType = MenuElementType.PLAYER;
                 objectData.gameObject = Instantiate<GameObject>(playerPrefab);
                 objectData.gameObject.name = "player [" + (int)position.y + ", " + (int)position.z + ", " + (int)position.x + "]";
@@ -424,6 +457,45 @@ public class MapToolManager : MonoBehaviour
 
                 arrMapObject[(int)position.y, (int)position.z, (int)position.x] = objectData;
                 return;
+            case MenuElementType.DEST:
+                // 목적지
+
+                // 마우스가 필드위에서 벗어남
+                if (!onFieldMouse)
+                {
+                    return;
+                }
+
+                // 해당 위치가 비어있지 않음
+                if (arrMapObject[(int)position.y, (int)position.z, (int)position.x].objectType != MenuElementType.EMPTY)
+                {
+                    return;
+                }
+
+                // 목적지 오브젝트가 이미 맵툴에 생성된 적이 있음
+                if (checkDest == true)
+                {
+                    // 기존의 플레이어 오브젝트를 제거함
+                    arrMapObject[(int)palyerPostion.y, (int)palyerPostion.z, (int)palyerPostion.x].objectType = MenuElementType.EMPTY;
+                    Destroy(arrMapObject[(int)palyerPostion.y, (int)palyerPostion.z, (int)palyerPostion.x].gameObject);
+                }
+
+                // 목적지 생성 위치 저장
+                destPostion = position;
+                // 목적지 생성 확인 true
+                checkDest = true;
+
+                objectData.objectType = MenuElementType.DEST;
+                objectData.gameObject = Instantiate<GameObject>(playerPrefab);
+                objectData.gameObject.name = "player [" + (int)position.y + ", " + (int)position.z + ", " + (int)position.x + "]";
+                objectData.color = Color.black;
+                // 오브젝트 마다 중심점이 다름
+                // 각자 맞게 배치됨
+                objectData.gameObject.transform.position = createObject.transform.position;
+                objectData.gameObject.transform.parent = gameStage.transform;
+
+                arrMapObject[(int)position.y, (int)position.z, (int)position.x] = objectData;
+                break;
             case MenuElementType.NORMAL_CUBE:
                 // 노말 큐브
 
@@ -483,6 +555,8 @@ public class MapToolManager : MonoBehaviour
     private void MouseRightClickAuto()
     {
         Vector3 position = MouseFieldPoint;
+        MenuElementType objectType = arrMapObject[(int)position.y, (int)position.z, (int)position.x].objectType;
+
 
         // 마우스가 필드위에서 벗어남
         if (!onFieldMouse)
@@ -490,11 +564,21 @@ public class MapToolManager : MonoBehaviour
             return;
         }
 
-        // 해당 위치가 비어있음
-        if (arrMapObject[(int)position.y, (int)position.z, (int)position.x].objectType == MenuElementType.EMPTY)
+        switch (objectType)
         {
-            return;
+            case MenuElementType.EMPTY:
+                // 해당 위치가 비어있음
+                return;
+            case MenuElementType.PLAYER:
+                // 플레이어 생성 확인 false
+                checkPlayer = false;
+                break; ;
+            case MenuElementType.DEST:
+                // 목적지 생성 확인 false;
+                checkDest = false;
+                break;
         }
+
 
         arrMapObject[(int)position.y, (int)position.z, (int)position.x].objectType = MenuElementType.EMPTY;
         Destroy(arrMapObject[(int)position.y, (int)position.z, (int)position.x].gameObject);
