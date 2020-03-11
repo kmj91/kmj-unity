@@ -206,6 +206,7 @@ public class MapToolManager : MonoBehaviour
             onFieldMouse = true;
         }
 
+
         Debug.DrawRay(world, screenCamera.transform.forward * 20f, Color.red);
 
         // 반올림, 올림
@@ -448,7 +449,7 @@ public class MapToolManager : MonoBehaviour
 
                 objectData.objectType = MenuElementType.PLAYER;
                 objectData.gameObject = Instantiate<GameObject>(playerPrefab);
-                objectData.gameObject.name = "player [" + (int)position.y + ", " + (int)position.z + ", " + (int)position.x + "]";
+                objectData.gameObject.name = "Player [" + (int)position.y + ", " + (int)position.z + ", " + (int)position.x + "]";
                 objectData.color = Color.black;
                 // 오브젝트 마다 중심점이 다름
                 // 각자 맞게 배치됨
@@ -476,8 +477,8 @@ public class MapToolManager : MonoBehaviour
                 if (checkDest == true)
                 {
                     // 기존의 플레이어 오브젝트를 제거함
-                    arrMapObject[(int)palyerPostion.y, (int)palyerPostion.z, (int)palyerPostion.x].objectType = MenuElementType.EMPTY;
-                    Destroy(arrMapObject[(int)palyerPostion.y, (int)palyerPostion.z, (int)palyerPostion.x].gameObject);
+                    arrMapObject[(int)destPostion.y, (int)destPostion.z, (int)destPostion.x].objectType = MenuElementType.EMPTY;
+                    Destroy(arrMapObject[(int)destPostion.y, (int)destPostion.z, (int)destPostion.x].gameObject);
                 }
 
                 // 목적지 생성 위치 저장
@@ -487,7 +488,7 @@ public class MapToolManager : MonoBehaviour
 
                 objectData.objectType = MenuElementType.DEST;
                 objectData.gameObject = Instantiate<GameObject>(playerPrefab);
-                objectData.gameObject.name = "player [" + (int)position.y + ", " + (int)position.z + ", " + (int)position.x + "]";
+                objectData.gameObject.name = "Dest [" + (int)position.y + ", " + (int)position.z + ", " + (int)position.x + "]";
                 objectData.color = Color.black;
                 // 오브젝트 마다 중심점이 다름
                 // 각자 맞게 배치됨
@@ -572,7 +573,7 @@ public class MapToolManager : MonoBehaviour
             case MenuElementType.PLAYER:
                 // 플레이어 생성 확인 false
                 checkPlayer = false;
-                break; ;
+                break;
             case MenuElementType.DEST:
                 // 목적지 생성 확인 false;
                 checkDest = false;
@@ -657,11 +658,25 @@ public class MapToolManager : MonoBehaviour
                 {
                     switch (arrMapObject[iY, iZ, iX].objectType)
                     {
+                        case MenuElementType.PLAYER:
+                            arrMapObject[iY, iZ, iX].gameObject = Instantiate<GameObject>(playerPrefab);
+                            arrMapObject[iY, iZ, iX].gameObject.name = "Player [" + iY + ", " + iZ + ", " + iX + "]";
+                            arrMapObject[iY, iZ, iX].color = Color.black;
+                            arrMapObject[iY, iZ, iX].gameObject.transform.position = new Vector3(iX, iY, iZ) + playerPrefab.transform.position;
+                            arrMapObject[iY, iZ, iX].gameObject.transform.parent = gameStage.transform;
+                            break;
+                        case MenuElementType.DEST:
+                            arrMapObject[iY, iZ, iX].gameObject = Instantiate<GameObject>(playerPrefab);
+                            arrMapObject[iY, iZ, iX].gameObject.name = "Dest [" + iY + ", " + iZ + ", " + iX + "]";
+                            arrMapObject[iY, iZ, iX].color = Color.black;
+                            arrMapObject[iY, iZ, iX].gameObject.transform.position = new Vector3(iX, iY, iZ) + playerPrefab.transform.position;
+                            arrMapObject[iY, iZ, iX].gameObject.transform.parent = gameStage.transform;
+                            break;
                         case MenuElementType.NORMAL_CUBE:
                             arrMapObject[iY, iZ, iX].gameObject = Instantiate<GameObject>(normalCubePrefab);
                             arrMapObject[iY, iZ, iX].gameObject.name = "NormalCube [" + iY + ", " + iZ + ", " + iX + "]";
                             arrMapObject[iY, iZ, iX].color = arrMapObject[iY, iZ, iX].gameObject.GetComponent<MeshRenderer>().material.color;
-                            arrMapObject[iY, iZ, iX].gameObject.transform.position = new Vector3(iX, iY, iZ);
+                            arrMapObject[iY, iZ, iX].gameObject.transform.position = new Vector3(iX, iY, iZ) + normalCubePrefab.transform.position;
                             arrMapObject[iY, iZ, iX].gameObject.transform.parent = gameStage.transform;
 
                             if (height > iY)
@@ -674,7 +689,24 @@ public class MapToolManager : MonoBehaviour
                                 // 알파값 변경
                                 arrMapObject[iY, iZ, iX].gameObject.GetComponent<MeshRenderer>().material.color = new Color(arrMapObject[iY, iZ, iX].color.r / 2, arrMapObject[iY, iZ, iX].color.g / 2, arrMapObject[iY, iZ, iX].color.b, 0.5f);
                             }
+                            break;
+                        case MenuElementType.ICE_CUBE:
+                            arrMapObject[iY, iZ, iX].gameObject = Instantiate<GameObject>(iceCubePrefab);
+                            arrMapObject[iY, iZ, iX].gameObject.name = "IceCube [" + iY + ", " + iZ + ", " + iX + "]";
+                            arrMapObject[iY, iZ, iX].color = arrMapObject[iY, iZ, iX].gameObject.GetComponent<MeshRenderer>().material.color;
+                            arrMapObject[iY, iZ, iX].gameObject.transform.position = new Vector3(iX, iY, iZ) + iceCubePrefab.transform.position;
+                            arrMapObject[iY, iZ, iX].gameObject.transform.parent = gameStage.transform;
 
+                            if (height > iY)
+                            {
+                                // 알파값 변경
+                                arrMapObject[iY, iZ, iX].gameObject.GetComponent<MeshRenderer>().material.color = new Color(arrMapObject[iY, iZ, iX].color.r, arrMapObject[iY, iZ, iX].color.g / 2, arrMapObject[iY, iZ, iX].color.b / 2, 0.8f);
+                            }
+                            else if (height < iY)
+                            {
+                                // 알파값 변경
+                                arrMapObject[iY, iZ, iX].gameObject.GetComponent<MeshRenderer>().material.color = new Color(arrMapObject[iY, iZ, iX].color.r / 2, arrMapObject[iY, iZ, iX].color.g / 2, arrMapObject[iY, iZ, iX].color.b, 0.5f);
+                            }
                             break;
                     }
 
