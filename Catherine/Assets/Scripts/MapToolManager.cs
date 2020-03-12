@@ -29,6 +29,7 @@ public class MapToolManager : MonoBehaviour
     private bool checkDest;                         // 목적지 생성 확인
     private bool controlToggle;                     // 컨트롤 키 토글
     private bool onFieldMouse;                      // 맵툴 필드 위에 마우스가 있나 없나
+    private bool onUIMouse;                         // UI 위에 마우스가 있나 없나
 
     private Camera screenCamera;                    // 메인 카메라
     private GameObject selectField;                 // 선택 영역
@@ -42,6 +43,10 @@ public class MapToolManager : MonoBehaviour
     private Dictionary<KeyCode, Action> keyUp;              // 키 업 딕셔너리
     private Dictionary<KeyCode, Action> keyCombination;     // 조합 키 딕셔너리
 
+
+    //--------------------------------
+    // public 함수
+    //--------------------------------
 
     public void MousePointerChange(int element)
     {
@@ -107,6 +112,22 @@ public class MapToolManager : MonoBehaviour
         
     }
 
+    // 마우스가 UI 위에 들어옴
+    public void OnMouseUIEnter()
+    {
+        onUIMouse = true;
+    }
+
+    // 마우스가 UI 에서 벗어남
+    public void OnMouseUIExit()
+    {
+        onUIMouse = false;
+    }
+
+
+    //--------------------------------
+    // private 함수
+    //--------------------------------
 
     private void Start()
     {
@@ -198,14 +219,22 @@ public class MapToolManager : MonoBehaviour
         // 레이
         if (!Physics.Raycast(world, screenCamera.transform.forward, out rayHit, 20f, layerMaskFloor))
         {
+            // 마우스가 맵툴 영역을 벗어남
             selectField.SetActive(false);
             onFieldMouse = false;
             return;
         }
-        else {
-            onFieldMouse = true;
+
+        // 마우스가 UI 위에 있음
+        if (onUIMouse)
+        {
+            selectField.SetActive(false);
+            onFieldMouse = false;
+            return;
         }
 
+
+        onFieldMouse = true;
 
         Debug.DrawRay(world, screenCamera.transform.forward * 20f, Color.red);
 
@@ -709,7 +738,6 @@ public class MapToolManager : MonoBehaviour
                             }
                             break;
                     }
-
                     ++iX;
                 }
                 ++iZ;
