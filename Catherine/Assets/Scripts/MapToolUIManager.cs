@@ -4,8 +4,7 @@ using UnityEngine;
 
 using UnityEngine.EventSystems;
 
-public class MapToolUIManager : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler, 
-                                IPointerUpHandler, IPointerClickHandler, IDragHandler, IEndDragHandler, IDropHandler
+public class MapToolUIManager : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
     public MapToolManager mapToolManager;           // 맵툴 매니저
 
@@ -13,48 +12,27 @@ public class MapToolUIManager : MonoBehaviour, IPointerEnterHandler, IPointerExi
     public void OnPointerEnter(PointerEventData eventData)
     {
         // 마우스가 UI 위에 올라감
-        mapToolManager.OnMouseUIEnter();
+        // 맵툴 매니저에게 알림
+        mapToolManager.MouseUIEnter();
     }
 
     public void OnPointerExit(PointerEventData eventData)
     {
         // 마우스가 UI 에서 벗어남
-        mapToolManager.OnMouseUIExit();
+        // 맵툴 매니저에게 알림
+        mapToolManager.MouseUIExit();
     }
 
-    public void OnPointerDown(PointerEventData eventData)
+
+    // 드래그 시작
+    public void DragStart()
     {
-        //Debug.Log("pointer down");
-        //Debug.Log(eventData.pointerEnter);
+        mapToolManager.MouseUIDragStart();
     }
 
-    public void OnPointerUp(PointerEventData eventData)
+    // 드래그 끝
+    public void DragEnd()
     {
-        Debug.Log("pointer up");
-        Debug.Log(eventData.pointerPress);
+        mapToolManager.MouseUIDragEnd();
     }
-
-    public void OnPointerClick(PointerEventData eventData)
-    {
-        //Debug.Log("click");
-        //Debug.Log(eventData.pointerEnter);
-    }
-
-    public void OnDrag(PointerEventData eventData)
-    {
-        //Debug.Log("drag");
-        //transform.position = eventData.position;
-    }
-
-    public void OnDrop(PointerEventData eventData)
-    {
-        //Debug.Log("drop");
-    }
-
-    public void OnEndDrag(PointerEventData eventData)
-    {
-        //Debug.Log("end drag");
-    }
-
-    
 }

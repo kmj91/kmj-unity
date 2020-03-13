@@ -25,11 +25,12 @@ public class MapToolManager : MonoBehaviour
     private Vector3 MouseFieldPoint;                // 현제 맵툴 필드위에서의 마우스 위치
     private Vector3 palyerPostion;                  // 맵툴에 생성된 플레이어 오브젝트 위치
     private Vector3 destPostion;                    // 맵툴에 생성된 목적지 오브젝트 위치
-    private bool checkPlayer;                       // 플레이어 생성 확인
-    private bool checkDest;                         // 목적지 생성 확인
-    private bool controlToggle;                     // 컨트롤 키 토글
-    private bool onFieldMouse;                      // 맵툴 필드 위에 마우스가 있나 없나
-    private bool onUIMouse;                         // UI 위에 마우스가 있나 없나
+    private bool isPlayerActive;                    // 플레이어 생성 확인
+    private bool isDestActive;                      // 목적지 생성 확인
+    private bool isCtrlKeyPressed;                  // 컨트롤 키 토글
+    private bool isMouseOnField;                    // 맵툴 필드 위에 마우스가 있나 없나
+    private bool isMouseOnUI;                       // 마우스가 UI 위에 있나 없나
+    private bool isMouseUIDragging;                 // 마우스가 UI 드래그 중인가
 
     private Camera screenCamera;                    // 메인 카메라
     private GameObject selectField;                 // 선택 영역
@@ -113,15 +114,29 @@ public class MapToolManager : MonoBehaviour
     }
 
     // 마우스가 UI 위에 들어옴
-    public void OnMouseUIEnter()
+    public void MouseUIEnter()
     {
-        onUIMouse = true;
+        // 맵툴 마우스 포인터 처리를 위한 플래그 true
+        isMouseOnUI = true;
     }
 
     // 마우스가 UI 에서 벗어남
-    public void OnMouseUIExit()
+    public void MouseUIExit()
     {
-        onUIMouse = false;
+        // 맵툴 마우스 포인터 처리를 위한 플래그 false
+        isMouseOnUI = false;
+    }
+
+    // UI 드래그 중
+    public void MouseUIDragStart()
+    {
+        isMouseUIDragging = true;
+    }
+
+    // UI 드래그 끝
+    public void MouseUIDragEnd()
+    {
+        isMouseUIDragging = false;
     }
 
 
@@ -220,21 +235,23 @@ public class MapToolManager : MonoBehaviour
         if (!Physics.Raycast(world, screenCamera.transform.forward, out rayHit, 20f, layerMaskFloor))
         {
             // 마우스가 맵툴 영역을 벗어남
+            // 마우스 포인터 숨김
             selectField.SetActive(false);
-            onFieldMouse = false;
+            isMouseOnField = false;
             return;
         }
 
-        // 마우스가 UI 위에 있음
-        if (onUIMouse)
+        // 마우스가 UI 위에 있음 || 드래그 중임
+        if (isMouseOnUI || isMouseUIDragging)
         {
+            // 마우스 포인터 숨김
             selectField.SetActive(false);
-            onFieldMouse = false;
+            isMouseOnField = false;
             return;
         }
 
 
-        onFieldMouse = true;
+        isMouseOnField = true;
 
         Debug.DrawRay(world, screenCamera.transform.forward * 20f, Color.red);
 
@@ -277,7 +294,7 @@ public class MapToolManager : MonoBehaviour
         if (Input.anyKeyDown)
         {
             // 조합 키
-            if (controlToggle)
+            if (isCtrlKeyPressed)
             {
                 foreach (var pair in keyCombination)
                 {
@@ -452,7 +469,7 @@ public class MapToolManager : MonoBehaviour
                 // 플레이어
 
                 // 마우스가 필드위에서 벗어남
-                if (!onFieldMouse)
+                if (!isMouseOnField)
                 {
                     return;
                 }
@@ -464,7 +481,7 @@ public class MapToolManager : MonoBehaviour
                 }
 
                 // 플레이어 오브젝트가 이미 맵툴에 생성된 적이 있음
-                if (checkPlayer == true)
+                if (isPlayerActive == true)
                 {
                     // 기존의 플레이어 오브젝트를 제거함
                     arrMapObject[(int)palyerPostion.y, (int)palyerPostion.z, (int)palyerPostion.x].objectType = MenuElementType.EMPTY;
@@ -474,7 +491,7 @@ public class MapToolManager : MonoBehaviour
                 // 플레이어 생성 위치 저장
                 palyerPostion = position;
                 // 플레이어 생성 확인 true
-                checkPlayer = true;
+                isPlayerActive = true;
 
                 objectData.objectType = MenuElementType.PLAYER;
                 objectData.gameObject = Instantiate<GameObject>(playerPrefab);
@@ -491,7 +508,7 @@ public class MapToolManager : MonoBehaviour
                 // 목적지
 
                 // 마우스가 필드위에서 벗어남
-                if (!onFieldMouse)
+                if (!isMouseOnField)
                 {
                     return;
                 }
@@ -503,7 +520,7 @@ public class MapToolManager : MonoBehaviour
                 }
 
                 // 목적지 오브젝트가 이미 맵툴에 생성된 적이 있음
-                if (checkDest == true)
+                if (isDestActive == true)
                 {
                     // 기존의 플레이어 오브젝트를 제거함
                     arrMapObject[(int)destPostion.y, (int)destPostion.z, (int)destPostion.x].objectType = MenuElementType.EMPTY;
@@ -513,7 +530,7 @@ public class MapToolManager : MonoBehaviour
                 // 목적지 생성 위치 저장
                 destPostion = position;
                 // 목적지 생성 확인 true
-                checkDest = true;
+                isDestActive = true;
 
                 objectData.objectType = MenuElementType.DEST;
                 objectData.gameObject = Instantiate<GameObject>(playerPrefab);
@@ -530,7 +547,7 @@ public class MapToolManager : MonoBehaviour
                 // 노말 큐브
 
                 // 마우스가 필드위에서 벗어남
-                if (!onFieldMouse)
+                if (!isMouseOnField)
                 {
                     return;
                 }
@@ -556,7 +573,7 @@ public class MapToolManager : MonoBehaviour
                 // 얼음 큐브
 
                 // 마우스가 필드위에서 벗어남
-                if (!onFieldMouse)
+                if (!isMouseOnField)
                 {
                     return;
                 }
@@ -589,7 +606,7 @@ public class MapToolManager : MonoBehaviour
 
 
         // 마우스가 필드위에서 벗어남
-        if (!onFieldMouse)
+        if (!isMouseOnField)
         {
             return;
         }
@@ -601,11 +618,11 @@ public class MapToolManager : MonoBehaviour
                 return;
             case MenuElementType.PLAYER:
                 // 플레이어 생성 확인 false
-                checkPlayer = false;
+                isPlayerActive = false;
                 break;
             case MenuElementType.DEST:
                 // 목적지 생성 확인 false;
-                checkDest = false;
+                isDestActive = false;
                 break;
         }
 
@@ -617,13 +634,13 @@ public class MapToolManager : MonoBehaviour
     // 왼쪽 컨트롤 키 다운
     private void LeftControlDown()
     {
-        controlToggle = true;
+        isCtrlKeyPressed = true;
     }
 
     // 왼쪽 컨트롤 키 업
     private void LeftControlUp()
     {
-        controlToggle = false;
+        isCtrlKeyPressed = false;
     }
 
     // 세이브
