@@ -16,8 +16,8 @@ public class GameManager : MonoBehaviour
     // public 변수
     //--------------------------------
 
-    public int undoToken;                       // 복원 지점 토큰
-    public Queue<GameMessage> messageQueue;     // 게임 매니저 큐
+    public int undoToken;                           // 복원 지점 토큰
+    public Queue<GameMessage> messageQueue;         // 게임 매니저 큐
     public UnityDeque<UndoData> undoDeque;
     public GameObject gameStage;                    // 생성된 게임 오브젝트가 자식으로 들어갈 부모
     public GameObject playerPrefab;                 // 플레이어 프리팹
@@ -28,10 +28,15 @@ public class GameManager : MonoBehaviour
     // private 변수
     //--------------------------------
 
-    private int undoArraySize;                  // 배열 크기
-    private PlayerMovement playerMovement;      // 플레이어 무브먼트
+    private int undoArraySize;                      // 배열 크기
+    private int mapSizeY;                           // 맵 크기 Y축
+    private int mapSizeZ;                           // 맵 크기 Z축
+    private int mapSizeX;                           // 맵 크기 X축
+    private st_IndexPos playerPostion;              // 맵에 생성된 플레이어 오브젝트 위치 (배열 인덱스 기준)
+    private st_IndexPos destPostion;                // 맵에 생성된 목적지 오브젝트 위치
+    private PlayerMovement playerMovement;          // 플레이어 무브먼트
     private GameObject GameOverUI;
-    private ObjectData[,,] arrMapObject;        // 맵 오브젝트 배열
+    private st_MapObjectData[,,] arrMapObject;      // 맵 오브젝트 배열
     private bool restartFlag;
 
 
@@ -149,19 +154,31 @@ public class GameManager : MonoBehaviour
     // 게임 초기화
     private void InitGame()
     {
-        int iY;
         int iX;
         int iZ;
+        int iY;
+        st_MapData mapData;
+        Stream rs;
+        BinaryFormatter deserializer;
+
+        // 파일 불러오기
+        rs = new FileStream("a.dat", FileMode.Open);
+        deserializer = new BinaryFormatter();
+
+        // 맵 정보 불러오기
+        mapData = (st_MapData)deserializer.Deserialize(rs);
+        // 맵 정보 저장
+        mapSizeY = mapData.iMapSizeY;
+        mapSizeZ = mapData.iMapSizeZ;
+        mapSizeX = mapData.iMapSizeX;
+        playerPostion = mapData.playerPostion;
+        destPostion = mapData.destPostion;
 
         // 오브젝트 배열 생성
         // Y, Z, X
-        arrMapObject = new ObjectData[100, 10, 10];
+        arrMapObject = new st_MapObjectData[mapSizeY, mapSizeZ, mapSizeX];
 
-
-        Stream rs = new FileStream("a.dat", FileMode.Open);
-        BinaryFormatter deserializer = new BinaryFormatter();
-
-        arrMapObject = (ObjectData[,,])deserializer.Deserialize(rs);
+        arrMapObject = (st_MapObjectData[,,])deserializer.Deserialize(rs);
         rs.Close();
 
         // 불러오기 오브젝트 생성
@@ -176,11 +193,33 @@ public class GameManager : MonoBehaviour
                 {
                     switch (arrMapObject[iY, iZ, iX].objectType)
                     {
-                        case MenuElementType.NORMAL_CUBE:
+                        case en_MenuElementType.PLAYER:
+                            arrMapObject[iY, iZ, iX].gameObject = Instantiate<GameObject>(playerPrefab);
+                            arrMapObject[iY, iZ, iX].gameObject.name = "Player [" + iY + ", " + iZ + ", " + iX + "]";
+                            arrMapObject[iY, iZ, iX].color = Color.black;
+                            arrMapObject[iY, iZ, iX].gameObject.transform.position = new Vector3(iX, iY, iZ) + playerPrefab.transform.position;
+                            //arrMapObject[iY, iZ, iX].gameObject.transform.parent = gameStage.transform;
+                            break;
+                        case en_MenuElementType.DEST:
+                            arrMapObject[iY, iZ, iX].gameObject = Instantiate<GameObject>(playerPrefab);
+                            arrMapObject[iY, iZ, iX].gameObject.name = "Dest [" + iY + ", " + iZ + ", " + iX + "]";
+                            arrMapObject[iY, iZ, iX].color = Color.black;
+                            arrMapObject[iY, iZ, iX].gameObject.transform.position = new Vector3(iX, iY, iZ) + playerPrefab.transform.position;
+                            arrMapObject[iY, iZ, iX].gameObject.transform.parent = gameStage.transform;
+                            break;
+                        case en_MenuElementType.NORMAL_CUBE:
                             arrMapObject[iY, iZ, iX].gameObject = Instantiate<GameObject>(normalCubePrefab);
                             arrMapObject[iY, iZ, iX].gameObject.name = "NormalCube [" + iY + ", " + iZ + ", " + iX + "]";
                             arrMapObject[iY, iZ, iX].color = arrMapObject[iY, iZ, iX].gameObject.GetComponent<MeshRenderer>().material.color;
-                            arrMapObject[iY, iZ, iX].gameObject.transform.position = new Vector3(iX, iY, iZ);
+                            arrMapObject[iY, iZ, iX].gameObject.transform.position = new Vector3(iX, iY, iZ) + normalCubePrefab.transform.position;
+                            arrMapObject[iY, iZ, iX].gameObject.transform.parent = gameStage.transform;
+                            arrMapObject[iY, iZ, iX].gameObject.AddComponent<CubeMovement>();
+                            break;
+                        case en_MenuElementType.ICE_CUBE:
+                            arrMapObject[iY, iZ, iX].gameObject = Instantiate<GameObject>(iceCubePrefab);
+                            arrMapObject[iY, iZ, iX].gameObject.name = "IceCube [" + iY + ", " + iZ + ", " + iX + "]";
+                            arrMapObject[iY, iZ, iX].color = arrMapObject[iY, iZ, iX].gameObject.GetComponent<MeshRenderer>().material.color;
+                            arrMapObject[iY, iZ, iX].gameObject.transform.position = new Vector3(iX, iY, iZ) + iceCubePrefab.transform.position;
                             arrMapObject[iY, iZ, iX].gameObject.transform.parent = gameStage.transform;
                             arrMapObject[iY, iZ, iX].gameObject.AddComponent<CubeMovement>();
                             break;
