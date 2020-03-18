@@ -9,6 +9,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 using GameMessageScript;
 using UnityDequeScript;
 using MapToolGlobalScript;
+using System;
 
 public class GameManager : MonoBehaviour
 {
@@ -34,20 +35,15 @@ public class GameManager : MonoBehaviour
     private int mapSizeX;                           // 맵 크기 X축
     private st_IndexPos playerPostion;              // 맵에 생성된 플레이어 오브젝트 위치 (배열 인덱스 기준)
     private st_IndexPos destPostion;                // 맵에 생성된 목적지 오브젝트 위치
-    private PlayerMovement playerMovement;          // 플레이어 무브먼트
+    //private PlayerMovement playerMovement;          // 플레이어 무브먼트
+    private GameObject m_playerObject;              // 플레이어 오브젝트
     private GameObject GameOverUI;
+    private PlayerAction m_playerAction;            // 플레이어 액션 스크립트
     private st_MapObjectData[,,] arrMapObject;      // 맵 오브젝트 배열
+    private Action[] arrMsgProc;                    // 메시지 함수 배열
+    private KeyCode[] arrKeyCode;                   // 키 코드 배열
+    private Action[] arrKeyProc;                    // 키 처리 함수 배열
     private bool restartFlag;
-
-
-    //--------------------------------
-    // delegate
-    //--------------------------------
-
-    private delegate void MsgProc();    // 메시지 함수
-
-    private MsgProc[] arrMsgProc;       // 메시지 함수 배열
-
 
 
     //--------------------------------
@@ -56,8 +52,35 @@ public class GameManager : MonoBehaviour
 
     private void Awake()
     {
-        arrMsgProc = new MsgProc[] { new MsgProc(CreateUndoPoint), new MsgProc(UpdateUndoCube) };
+        arrMsgProc = new Action[] 
+        {
+            CreateUndoPoint,
+            UpdateUndoCube
+        };
+        arrKeyCode = new KeyCode[] 
+        {
+            KeyCode.W,              // 위
+            KeyCode.UpArrow,
+            KeyCode.S,              // 아래
+            KeyCode.DownArrow,
+            KeyCode.A,              // 왼쪽
+            KeyCode.LeftArrow,
+            KeyCode.D,              // 오른쪽
+            KeyCode.RightArrow
+        };
+        arrKeyProc = new Action[] 
+        {
+            Up,
+            Up,
+            Down,
+            Down,
+            Left,
+            Left,
+            Right,
+            Right
+        };
 
+        // 게임 초기화
         InitGame();
     }
 
@@ -76,11 +99,14 @@ public class GameManager : MonoBehaviour
         undoDeque = new UnityDeque<UndoData>();
     }
 
-    private void FixedUpdate()
+    private void Update()
     {
         GameMessage gameMsg;
         UndoData undoData;          // 되돌리기 정보
         CubeMovement cubeMovement;
+
+        // 키처리
+        KeyProc();
 
         if (restartFlag)
         {
@@ -99,43 +125,43 @@ public class GameManager : MonoBehaviour
         //    restartFlag = true;
         //}
 
-        // 되돌리기 테스트
-        if (Input.GetKeyDown(KeyCode.Tab))
-        {
-            // Deque가 비어있지 않으면 되돌리기
-            if (undoDeque.Count > 0)
-            {
-                // 뒤에서부터 데이터 하나 꺼내기
-                undoData = undoDeque.Pop_Back();
+        //// 되돌리기 테스트
+        //if (Input.GetKeyDown(KeyCode.Tab))
+        //{
+        //    // Deque가 비어있지 않으면 되돌리기
+        //    if (undoDeque.Count > 0)
+        //    {
+        //        // 뒤에서부터 데이터 하나 꺼내기
+        //        undoData = undoDeque.Pop_Back();
 
-                //-----------------------------------------------
-                // 1. 플레이어 애니메이션도 대기상태로 복구해야됨
-                //-----------------------------------------------
+        //        //-----------------------------------------------
+        //        // 1. 플레이어 애니메이션도 대기상태로 복구해야됨
+        //        //-----------------------------------------------
 
-                // 플레이어 위치 되돌리기
-                playerMovement.setPlayerPostion(undoData.playerPos);
-                // 플레이어 상태 되돌리기
-                playerMovement.UndoProcess();
+        //        // 플레이어 위치 되돌리기
+        //        playerMovement.setPlayerPostion(undoData.playerPos);
+        //        // 플레이어 상태 되돌리기
+        //        playerMovement.UndoProcess();
 
-                // 큐브 되돌리기
-                for (int i = 0; i < undoArraySize; ++i)
-                {
-                    if (!undoData.cubePosArray[i].flag)
-                    {
-                        break;
-                    }
+        //        // 큐브 되돌리기
+        //        for (int i = 0; i < undoArraySize; ++i)
+        //        {
+        //            if (!undoData.cubePosArray[i].flag)
+        //            {
+        //                break;
+        //            }
 
-                    cubeMovement = undoData.cubePosArray[i].cubeObject.GetComponent<CubeMovement>();
+        //            cubeMovement = undoData.cubePosArray[i].cubeObject.GetComponent<CubeMovement>();
 
-                    // 큐브 위치 되돌리기
-                    cubeMovement.transform.position = undoData.cubePosArray[i].CubePos;
-                    // 큐브 대기 상태로
-                    cubeMovement.UpdateStateToIdle();
-                }
-            }
+        //            // 큐브 위치 되돌리기
+        //            cubeMovement.transform.position = undoData.cubePosArray[i].CubePos;
+        //            // 큐브 대기 상태로
+        //            cubeMovement.UpdateStateToIdle();
+        //        }
+        //    }
 
-            //Debug.Log("undoDeque Count : " + undoDeque.Count);
-        }
+        //    //Debug.Log("undoDeque Count : " + undoDeque.Count);
+        //}
 
 
         // 처리할 메시지
@@ -148,6 +174,13 @@ public class GameManager : MonoBehaviour
             // 메시지 처리
             arrMsgProc[(int)gameMsg.messageType]();
         }
+    }
+
+
+    // 키 처리
+    private void KeyProc()
+    {
+        
     }
 
 
@@ -194,13 +227,18 @@ public class GameManager : MonoBehaviour
                     switch (arrMapObject[iY, iZ, iX].objectType)
                     {
                         case en_MenuElementType.PLAYER:
-                            arrMapObject[iY, iZ, iX].gameObject = Instantiate<GameObject>(playerPrefab);
+                            // 플레이어
+                            m_playerObject = Instantiate<GameObject>(playerPrefab);
+                            arrMapObject[iY, iZ, iX].gameObject = m_playerObject;
                             arrMapObject[iY, iZ, iX].gameObject.name = "Player [" + iY + ", " + iZ + ", " + iX + "]";
                             arrMapObject[iY, iZ, iX].color = Color.black;
                             arrMapObject[iY, iZ, iX].gameObject.transform.position = new Vector3(iX, iY, iZ) + playerPrefab.transform.position;
-                            //arrMapObject[iY, iZ, iX].gameObject.transform.parent = gameStage.transform;
+                            arrMapObject[iY, iZ, iX].gameObject.AddComponent<PlayerAction>();
+                            // 플레이어 액션 스크립트
+                            m_playerAction = m_playerObject.GetComponent<PlayerAction>();
                             break;
                         case en_MenuElementType.DEST:
+                            // 목적지
                             arrMapObject[iY, iZ, iX].gameObject = Instantiate<GameObject>(playerPrefab);
                             arrMapObject[iY, iZ, iX].gameObject.name = "Dest [" + iY + ", " + iZ + ", " + iX + "]";
                             arrMapObject[iY, iZ, iX].color = Color.black;
@@ -208,6 +246,7 @@ public class GameManager : MonoBehaviour
                             arrMapObject[iY, iZ, iX].gameObject.transform.parent = gameStage.transform;
                             break;
                         case en_MenuElementType.NORMAL_CUBE:
+                            // 일반 큐브
                             arrMapObject[iY, iZ, iX].gameObject = Instantiate<GameObject>(normalCubePrefab);
                             arrMapObject[iY, iZ, iX].gameObject.name = "NormalCube [" + iY + ", " + iZ + ", " + iX + "]";
                             arrMapObject[iY, iZ, iX].color = arrMapObject[iY, iZ, iX].gameObject.GetComponent<MeshRenderer>().material.color;
@@ -216,6 +255,7 @@ public class GameManager : MonoBehaviour
                             arrMapObject[iY, iZ, iX].gameObject.AddComponent<CubeMovement>();
                             break;
                         case en_MenuElementType.ICE_CUBE:
+                            // 얼음 큐브
                             arrMapObject[iY, iZ, iX].gameObject = Instantiate<GameObject>(iceCubePrefab);
                             arrMapObject[iY, iZ, iX].gameObject.name = "IceCube [" + iY + ", " + iZ + ", " + iX + "]";
                             arrMapObject[iY, iZ, iX].color = arrMapObject[iY, iZ, iX].gameObject.GetComponent<MeshRenderer>().material.color;
@@ -304,5 +344,33 @@ public class GameManager : MonoBehaviour
         }
 
         Debug.Log("복원 지점에 추가하지 못함");
+    }
+
+
+    // 방향키 위
+    private void Up()
+    {
+        
+    }
+
+
+    // 방향키 아래
+    private void Down()
+    {
+
+    }
+
+
+    // 방향키 왼쪽
+    private void Left()
+    {
+
+    }
+
+
+    // 방향키 오른쪽
+    private void Right()
+    {
+
     }
 }
