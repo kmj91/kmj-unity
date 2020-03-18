@@ -28,6 +28,29 @@ namespace MapToolGlobalScript
     [Serializable]
     public struct st_IndexPos
     {
+        public static bool operator ==(st_IndexPos left, st_IndexPos right)
+        {
+            if (left.iY != right.iY)
+            {
+                return false;
+            }
+            else if (left.iZ != right.iZ)
+            {
+                return false;
+            }
+            else if (left.iX != right.iX)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        public static bool operator !=(st_IndexPos left, st_IndexPos right)
+        {
+            return !(left == right);
+        }
+
         public int iY;
         public int iZ;
         public int iX;
@@ -35,20 +58,20 @@ namespace MapToolGlobalScript
 
     // 맵 정보
     [Serializable]
-    public struct st_MapData
+    public struct st_MapToolData
     {
         public int iMapSizeY;                       // 맵 Y축 크기
         public int iMapSizeZ;                       // 맵 Z축 크기
         public int iMapSizeX;                       // 맵 X축 크기
-        public st_IndexPos playerPostion;           // 맵툴에 생성된 플레이어 오브젝트 위치 (배열 인덱스 기준)
-        public st_IndexPos destPostion;             // 맵툴에 생성된 목적지 오브젝트 위치
+        public st_IndexPos playerPosition;          // 맵툴에 생성된 플레이어 오브젝트 위치 (배열 인덱스 기준)
+        public st_IndexPos destPosition;            // 맵툴에 생성된 목적지 오브젝트 위치
         public bool isPlayerActive;                 // 플레이어 생성 확인
         public bool isDestActive;                   // 목적지 생성 확인
     }
 
     // 맵 오브젝트 정보
     [Serializable]
-    public struct st_MapObjectData 
+    public struct st_MapToolObjectData 
     {
         public en_MenuElementType objectType;       // 오브젝트 타입
         [NonSerialized]

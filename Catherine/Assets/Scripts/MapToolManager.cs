@@ -16,7 +16,7 @@ public class MapToolManager : MonoBehaviour
     // public 변수
     //--------------------------------
 
-    public st_MapObjectData[,,] arrMapObject;       // 맵 오브젝트 배열
+    public st_MapToolObjectData[,,] arrMapObject;       // 맵 오브젝트 배열
     public GameObject gameStage;                    // 생성된 게임 오브젝트가 자식으로 들어갈 부모
     public GameObject guideLine;                    // 맵툴 격자
     public GameObject playerPrefab;                 // 플레이어 프리팹
@@ -35,8 +35,8 @@ public class MapToolManager : MonoBehaviour
     private int mapSizeX;                           // 맵 크기 X축
     private int selectElement;                      // 선택된 요소
     private Vector3 mouseFieldPoint;                // 현제 맵툴 필드위에서의 마우스 위치
-    private st_IndexPos playerPostion;              // 맵툴에 생성된 플레이어 오브젝트 위치 (배열 인덱스 기준)
-    private st_IndexPos destPostion;                // 맵툴에 생성된 목적지 오브젝트 위치
+    private st_IndexPos playerPosition;             // 맵툴에 생성된 플레이어 오브젝트 위치 (배열 인덱스 기준)
+    private st_IndexPos destPosition;               // 맵툴에 생성된 목적지 오브젝트 위치
     private bool isPlayerActive;                    // 플레이어 생성 확인
     private bool isDestActive;                      // 목적지 생성 확인
     private bool isCtrlKeyPressed;                  // 컨트롤 키 토글
@@ -169,7 +169,7 @@ public class MapToolManager : MonoBehaviour
     {
         // 오브젝트 배열 생성
         // Y, Z, X
-        arrMapObject = new st_MapObjectData[MAP_SIZE_Y, MAP_SIZE_Z, MAP_SIZE_X];
+        arrMapObject = new st_MapToolObjectData[MAP_SIZE_Y, MAP_SIZE_Z, MAP_SIZE_X];
         // 맵 크기 저장
         mapSizeY = MAP_SIZE_Y;
         mapSizeZ = MAP_SIZE_Z;
@@ -481,7 +481,7 @@ public class MapToolManager : MonoBehaviour
     // 마우스 왼쪽 클릭 오토
     private void MouseLeftClickAuto()
     {
-        st_MapObjectData st_MapObjectData;
+        st_MapToolObjectData st_MapToolObjectData;
         Vector3 position = mouseFieldPoint;
 
         // 오브젝트 생성
@@ -509,27 +509,27 @@ public class MapToolManager : MonoBehaviour
                 if (isPlayerActive == true)
                 {
                     // 기존의 플레이어 오브젝트를 제거함
-                    arrMapObject[playerPostion.iY, playerPostion.iZ, playerPostion.iX].objectType = en_MenuElementType.EMPTY;
-                    Destroy(arrMapObject[playerPostion.iY, playerPostion.iZ, playerPostion.iX].gameObject);
+                    arrMapObject[playerPosition.iY, playerPosition.iZ, playerPosition.iX].objectType = en_MenuElementType.EMPTY;
+                    Destroy(arrMapObject[playerPosition.iY, playerPosition.iZ, playerPosition.iX].gameObject);
                 }
 
                 // 플레이어 생성 위치 저장
-                playerPostion.iY = (int)position.y;
-                playerPostion.iZ = (int)position.z;
-                playerPostion.iX = (int)position.x;
+                playerPosition.iY = (int)position.y;
+                playerPosition.iZ = (int)position.z;
+                playerPosition.iX = (int)position.x;
                 // 플레이어 생성 확인 true
                 isPlayerActive = true;
 
-                st_MapObjectData.objectType = en_MenuElementType.PLAYER;
-                st_MapObjectData.gameObject = Instantiate<GameObject>(playerPrefab);
-                st_MapObjectData.gameObject.name = "Player [" + (int)position.y + ", " + (int)position.z + ", " + (int)position.x + "]";
-                st_MapObjectData.color = Color.black;
+                st_MapToolObjectData.objectType = en_MenuElementType.PLAYER;
+                st_MapToolObjectData.gameObject = Instantiate<GameObject>(playerPrefab);
+                st_MapToolObjectData.gameObject.name = "Player [" + (int)position.y + ", " + (int)position.z + ", " + (int)position.x + "]";
+                st_MapToolObjectData.color = Color.black;
                 // 오브젝트 마다 중심점이 다름
                 // 각자 맞게 배치됨
-                st_MapObjectData.gameObject.transform.position = createObject.transform.position;
-                st_MapObjectData.gameObject.transform.parent = gameStage.transform;
+                st_MapToolObjectData.gameObject.transform.position = createObject.transform.position;
+                st_MapToolObjectData.gameObject.transform.parent = gameStage.transform;
 
-                arrMapObject[(int)position.y, (int)position.z, (int)position.x] = st_MapObjectData;
+                arrMapObject[(int)position.y, (int)position.z, (int)position.x] = st_MapToolObjectData;
                 return;
             case en_MenuElementType.DEST:
                 // 목적지
@@ -550,27 +550,27 @@ public class MapToolManager : MonoBehaviour
                 if (isDestActive == true)
                 {
                     // 기존의 플레이어 오브젝트를 제거함
-                    arrMapObject[destPostion.iY, destPostion.iZ, destPostion.iX].objectType = en_MenuElementType.EMPTY;
-                    Destroy(arrMapObject[destPostion.iY, destPostion.iZ, destPostion.iX].gameObject);
+                    arrMapObject[destPosition.iY, destPosition.iZ, destPosition.iX].objectType = en_MenuElementType.EMPTY;
+                    Destroy(arrMapObject[destPosition.iY, destPosition.iZ, destPosition.iX].gameObject);
                 }
 
                 // 목적지 생성 위치 저장
-                destPostion.iY = (int)position.y;
-                destPostion.iZ = (int)position.z;
-                destPostion.iX = (int)position.x;
+                destPosition.iY = (int)position.y;
+                destPosition.iZ = (int)position.z;
+                destPosition.iX = (int)position.x;
                 // 목적지 생성 확인 true
                 isDestActive = true;
 
-                st_MapObjectData.objectType = en_MenuElementType.DEST;
-                st_MapObjectData.gameObject = Instantiate<GameObject>(playerPrefab);
-                st_MapObjectData.gameObject.name = "Dest [" + (int)position.y + ", " + (int)position.z + ", " + (int)position.x + "]";
-                st_MapObjectData.color = Color.black;
+                st_MapToolObjectData.objectType = en_MenuElementType.DEST;
+                st_MapToolObjectData.gameObject = Instantiate<GameObject>(playerPrefab);
+                st_MapToolObjectData.gameObject.name = "Dest [" + (int)position.y + ", " + (int)position.z + ", " + (int)position.x + "]";
+                st_MapToolObjectData.color = Color.black;
                 // 오브젝트 마다 중심점이 다름
                 // 각자 맞게 배치됨
-                st_MapObjectData.gameObject.transform.position = createObject.transform.position;
-                st_MapObjectData.gameObject.transform.parent = gameStage.transform;
+                st_MapToolObjectData.gameObject.transform.position = createObject.transform.position;
+                st_MapToolObjectData.gameObject.transform.parent = gameStage.transform;
 
-                arrMapObject[(int)position.y, (int)position.z, (int)position.x] = st_MapObjectData;
+                arrMapObject[(int)position.y, (int)position.z, (int)position.x] = st_MapToolObjectData;
                 break;
             case en_MenuElementType.NORMAL_CUBE:
                 // 노말 큐브
@@ -587,16 +587,16 @@ public class MapToolManager : MonoBehaviour
                     return;
                 }
 
-                st_MapObjectData.objectType = en_MenuElementType.NORMAL_CUBE;
-                st_MapObjectData.gameObject = Instantiate<GameObject>(normalCubePrefab);
-                st_MapObjectData.gameObject.name = "NormalCube [" + (int)position.y + ", " + (int)position.z + ", " + (int)position.x + "]";
-                st_MapObjectData.color = st_MapObjectData.gameObject.GetComponent<MeshRenderer>().material.color;
+                st_MapToolObjectData.objectType = en_MenuElementType.NORMAL_CUBE;
+                st_MapToolObjectData.gameObject = Instantiate<GameObject>(normalCubePrefab);
+                st_MapToolObjectData.gameObject.name = "NormalCube [" + (int)position.y + ", " + (int)position.z + ", " + (int)position.x + "]";
+                st_MapToolObjectData.color = st_MapToolObjectData.gameObject.GetComponent<MeshRenderer>().material.color;
                 // 오브젝트 마다 중심점이 다름
                 // 각자 맞게 배치됨
-                st_MapObjectData.gameObject.transform.position = createObject.transform.position;
-                st_MapObjectData.gameObject.transform.parent = gameStage.transform;
+                st_MapToolObjectData.gameObject.transform.position = createObject.transform.position;
+                st_MapToolObjectData.gameObject.transform.parent = gameStage.transform;
 
-                arrMapObject[(int)position.y, (int)position.z, (int)position.x] = st_MapObjectData;
+                arrMapObject[(int)position.y, (int)position.z, (int)position.x] = st_MapToolObjectData;
                 return;
             case en_MenuElementType.ICE_CUBE:
                 // 얼음 큐브
@@ -613,16 +613,16 @@ public class MapToolManager : MonoBehaviour
                     return;
                 }
 
-                st_MapObjectData.objectType = en_MenuElementType.ICE_CUBE;
-                st_MapObjectData.gameObject = Instantiate<GameObject>(iceCubePrefab);
-                st_MapObjectData.gameObject.name = "IceCube [" + (int)position.y + ", " + (int)position.z + ", " + (int)position.x + "]";
-                st_MapObjectData.color = st_MapObjectData.gameObject.GetComponent<MeshRenderer>().material.color;
+                st_MapToolObjectData.objectType = en_MenuElementType.ICE_CUBE;
+                st_MapToolObjectData.gameObject = Instantiate<GameObject>(iceCubePrefab);
+                st_MapToolObjectData.gameObject.name = "IceCube [" + (int)position.y + ", " + (int)position.z + ", " + (int)position.x + "]";
+                st_MapToolObjectData.color = st_MapToolObjectData.gameObject.GetComponent<MeshRenderer>().material.color;
                 // 오브젝트 마다 중심점이 다름
                 // 각자 맞게 배치됨
-                st_MapObjectData.gameObject.transform.position = createObject.transform.position;
-                st_MapObjectData.gameObject.transform.parent = gameStage.transform;
+                st_MapToolObjectData.gameObject.transform.position = createObject.transform.position;
+                st_MapToolObjectData.gameObject.transform.parent = gameStage.transform;
 
-                arrMapObject[(int)position.y, (int)position.z, (int)position.x] = st_MapObjectData;
+                arrMapObject[(int)position.y, (int)position.z, (int)position.x] = st_MapToolObjectData;
                 return;
         }
     }
@@ -675,7 +675,7 @@ public class MapToolManager : MonoBehaviour
     // 세이브
     private void Save()
     {
-        st_MapData mapData;
+        st_MapToolData mapData;
         Stream ws;
         BinaryFormatter serializer;
 
@@ -683,8 +683,8 @@ public class MapToolManager : MonoBehaviour
         mapData.iMapSizeY = mapSizeY;
         mapData.iMapSizeZ = mapSizeZ;
         mapData.iMapSizeX = mapSizeX;
-        mapData.playerPostion = playerPostion;
-        mapData.destPostion = destPostion;
+        mapData.playerPosition = playerPosition;
+        mapData.destPosition = destPosition;
         mapData.isPlayerActive = isPlayerActive;
         mapData.isDestActive = isDestActive;
 
@@ -710,7 +710,7 @@ public class MapToolManager : MonoBehaviour
         int iX;
         int iZ;
         int iY;
-        st_MapData mapData;
+        st_MapToolData mapData;
         Stream rs;
         BinaryFormatter deserializer;
 
@@ -741,17 +741,17 @@ public class MapToolManager : MonoBehaviour
         deserializer = new BinaryFormatter();
 
         // 맵 정보 불러오기
-        mapData = (st_MapData)deserializer.Deserialize(rs);
+        mapData = (st_MapToolData)deserializer.Deserialize(rs);
         // 맵 오브젝트 정보 불러오기
-        arrMapObject = (st_MapObjectData[,,])deserializer.Deserialize(rs);
+        arrMapObject = (st_MapToolObjectData[,,])deserializer.Deserialize(rs);
         rs.Close();
 
         // 맵 정보 셋팅
         mapSizeY = mapData.iMapSizeY;
         mapSizeZ = mapData.iMapSizeZ;
         mapSizeX = mapData.iMapSizeX;
-        playerPostion = mapData.playerPostion;
-        destPostion = mapData.destPostion;
+        playerPosition = mapData.playerPosition;
+        destPosition = mapData.destPosition;
         isPlayerActive = mapData.isPlayerActive;
         isDestActive = mapData.isDestActive;
 
