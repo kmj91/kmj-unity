@@ -28,6 +28,12 @@ namespace GameGlobalScript
         CUBE                // 큐브
     }
 
+    // 이동 가능 불가 구분 타입
+    public enum en_MeshType
+    {
+        BLOCK,              // 블록
+        EMPTY               // 비어있음
+    }
 
     //--------------------------------
     // struct
@@ -38,6 +44,7 @@ namespace GameGlobalScript
     {
         public en_GameObjectTag objectTag;          // 오브젝트 태그
         public en_GameObjectLayer objectLayer;      // 오브젝트 레이어
+        public en_MeshType meshData;                // 이동 가능 여부 데이터 타입
         public GameObject gameObject;               // 맵툴에 생성된 게임 오브젝트
     }
 }

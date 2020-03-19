@@ -187,6 +187,7 @@ MonoBehaviour:
     type: 3}
   iceCubePrefab: {fileID: 2508297667175379775, guid: b5c4421e61adfc44f87cb1e424f7d138,
     type: 3}
+  followCam: {fileID: 462523341}
 --- !u!4 &197667292
 Transform:
   m_ObjectHideFlags: 0
@@ -256,7 +257,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 251544137}
-  m_LocalRotation: {x: -0.08248631, y: -0, z: -0, w: 0.9965922}
+  m_LocalRotation: {x: -0.08248626, y: -0, z: -0, w: 0.9965922}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
@@ -304,8 +305,8 @@ MonoBehaviour:
   m_LockStageInInspector: 
   m_StreamingVersion: 20170927
   m_Priority: 10
-  m_LookAt: {fileID: 263380739}
-  m_Follow: {fileID: 263380739}
+  m_LookAt: {fileID: 0}
+  m_Follow: {fileID: 0}
   m_CommonLens: 1
   m_Lens:
     FieldOfView: 80
@@ -779,7 +780,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 963194225}
-  m_LocalRotation: {x: -0.04155558, y: 0, z: 0, w: 0.9991362}
+  m_LocalRotation: {x: 0.041555744, y: 0, z: 0, w: -0.9991362}
   m_LocalPosition: {x: 0, y: 1.5, z: -1}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
@@ -1320,7 +1321,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1805245854}
-  m_LocalRotation: {x: -0.0415557, y: -0, z: -0, w: 0.9991362}
+  m_LocalRotation: {x: -0.04155567, y: -0, z: -0, w: 0.9991362}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
