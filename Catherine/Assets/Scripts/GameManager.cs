@@ -421,36 +421,198 @@ public class GameManager : MonoBehaviour
         }
 
         // 이동 지점이 비어있나
-        if (m_arrMapData[iY, iZ + 1, iX].objectLayer != en_GameObjectLayer.EMPTY)
+        if (m_arrMapData[iY, iZ + 1, iX].meshData == en_MeshType.BLOCK)
         {
-            // 비어 있지 않음
-            Debug.Log("충돌");
-            return;
+            // 블록
+
+            //--------------------------------
+            // 위쪽 검사
+            //   ？
+            // ★■
+            //--------------------------------
+
+            // 맵 바깥으로 나가면 안됨
+            if (iY + 1 >= m_mapSizeY)
+            {
+                // 더이상 갈 수 없음
+                Debug.Log("맵의 끝");
+                return;
+            }
+
+            if (m_arrMapData[iY + 1, iZ + 1, iX].meshData == en_MeshType.BLOCK)
+            {
+                // 블록
+
+                // 못올라감
+                //--------------------------------
+                // 아이템을 통해 올라갈 수 있도록...
+                //--------------------------------
+            }
+            else
+            {
+                // 비어 있음
+
+                //--------------------------------
+                // 플레이어 위쪽 검사
+                // ？
+                // ★■
+                //--------------------------------
+
+                if (m_arrMapData[iY + 1, iZ, iX].meshData == en_MeshType.EMPTY)
+                {
+                    // 비어 있음
+
+                    //--------------------------------
+                    // 점프
+                    // ↗
+                    // ★■
+                    // ■
+                    //--------------------------------
+
+                    // 이동 지점 위치에 플레이어 정보 입력
+                    m_arrMapData[iY + 1, iZ + 1, iX].objectTag = en_GameObjectTag.PLAYER;
+                    m_arrMapData[iY + 1, iZ + 1, iX].objectLayer = en_GameObjectLayer.PLAYER;
+                    m_arrMapData[iY + 1, iZ + 1, iX].gameObject = m_playerObject;
+                    m_playerObject.name = "Player [" + (iY + 1) + ", " + (iZ + 1) + ", " + iX + "]";
+
+                    // 플레이어 왼쪽 이동
+                    playerPosition.iY = iY + 1;
+                    playerPosition.iZ = iZ + 1;
+
+                    // 이전 위치의 플레이어 정보 삭제
+                    m_arrMapData[iY, iZ, iX].objectTag = en_GameObjectTag.EMPTY;
+                    m_arrMapData[iY, iZ, iX].objectLayer = en_GameObjectLayer.EMPTY;
+                    m_arrMapData[iY, iZ, iX].gameObject = null;
+
+                    // 화면상의 플레이어 이동
+                    if (isPlayerActive)
+                    {
+                        m_playerAction.MoveForwardUp();
+                    }
+                }
+            }
+        }
+        else
+        {
+            // 비어 있음
+
+            //--------------------------------
+            // 아래쪽 검사
+            // ★
+            // ■？
+            //--------------------------------
+
+            if (m_arrMapData[iY - 1, iZ + 1, iX].meshData == en_MeshType.BLOCK)
+            {
+                // 블록
+
+                //--------------------------------
+                // 이동
+                // ★→
+                // ■■
+                //--------------------------------
+
+                // 이동 지점 위치에 플레이어 정보 입력
+                m_arrMapData[iY, iZ + 1, iX].objectTag = en_GameObjectTag.PLAYER;
+                m_arrMapData[iY, iZ + 1, iX].objectLayer = en_GameObjectLayer.PLAYER;
+                m_arrMapData[iY, iZ + 1, iX].gameObject = m_playerObject;
+                m_playerObject.name = "Player [" + iY + ", " + (iZ + 1) + ", " + iX + "]";
+
+                // 플레이어 왼쪽 이동
+                playerPosition.iZ = iZ + 1;
+
+                // 이전 위치의 플레이어 정보 삭제
+                m_arrMapData[iY, iZ, iX].objectTag = en_GameObjectTag.EMPTY;
+                m_arrMapData[iY, iZ, iX].objectLayer = en_GameObjectLayer.EMPTY;
+                m_arrMapData[iY, iZ, iX].gameObject = null;
+
+                // 화면상의 플레이어 이동
+                if (isPlayerActive)
+                {
+                    m_playerAction.MoveForward();
+                }
+            }
+            else
+            {
+                // 비어 있음
+
+                //--------------------------------
+                // 2칸 아래쪽 검사
+                // ★
+                // ■
+                //   ？
+                //--------------------------------
+
+                // 맵 바깥으로 나가면 안됨
+                if (iY - 2 < 0)
+                {
+                    // 더이상 갈 수 없음
+                    Debug.Log("맵의 끝");
+                    return;
+                }
+
+                if (m_arrMapData[iY - 2, iZ + 1, iX].meshData == en_MeshType.BLOCK)
+                {
+                    // 블록
+
+                    //--------------------------------
+                    // 이동
+                    // ★
+                    // ■↘
+                    //   ■
+                    //--------------------------------
+
+                    // 이동 지점 위치에 플레이어 정보 입력
+                    m_arrMapData[iY - 1, iZ + 1, iX].objectTag = en_GameObjectTag.PLAYER;
+                    m_arrMapData[iY - 1, iZ + 1, iX].objectLayer = en_GameObjectLayer.PLAYER;
+                    m_arrMapData[iY - 1, iZ + 1, iX].gameObject = m_playerObject;
+                    m_playerObject.name = "Player [" + (iY - 1) + ", " + (iZ + 1) + ", " + iX + "]";
+
+                    // 플레이어 왼쪽 이동
+                    playerPosition.iY = iY - 1;
+                    playerPosition.iZ = iZ + 1;
+
+                    // 이전 위치의 플레이어 정보 삭제
+                    m_arrMapData[iY, iZ, iX].objectTag = en_GameObjectTag.EMPTY;
+                    m_arrMapData[iY, iZ, iX].objectLayer = en_GameObjectLayer.EMPTY;
+                    m_arrMapData[iY, iZ, iX].gameObject = null;
+
+                    // 화면상의 플레이어 이동
+                    if (isPlayerActive)
+                    {
+                        m_playerAction.MoveForwardDown();
+                    }
+                }
+                else
+                {
+                    // 비어 있음
+
+                    // 매달림
+
+                    // 이동 지점 위치에 플레이어 정보 입력
+                    m_arrMapData[iY - 1, iZ + 1, iX].objectTag = en_GameObjectTag.PLAYER;
+                    m_arrMapData[iY - 1, iZ + 1, iX].objectLayer = en_GameObjectLayer.PLAYER;
+                    m_arrMapData[iY - 1, iZ + 1, iX].gameObject = m_playerObject;
+                    m_playerObject.name = "Player [" + (iY - 1) + ", " + (iZ + 1) + ", " + iX + "]";
+
+                    // 플레이어 왼쪽 이동
+                    playerPosition.iY = iY - 1;
+                    playerPosition.iZ = iZ + 1;
+
+                    // 이전 위치의 플레이어 정보 삭제
+                    m_arrMapData[iY, iZ, iX].objectTag = en_GameObjectTag.EMPTY;
+                    m_arrMapData[iY, iZ, iX].objectLayer = en_GameObjectLayer.EMPTY;
+                    m_arrMapData[iY, iZ, iX].gameObject = null;
+
+                    // 화면상의 플레이어 이동
+                    if (isPlayerActive)
+                    {
+                        m_playerAction.MoveForwardDown();
+                    }
+                }
+            }
         }
 
-        // 이동 지점 위치에 플레이어 정보 입력
-        m_arrMapData[iY, iZ + 1, iX].objectTag = en_GameObjectTag.PLAYER;
-        m_arrMapData[iY, iZ + 1, iX].objectLayer = en_GameObjectLayer.PLAYER;
-        m_arrMapData[iY, iZ + 1, iX].gameObject = m_playerObject;
-        m_playerObject.name = "Player [" + iY + ", " + (iZ + 1) + ", " + iX + "]";
-        
-        // 플레이어 앞쪽 이동
-        playerPosition.iZ = iZ + 1;
-
-        // 이전 위치의 플레이어 정보 삭제
-        m_arrMapData[iY, iZ, iX].objectTag = en_GameObjectTag.EMPTY;
-        m_arrMapData[iY, iZ, iX].objectLayer = en_GameObjectLayer.EMPTY;
-        m_arrMapData[iY, iZ, iX].gameObject = null;
-
-        // 화면상의 플레이어 이동
-        //-----------------------------------------
-        // 나중에 로직 처음 부분으로 이동
-        //-----------------------------------------
-        if (isPlayerActive)
-        {
-            m_playerAction.MoveForward();
-        }
-        
     }
 
 
@@ -470,34 +632,196 @@ public class GameManager : MonoBehaviour
         }
 
         // 이동 지점이 비어있나
-        if (m_arrMapData[iY, iZ - 1, iX].objectLayer != en_GameObjectLayer.EMPTY)
+        if (m_arrMapData[iY, iZ - 1, iX].meshData == en_MeshType.BLOCK)
         {
-            // 비어 있지 않음
-            Debug.Log("충돌");
-            return;
+            // 블록
+
+            //--------------------------------
+            // 위쪽 검사
+            //   ？
+            // ★■
+            //--------------------------------
+
+            // 맵 바깥으로 나가면 안됨
+            if (iY + 1 >= m_mapSizeY)
+            {
+                // 더이상 갈 수 없음
+                Debug.Log("맵의 끝");
+                return;
+            }
+
+            if (m_arrMapData[iY + 1, iZ - 1, iX].meshData == en_MeshType.BLOCK)
+            {
+                // 블록
+
+                // 못올라감
+                //--------------------------------
+                // 아이템을 통해 올라갈 수 있도록...
+                //--------------------------------
+            }
+            else
+            {
+                // 비어 있음
+
+                //--------------------------------
+                // 플레이어 위쪽 검사
+                // ？
+                // ★■
+                //--------------------------------
+
+                if (m_arrMapData[iY + 1, iZ, iX].meshData == en_MeshType.EMPTY)
+                {
+                    // 비어 있음
+
+                    //--------------------------------
+                    // 점프
+                    // ↗
+                    // ★■
+                    // ■
+                    //--------------------------------
+
+                    // 이동 지점 위치에 플레이어 정보 입력
+                    m_arrMapData[iY + 1, iZ - 1, iX].objectTag = en_GameObjectTag.PLAYER;
+                    m_arrMapData[iY + 1, iZ - 1, iX].objectLayer = en_GameObjectLayer.PLAYER;
+                    m_arrMapData[iY + 1, iZ - 1, iX].gameObject = m_playerObject;
+                    m_playerObject.name = "Player [" + (iY + 1) + ", " + (iZ - 1) + ", " + iX + "]";
+
+                    // 플레이어 왼쪽 이동
+                    playerPosition.iY = iY + 1;
+                    playerPosition.iZ = iZ - 1;
+
+                    // 이전 위치의 플레이어 정보 삭제
+                    m_arrMapData[iY, iZ, iX].objectTag = en_GameObjectTag.EMPTY;
+                    m_arrMapData[iY, iZ, iX].objectLayer = en_GameObjectLayer.EMPTY;
+                    m_arrMapData[iY, iZ, iX].gameObject = null;
+
+                    // 화면상의 플레이어 이동
+                    if (isPlayerActive)
+                    {
+                        m_playerAction.MoveBackUp();
+                    }
+                }
+            }
         }
-
-        // 이동 지점 위치에 플레이어 정보 입력
-        m_arrMapData[iY, iZ - 1, iX].objectTag = en_GameObjectTag.PLAYER;
-        m_arrMapData[iY, iZ - 1, iX].objectLayer = en_GameObjectLayer.PLAYER;
-        m_arrMapData[iY, iZ - 1, iX].gameObject = m_playerObject;
-        m_playerObject.name = "Player [" + iY + ", " + (iZ - 1) + ", " + iX + "]";
-
-        // 플레이어 뒤쪽 이동
-        playerPosition.iZ = iZ - 1;
-
-        // 이전 위치의 플레이어 정보 삭제
-        m_arrMapData[iY, iZ, iX].objectTag = en_GameObjectTag.EMPTY;
-        m_arrMapData[iY, iZ, iX].objectLayer = en_GameObjectLayer.EMPTY;
-        m_arrMapData[iY, iZ, iX].gameObject = null;
-
-        // 화면상의 플레이어 이동
-        //-----------------------------------------
-        // 나중에 로직 처음 부분으로 이동
-        //-----------------------------------------
-        if (isPlayerActive)
+        else
         {
-            m_playerAction.MoveBack();
+            // 비어 있음
+
+            //--------------------------------
+            // 아래쪽 검사
+            // ★
+            // ■？
+            //--------------------------------
+
+            if (m_arrMapData[iY - 1, iZ - 1, iX].meshData == en_MeshType.BLOCK)
+            {
+                // 블록
+
+                //--------------------------------
+                // 이동
+                // ★→
+                // ■■
+                //--------------------------------
+
+                // 이동 지점 위치에 플레이어 정보 입력
+                m_arrMapData[iY, iZ - 1, iX].objectTag = en_GameObjectTag.PLAYER;
+                m_arrMapData[iY, iZ - 1, iX].objectLayer = en_GameObjectLayer.PLAYER;
+                m_arrMapData[iY, iZ - 1, iX].gameObject = m_playerObject;
+                m_playerObject.name = "Player [" + iY + ", " + (iZ - 1) + ", " + iX + "]";
+
+                // 플레이어 왼쪽 이동
+                playerPosition.iZ = iZ - 1;
+
+                // 이전 위치의 플레이어 정보 삭제
+                m_arrMapData[iY, iZ, iX].objectTag = en_GameObjectTag.EMPTY;
+                m_arrMapData[iY, iZ, iX].objectLayer = en_GameObjectLayer.EMPTY;
+                m_arrMapData[iY, iZ, iX].gameObject = null;
+
+                // 화면상의 플레이어 이동
+                if (isPlayerActive)
+                {
+                    m_playerAction.MoveBack();
+                }
+            }
+            else
+            {
+                // 비어 있음
+
+                //--------------------------------
+                // 2칸 아래쪽 검사
+                // ★
+                // ■
+                //   ？
+                //--------------------------------
+
+                // 맵 바깥으로 나가면 안됨
+                if (iY - 2 < 0)
+                {
+                    // 더이상 갈 수 없음
+                    Debug.Log("맵의 끝");
+                    return;
+                }
+
+                if (m_arrMapData[iY - 2, iZ - 1, iX].meshData == en_MeshType.BLOCK)
+                {
+                    // 블록
+
+                    //--------------------------------
+                    // 이동
+                    // ★
+                    // ■↘
+                    //   ■
+                    //--------------------------------
+
+                    // 이동 지점 위치에 플레이어 정보 입력
+                    m_arrMapData[iY - 1, iZ - 1, iX].objectTag = en_GameObjectTag.PLAYER;
+                    m_arrMapData[iY - 1, iZ - 1, iX].objectLayer = en_GameObjectLayer.PLAYER;
+                    m_arrMapData[iY - 1, iZ - 1, iX].gameObject = m_playerObject;
+                    m_playerObject.name = "Player [" + (iY - 1) + ", " + (iZ - 1) + ", " + iX + "]";
+
+                    // 플레이어 왼쪽 이동
+                    playerPosition.iY = iY - 1;
+                    playerPosition.iZ = iZ - 1;
+
+                    // 이전 위치의 플레이어 정보 삭제
+                    m_arrMapData[iY, iZ, iX].objectTag = en_GameObjectTag.EMPTY;
+                    m_arrMapData[iY, iZ, iX].objectLayer = en_GameObjectLayer.EMPTY;
+                    m_arrMapData[iY, iZ, iX].gameObject = null;
+
+                    // 화면상의 플레이어 이동
+                    if (isPlayerActive)
+                    {
+                        m_playerAction.MoveBackDown();
+                    }
+                }
+                else
+                {
+                    // 비어 있음
+
+                    // 매달림
+
+                    // 이동 지점 위치에 플레이어 정보 입력
+                    m_arrMapData[iY - 1, iZ - 1, iX].objectTag = en_GameObjectTag.PLAYER;
+                    m_arrMapData[iY - 1, iZ - 1, iX].objectLayer = en_GameObjectLayer.PLAYER;
+                    m_arrMapData[iY - 1, iZ - 1, iX].gameObject = m_playerObject;
+                    m_playerObject.name = "Player [" + (iY - 1) + ", " + (iZ - 1) + ", " + iX + "]";
+
+                    // 플레이어 왼쪽 이동
+                    playerPosition.iY = iY - 1;
+                    playerPosition.iZ = iZ - 1;
+
+                    // 이전 위치의 플레이어 정보 삭제
+                    m_arrMapData[iY, iZ, iX].objectTag = en_GameObjectTag.EMPTY;
+                    m_arrMapData[iY, iZ, iX].objectLayer = en_GameObjectLayer.EMPTY;
+                    m_arrMapData[iY, iZ, iX].gameObject = null;
+
+                    // 화면상의 플레이어 이동
+                    if (isPlayerActive)
+                    {
+                        m_playerAction.MoveBackDown();
+                    }
+                }
+            }
         }
     }
 
@@ -518,34 +842,196 @@ public class GameManager : MonoBehaviour
         }
 
         // 이동 지점이 비어있나
-        if (m_arrMapData[iY, iZ, iX - 1].objectLayer != en_GameObjectLayer.EMPTY)
+        if (m_arrMapData[iY, iZ, iX - 1].meshData == en_MeshType.BLOCK)
         {
-            // 비어 있지 않음
-            Debug.Log("충돌");
-            return;
+            // 블록
+
+            //--------------------------------
+            // 위쪽 검사
+            //   ？
+            // ★■
+            //--------------------------------
+
+            // 맵 바깥으로 나가면 안됨
+            if (iY + 1 >= m_mapSizeY)
+            {
+                // 더이상 갈 수 없음
+                Debug.Log("맵의 끝");
+                return;
+            }
+
+            if (m_arrMapData[iY + 1, iZ, iX - 1].meshData == en_MeshType.BLOCK)
+            {
+                // 블록
+
+                // 못올라감
+                //--------------------------------
+                // 아이템을 통해 올라갈 수 있도록...
+                //--------------------------------
+            }
+            else
+            {
+                // 비어 있음
+
+                //--------------------------------
+                // 플레이어 위쪽 검사
+                // ？
+                // ★■
+                //--------------------------------
+
+                if (m_arrMapData[iY + 1, iZ, iX].meshData == en_MeshType.EMPTY)
+                {
+                    // 비어 있음
+
+                    //--------------------------------
+                    // 점프
+                    // ↗
+                    // ★■
+                    // ■
+                    //--------------------------------
+
+                    // 이동 지점 위치에 플레이어 정보 입력
+                    m_arrMapData[iY + 1, iZ, iX - 1].objectTag = en_GameObjectTag.PLAYER;
+                    m_arrMapData[iY + 1, iZ, iX - 1].objectLayer = en_GameObjectLayer.PLAYER;
+                    m_arrMapData[iY + 1, iZ, iX - 1].gameObject = m_playerObject;
+                    m_playerObject.name = "Player [" + (iY + 1) + ", " + iZ + ", " + (iX - 1) + "]";
+
+                    // 플레이어 왼쪽 이동
+                    playerPosition.iY = iY + 1;
+                    playerPosition.iX = iX - 1;
+
+                    // 이전 위치의 플레이어 정보 삭제
+                    m_arrMapData[iY, iZ, iX].objectTag = en_GameObjectTag.EMPTY;
+                    m_arrMapData[iY, iZ, iX].objectLayer = en_GameObjectLayer.EMPTY;
+                    m_arrMapData[iY, iZ, iX].gameObject = null;
+
+                    // 화면상의 플레이어 이동
+                    if (isPlayerActive)
+                    {
+                        m_playerAction.MoveLeftUp();
+                    }
+                }
+            }
         }
-
-        // 이동 지점 위치에 플레이어 정보 입력
-        m_arrMapData[iY, iZ, iX - 1].objectTag = en_GameObjectTag.PLAYER;
-        m_arrMapData[iY, iZ, iX - 1].objectLayer = en_GameObjectLayer.PLAYER;
-        m_arrMapData[iY, iZ, iX - 1].gameObject = m_playerObject;
-        m_playerObject.name = "Player [" + iY + ", " + iZ + ", " + (iX - 1) + "]";
-
-        // 플레이어 왼쪽 이동
-        playerPosition.iX = iX - 1;
-
-        // 이전 위치의 플레이어 정보 삭제
-        m_arrMapData[iY, iZ, iX].objectTag = en_GameObjectTag.EMPTY;
-        m_arrMapData[iY, iZ, iX].objectLayer = en_GameObjectLayer.EMPTY;
-        m_arrMapData[iY, iZ, iX].gameObject = null;
-
-        // 화면상의 플레이어 이동
-        //-----------------------------------------
-        // 나중에 로직 처음 부분으로 이동
-        //-----------------------------------------
-        if (isPlayerActive)
+        else
         {
-            m_playerAction.MoveLeft();
+            // 비어 있음
+
+            //--------------------------------
+            // 아래쪽 검사
+            // ★
+            // ■？
+            //--------------------------------
+
+            if (m_arrMapData[iY - 1, iZ, iX - 1].meshData == en_MeshType.BLOCK)
+            {
+                // 블록
+
+                //--------------------------------
+                // 이동
+                // ★→
+                // ■■
+                //--------------------------------
+
+                // 이동 지점 위치에 플레이어 정보 입력
+                m_arrMapData[iY, iZ, iX - 1].objectTag = en_GameObjectTag.PLAYER;
+                m_arrMapData[iY, iZ, iX - 1].objectLayer = en_GameObjectLayer.PLAYER;
+                m_arrMapData[iY, iZ, iX - 1].gameObject = m_playerObject;
+                m_playerObject.name = "Player [" + iY + ", " + iZ + ", " + (iX - 1) + "]";
+
+                // 플레이어 왼쪽 이동
+                playerPosition.iX = iX - 1;
+
+                // 이전 위치의 플레이어 정보 삭제
+                m_arrMapData[iY, iZ, iX].objectTag = en_GameObjectTag.EMPTY;
+                m_arrMapData[iY, iZ, iX].objectLayer = en_GameObjectLayer.EMPTY;
+                m_arrMapData[iY, iZ, iX].gameObject = null;
+
+                // 화면상의 플레이어 이동
+                if (isPlayerActive)
+                {
+                    m_playerAction.MoveLeft();
+                }
+            }
+            else
+            {
+                // 비어 있음
+
+                //--------------------------------
+                // 2칸 아래쪽 검사
+                // ★
+                // ■
+                //   ？
+                //--------------------------------
+
+                // 맵 바깥으로 나가면 안됨
+                if (iY - 2 < 0)
+                {
+                    // 더이상 갈 수 없음
+                    Debug.Log("맵의 끝");
+                    return;
+                }
+
+                if (m_arrMapData[iY - 2, iZ, iX - 1].meshData == en_MeshType.BLOCK)
+                {
+                    // 블록
+
+                    //--------------------------------
+                    // 이동
+                    // ★
+                    // ■↘
+                    //   ■
+                    //--------------------------------
+
+                    // 이동 지점 위치에 플레이어 정보 입력
+                    m_arrMapData[iY - 1, iZ, iX - 1].objectTag = en_GameObjectTag.PLAYER;
+                    m_arrMapData[iY - 1, iZ, iX - 1].objectLayer = en_GameObjectLayer.PLAYER;
+                    m_arrMapData[iY - 1, iZ, iX - 1].gameObject = m_playerObject;
+                    m_playerObject.name = "Player [" + (iY - 1) + ", " + iZ + ", " + (iX - 1) + "]";
+
+                    // 플레이어 왼쪽 이동
+                    playerPosition.iY = iY - 1;
+                    playerPosition.iX = iX - 1;
+
+                    // 이전 위치의 플레이어 정보 삭제
+                    m_arrMapData[iY, iZ, iX].objectTag = en_GameObjectTag.EMPTY;
+                    m_arrMapData[iY, iZ, iX].objectLayer = en_GameObjectLayer.EMPTY;
+                    m_arrMapData[iY, iZ, iX].gameObject = null;
+
+                    // 화면상의 플레이어 이동
+                    if (isPlayerActive)
+                    {
+                        m_playerAction.MoveLeftDown();
+                    }
+                }
+                else
+                {
+                    // 비어 있음
+
+                    // 매달림
+
+                    // 이동 지점 위치에 플레이어 정보 입력
+                    m_arrMapData[iY - 1, iZ, iX - 1].objectTag = en_GameObjectTag.PLAYER;
+                    m_arrMapData[iY - 1, iZ, iX - 1].objectLayer = en_GameObjectLayer.PLAYER;
+                    m_arrMapData[iY - 1, iZ, iX - 1].gameObject = m_playerObject;
+                    m_playerObject.name = "Player [" + (iY - 1) + ", " + iZ + ", " + (iX - 1) + "]";
+
+                    // 플레이어 왼쪽 이동
+                    playerPosition.iY = iY - 1;
+                    playerPosition.iX = iX + 1;
+
+                    // 이전 위치의 플레이어 정보 삭제
+                    m_arrMapData[iY, iZ, iX].objectTag = en_GameObjectTag.EMPTY;
+                    m_arrMapData[iY, iZ, iX].objectLayer = en_GameObjectLayer.EMPTY;
+                    m_arrMapData[iY, iZ, iX].gameObject = null;
+
+                    // 화면상의 플레이어 이동
+                    if (isPlayerActive)
+                    {
+                        m_playerAction.MoveLeftDown();
+                    }
+                }
+            }
         }
     }
 
@@ -590,6 +1076,9 @@ public class GameManager : MonoBehaviour
                 // 블록
 
                 // 못올라감
+                //--------------------------------
+                // 아이템을 통해 올라갈 수 있도록...
+                //--------------------------------
             }
             else
             {
@@ -601,7 +1090,7 @@ public class GameManager : MonoBehaviour
                 // ★■
                 //--------------------------------
 
-                if (m_arrMapData[iY + 1, iZ, iX + 1].meshData == en_MeshType.EMPTY)
+                if (m_arrMapData[iY + 1, iZ, iX].meshData == en_MeshType.EMPTY)
                 {
                     // 비어 있음
 
@@ -630,7 +1119,7 @@ public class GameManager : MonoBehaviour
                     // 화면상의 플레이어 이동
                     if (isPlayerActive)
                     {
-                        //m_playerAction.MoveRight();
+                        m_playerAction.MoveRightUp();
                     }
                 }
             }
@@ -723,7 +1212,7 @@ public class GameManager : MonoBehaviour
                     // 화면상의 플레이어 이동
                     if (isPlayerActive)
                     {
-                        //m_playerAction.MoveRight();
+                        m_playerAction.MoveRightDown();
                     }
                 }
                 else
@@ -750,7 +1239,7 @@ public class GameManager : MonoBehaviour
                     // 화면상의 플레이어 이동
                     if (isPlayerActive)
                     {
-                        //m_playerAction.MoveRight();
+                        m_playerAction.MoveRightDown();
                     }
                 }
             }
