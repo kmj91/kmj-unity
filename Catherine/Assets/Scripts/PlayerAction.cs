@@ -4,6 +4,18 @@ using UnityEngine;
 
 public class PlayerAction : MonoBehaviour
 {
+    public float m_speed;                   // 캐릭터 이동 속도
+
+    private GameManager m_gameManger;        // 게임 매니저
+
+
+    // 초기화
+    public void Init(GameManager gameManager, float speed)
+    {
+        m_gameManger = gameManager;
+        m_speed = speed;
+    }
+
     public void MoveForward()
     {
         transform.position = transform.position + Vector3.forward;

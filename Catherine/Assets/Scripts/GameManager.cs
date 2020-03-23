@@ -20,6 +20,7 @@ public class GameManager : MonoBehaviour
     // public 변수
     //--------------------------------
 
+    public float playerSpeed;                       // 플레이어 이동 속도
     public int undoToken;                           // 복원 지점 토큰
     public Queue<GameMessage> messageQueue;         // 게임 매니저 큐
     public UnityDeque<UndoData> undoDeque;
@@ -28,6 +29,7 @@ public class GameManager : MonoBehaviour
     public GameObject normalCubePrefab;             // 일반 큐브 프리팹
     public GameObject iceCubePrefab;                // 얼음 큐브 프리팹
     public GameObject followCam;                    // 카메라
+    public bool canPlayerControl;                   // 플레이어 조작 플래그
 
     //--------------------------------
     // private 변수
@@ -47,11 +49,16 @@ public class GameManager : MonoBehaviour
     private PlayerAction m_playerAction;            // 플레이어 액션 스크립트
     private st_GameObjectData[,,] m_arrMapData;     // 게임 맵 오브젝트 정보 배열
     private Action[] arrMsgProc;                    // 메시지 함수 배열
+    private KeyCode[] arrKeyDownCode;               // 키 다운 코드 배열
+    private Action[] arrKeyDownProc;                // 키 다운 함수 배열
     private KeyCode[] arrKeyAutoCode;               // 키 오토 코드 배열
     private Action[] arrKeyAutoProc;                // 키 오토 함수 배열
+    private KeyCode[] arrKeyUpCode;                 // 키 업 코드 배열
+    private Action[] arrKeyUpProc;                  // 키 업 함수 배열
     private bool restartFlag;
     private bool isPlayerActive;                    // 플레이어 생성 확인
     private bool isDestActive;                      // 목적지 생성 확인
+    private bool isGripKeyPressed;                  // 붙잡기 누름
 
     //--------------------------------
     // private 함수
@@ -63,6 +70,14 @@ public class GameManager : MonoBehaviour
         {
             CreateUndoPoint,
             UpdateUndoCube
+        };
+        arrKeyDownCode = new KeyCode[]
+        {
+            KeyCode.Mouse0          // 마우스 왼쪽 클릭
+        };
+        arrKeyDownProc = new Action[]
+        {
+            GripStart               // 붙잡기 시작
         };
         arrKeyAutoCode = new KeyCode[] 
         {
@@ -85,6 +100,14 @@ public class GameManager : MonoBehaviour
             Left,
             Right,
             Right
+        };
+        arrKeyUpCode = new KeyCode[]
+        {
+            KeyCode.Mouse0          // 마우스 왼쪽 클릭
+        };
+        arrKeyUpProc = new Action[]
+        {
+            GripEnd                 // 붙잡기 끝
         };
 
         // 게임 초기화
@@ -202,12 +225,25 @@ public class GameManager : MonoBehaviour
         int iCnt;
         int iSize;
 
-        // 키 오토
-        //-----------------------------------------
-        // 나중에 anyKey로 수정해야됨
-        //-----------------------------------------
+        
         if (Input.anyKeyDown)
         {
+            // 키 다운
+            iSize = arrKeyDownCode.Length;
+            iCnt = 0;
+            while (iCnt < iSize)
+            {
+                if (Input.GetKeyDown(arrKeyDownCode[iCnt]))
+                {
+                    arrKeyDownProc[iCnt]();
+                }
+                ++iCnt;
+            }
+
+            // 키 오토
+            //-----------------------------------------
+            // 나중에 getKey로 수정해야됨
+            //-----------------------------------------
             iSize = arrKeyAutoCode.Length;
             iCnt = 0;
             while (iCnt < iSize)
@@ -218,6 +254,18 @@ public class GameManager : MonoBehaviour
                 }
                 ++iCnt;
             }
+        }
+
+        // 키 업
+        iSize = arrKeyUpCode.Length;
+        iCnt = 0;
+        while (iCnt < iSize)
+        {
+            if (Input.GetKeyUp(arrKeyUpCode[iCnt]))
+            {
+                arrKeyUpProc[iCnt]();
+            }
+            ++iCnt;
         }
     }
 
@@ -282,6 +330,10 @@ public class GameManager : MonoBehaviour
                             m_arrMapData[iY, iZ, iX].meshData = en_MeshType.EMPTY;
                             // 플레이어 액션 스크립트
                             m_playerAction = m_playerObject.GetComponent<PlayerAction>();
+                            // 초기화
+                            m_playerAction.Init(this, playerSpeed);
+                            // 플레이어 조작 플래그
+                            canPlayerControl = true;
                             break;
                         case en_MenuElementType.DEST:
                             // 목적지
@@ -405,8 +457,111 @@ public class GameManager : MonoBehaviour
     }
 
 
+
+    // 붙잡기 시작
+    private void GripStart()
+    {
+        isGripKeyPressed = true;
+    }
+
+
+    // 붙잡기 끝
+    private void GripEnd()
+    {
+        isGripKeyPressed = false;
+    }
+
+
     // 방향키 위
     private void Up()
+    {
+        // 플레이어 조작 불가
+        if (!canPlayerControl)
+        {
+            return;
+        }
+
+        // 붙잡기
+        if (isGripKeyPressed)
+        {
+            PlayerGripForward();
+        }
+        // 일반
+        else
+        {
+            PlayerMoveForward();
+        }
+    }
+
+
+    // 방향키 아래
+    private void Down()
+    {
+        // 플레이어 조작 불가
+        if (!canPlayerControl)
+        {
+            return;
+        }
+
+        // 붙잡기
+        if (isGripKeyPressed)
+        {
+            PlayerGripBack();
+        }
+        // 일반
+        else
+        {
+            PlayerMoveBack();
+        }
+    }
+
+
+    // 방향키 왼쪽
+    private void Left()
+    {
+        // 플레이어 조작 불가
+        if (!canPlayerControl)
+        {
+            return;
+        }
+
+        // 붙잡기
+        if (isGripKeyPressed)
+        {
+            PlayerGripLeft();
+        }
+        // 일반
+        else
+        {
+            PlayerMoveLeft();
+        }
+    }
+
+
+    // 방향키 오른쪽
+    private void Right()
+    {
+        // 플레이어 조작 불가
+        if (!canPlayerControl)
+        {
+            return;
+        }
+
+        // 붙잡기
+        if (isGripKeyPressed)
+        {
+            PlayerGripRight();
+        }
+        // 일반
+        else
+        {
+            PlayerMoveRight();
+        }
+    }
+
+
+    // 앞으로 이동
+    private void PlayerMoveForward()
     {
         int iY = playerPosition.iY;     // 플레이어 위치 Y
         int iZ = playerPosition.iZ;     // 플레이어 위치 Z
@@ -612,12 +767,11 @@ public class GameManager : MonoBehaviour
                 }
             }
         }
-
     }
 
 
-    // 방향키 아래
-    private void Down()
+    // 뒤로 이동
+    private void PlayerMoveBack()
     {
         int iY = playerPosition.iY;     // 플레이어 위치 Y
         int iZ = playerPosition.iZ;     // 플레이어 위치 Z
@@ -826,8 +980,8 @@ public class GameManager : MonoBehaviour
     }
 
 
-    // 방향키 왼쪽
-    private void Left()
+    // 왼쪽 이동
+    private void PlayerMoveLeft()
     {
         int iY = playerPosition.iY;     // 플레이어 위치 Y
         int iZ = playerPosition.iZ;     // 플레이어 위치 Z
@@ -1036,8 +1190,8 @@ public class GameManager : MonoBehaviour
     }
 
 
-    // 방향키 오른쪽
-    private void Right()
+    // 오른쪽 이동
+    private void PlayerMoveRight()
     {
         int iY = playerPosition.iY;     // 플레이어 위치 Y
         int iZ = playerPosition.iZ;     // 플레이어 위치 Z
@@ -1244,5 +1398,33 @@ public class GameManager : MonoBehaviour
                 }
             }
         }
+    }
+
+
+    // 붙잡기 앞
+    private void PlayerGripForward()
+    {
+
+    }
+
+
+    // 붙잡기 뒤
+    private void PlayerGripBack()
+    {
+
+    }
+
+
+    // 붙잡기 왼쪽
+    private void PlayerGripLeft()
+    {
+
+    }
+
+
+    // 붙잡기 오른쪽
+    private void PlayerGripRight()
+    {
+
     }
 }
