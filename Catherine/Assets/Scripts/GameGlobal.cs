@@ -35,6 +35,16 @@ namespace GameGlobalScript
         EMPTY               // 비어있음
     }
 
+    // 방향
+    public enum en_Direction
+    {
+        FORWARD,
+        BACK,
+        LEFT,
+        RIGHT
+    }
+
+
     //--------------------------------
     // struct
     //--------------------------------

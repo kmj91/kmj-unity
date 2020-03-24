@@ -29,7 +29,9 @@ public class GameManager : MonoBehaviour
     public GameObject normalCubePrefab;             // 일반 큐브 프리팹
     public GameObject iceCubePrefab;                // 얼음 큐브 프리팹
     public GameObject followCam;                    // 카메라
+    public en_Direction m_playerDirection;          // 플레이어 방향
     public bool canPlayerControl;                   // 플레이어 조작 플래그
+    
 
     //--------------------------------
     // private 변수
@@ -46,6 +48,7 @@ public class GameManager : MonoBehaviour
     //private PlayerMovement playerMovement;          // 플레이어 무브먼트
     private GameObject m_playerObject;              // 플레이어 오브젝트
     private GameObject GameOverUI;
+    private Camera m_mainCamera;                    // 메인 카메라
     private PlayerAction m_playerAction;            // 플레이어 액션 스크립트
     private st_GameObjectData[,,] m_arrMapData;     // 게임 맵 오브젝트 정보 배열
     private Action[] arrMsgProc;                    // 메시지 함수 배열
@@ -121,6 +124,8 @@ public class GameManager : MonoBehaviour
         //playerMovement = GameObject.Find("Player").GetComponent<PlayerMovement>();
         // UI
         GameOverUI = GameObject.Find("Canvas").transform.Find("gameOverUI").gameObject;
+        // 메인 카메라
+        m_mainCamera = Camera.main;
         // 다시시작 플래그
         restartFlag = false;
         // 초기화
@@ -475,21 +480,73 @@ public class GameManager : MonoBehaviour
     // 방향키 위
     private void Up()
     {
+        float CameraAngleY;      // 카메라 방향
+
         // 플레이어 조작 불가
         if (!canPlayerControl)
         {
             return;
         }
 
-        // 붙잡기
-        if (isGripKeyPressed)
+        //------------------------------------------------
+        // 카메라 방향에 따른 키 입력 값 변화
+        //------------------------------------------------
+        CameraAngleY = m_mainCamera.transform.eulerAngles.y;
+        // 오른쪽 →
+        if (45 <= CameraAngleY && CameraAngleY < 135)
         {
-            PlayerGripForward();
+            // 붙잡기
+            if (isGripKeyPressed)
+            {
+                PlayerGripRight();
+            }
+            // 일반
+            else
+            {
+                PlayerMoveRight();
+            }
         }
-        // 일반
+        // 뒤쪽 ↓
+        else if (135 <= CameraAngleY && CameraAngleY < 225)
+        {
+            // 붙잡기
+            if (isGripKeyPressed)
+            {
+                PlayerGripBack();
+            }
+            // 일반
+            else
+            {
+                PlayerMoveBack();
+            }
+        }
+        // 왼쪽 ←
+        else if (225 <= CameraAngleY && CameraAngleY < 315)
+        {
+            // 붙잡기
+            if (isGripKeyPressed)
+            {
+                PlayerGripLeft();
+            }
+            // 일반
+            else
+            {
+                PlayerMoveLeft();
+            }
+        }
+        // 앞쪽 ↑
         else
         {
-            PlayerMoveForward();
+            // 붙잡기
+            if (isGripKeyPressed)
+            {
+                PlayerGripForward();
+            }
+            // 일반
+            else
+            {
+                PlayerMoveForward();
+            }
         }
     }
 
@@ -497,21 +554,73 @@ public class GameManager : MonoBehaviour
     // 방향키 아래
     private void Down()
     {
+        float CameraAngleY;      // 카메라 방향
+
         // 플레이어 조작 불가
         if (!canPlayerControl)
         {
             return;
         }
 
-        // 붙잡기
-        if (isGripKeyPressed)
+        //------------------------------------------------
+        // 카메라 방향에 따른 키 입력 값 변화
+        //------------------------------------------------
+        CameraAngleY = m_mainCamera.transform.eulerAngles.y;
+        // 오른쪽 →
+        if (45 <= CameraAngleY && CameraAngleY < 135)
         {
-            PlayerGripBack();
+            // 붙잡기
+            if (isGripKeyPressed)
+            {
+                PlayerGripLeft();
+            }
+            // 일반
+            else
+            {
+                PlayerMoveLeft();
+            }
         }
-        // 일반
+        // 뒤쪽 ↓
+        else if (135 <= CameraAngleY && CameraAngleY < 225)
+        {
+            // 붙잡기
+            if (isGripKeyPressed)
+            {
+                PlayerGripForward();
+            }
+            // 일반
+            else
+            {
+                PlayerMoveForward();
+            }
+        }
+        // 왼쪽 ←
+        else if (225 <= CameraAngleY && CameraAngleY < 315)
+        {
+            // 붙잡기
+            if (isGripKeyPressed)
+            {
+                PlayerGripRight();
+            }
+            // 일반
+            else
+            {
+                PlayerMoveRight();
+            }
+        }
+        // 앞쪽 ↑
         else
         {
-            PlayerMoveBack();
+            // 붙잡기
+            if (isGripKeyPressed)
+            {
+                PlayerGripBack();
+            }
+            // 일반
+            else
+            {
+                PlayerMoveBack();
+            }
         }
     }
 
@@ -519,21 +628,73 @@ public class GameManager : MonoBehaviour
     // 방향키 왼쪽
     private void Left()
     {
+        float CameraAngleY;      // 카메라 방향
+
         // 플레이어 조작 불가
         if (!canPlayerControl)
         {
             return;
         }
 
-        // 붙잡기
-        if (isGripKeyPressed)
+        //------------------------------------------------
+        // 카메라 방향에 따른 키 입력 값 변화
+        //------------------------------------------------
+        CameraAngleY = m_mainCamera.transform.eulerAngles.y;
+        // 오른쪽 →
+        if (45 <= CameraAngleY && CameraAngleY < 135)
         {
-            PlayerGripLeft();
+            // 붙잡기
+            if (isGripKeyPressed)
+            {
+                PlayerGripForward();
+            }
+            // 일반
+            else
+            {
+                PlayerMoveForward();
+            }
         }
-        // 일반
+        // 뒤쪽 ↓
+        else if (135 <= CameraAngleY && CameraAngleY < 225)
+        {
+            // 붙잡기
+            if (isGripKeyPressed)
+            {
+                PlayerGripRight();
+            }
+            // 일반
+            else
+            {
+                PlayerMoveRight();
+            }
+        }
+        // 왼쪽 ←
+        else if (225 <= CameraAngleY && CameraAngleY < 315)
+        {
+            // 붙잡기
+            if (isGripKeyPressed)
+            {
+                PlayerGripBack();
+            }
+            // 일반
+            else
+            {
+                PlayerMoveBack();
+            }
+        }
+        // 앞쪽 ↑
         else
         {
-            PlayerMoveLeft();
+            // 붙잡기
+            if (isGripKeyPressed)
+            {
+                PlayerGripLeft();
+            }
+            // 일반
+            else
+            {
+                PlayerMoveLeft();
+            }
         }
     }
 
@@ -541,21 +702,73 @@ public class GameManager : MonoBehaviour
     // 방향키 오른쪽
     private void Right()
     {
+        float CameraAngleY;      // 카메라 방향
+
         // 플레이어 조작 불가
         if (!canPlayerControl)
         {
             return;
         }
 
-        // 붙잡기
-        if (isGripKeyPressed)
+        //------------------------------------------------
+        // 카메라 방향에 따른 키 입력 값 변화
+        //------------------------------------------------
+        CameraAngleY = m_mainCamera.transform.eulerAngles.y;
+        // 오른쪽 →
+        if (45 <= CameraAngleY && CameraAngleY < 135)
         {
-            PlayerGripRight();
+            // 붙잡기
+            if (isGripKeyPressed)
+            {
+                PlayerGripBack();
+            }
+            // 일반
+            else
+            {
+                PlayerMoveBack();
+            }
         }
-        // 일반
+        // 뒤쪽 ↓
+        else if (135 <= CameraAngleY && CameraAngleY < 225)
+        {
+            // 붙잡기
+            if (isGripKeyPressed)
+            {
+                PlayerGripLeft();
+            }
+            // 일반
+            else
+            {
+                PlayerMoveLeft();
+            }
+        }
+        // 왼쪽 ←
+        else if (225 <= CameraAngleY && CameraAngleY < 315)
+        {
+            // 붙잡기
+            if (isGripKeyPressed)
+            {
+                PlayerGripForward();
+            }
+            // 일반
+            else
+            {
+                PlayerMoveForward();
+            }
+        }
+        // 앞쪽 ↑
         else
         {
-            PlayerMoveRight();
+            // 붙잡기
+            if (isGripKeyPressed)
+            {
+                PlayerGripRight();
+            }
+            // 일반
+            else
+            {
+                PlayerMoveRight();
+            }
         }
     }
 
@@ -642,7 +855,10 @@ public class GameManager : MonoBehaviour
                     // 화면상의 플레이어 이동
                     if (isPlayerActive)
                     {
+                        // 플레이어 좌표 이동
                         m_playerAction.MoveForwardUp();
+                        // 플레이어 방향
+                        m_playerDirection = en_Direction.FORWARD;
                     }
                 }
             }
@@ -684,7 +900,10 @@ public class GameManager : MonoBehaviour
                 // 화면상의 플레이어 이동
                 if (isPlayerActive)
                 {
+                    // 플레이어 좌표 이동
                     m_playerAction.MoveForward();
+                    // 플레이어 방향
+                    m_playerDirection = en_Direction.FORWARD;
                 }
             }
             else
@@ -735,7 +954,10 @@ public class GameManager : MonoBehaviour
                     // 화면상의 플레이어 이동
                     if (isPlayerActive)
                     {
+                        // 플레이어 좌표 이동
                         m_playerAction.MoveForwardDown();
+                        // 플레이어 방향
+                        m_playerDirection = en_Direction.FORWARD;
                     }
                 }
                 else
@@ -762,7 +984,10 @@ public class GameManager : MonoBehaviour
                     // 화면상의 플레이어 이동
                     if (isPlayerActive)
                     {
+                        // 플레이어 좌표 이동
                         m_playerAction.MoveForwardDown();
+                        // 플레이어 방향
+                        m_playerDirection = en_Direction.FORWARD;
                     }
                 }
             }
@@ -852,7 +1077,10 @@ public class GameManager : MonoBehaviour
                     // 화면상의 플레이어 이동
                     if (isPlayerActive)
                     {
+                        // 플레이어 좌표 이동
                         m_playerAction.MoveBackUp();
+                        // 플레이어 방향
+                        m_playerDirection = en_Direction.BACK;
                     }
                 }
             }
@@ -894,7 +1122,10 @@ public class GameManager : MonoBehaviour
                 // 화면상의 플레이어 이동
                 if (isPlayerActive)
                 {
+                    // 플레이어 좌표 이동
                     m_playerAction.MoveBack();
+                    // 플레이어 방향
+                    m_playerDirection = en_Direction.BACK;
                 }
             }
             else
@@ -945,7 +1176,10 @@ public class GameManager : MonoBehaviour
                     // 화면상의 플레이어 이동
                     if (isPlayerActive)
                     {
+                        // 플레이어 좌표 이동
                         m_playerAction.MoveBackDown();
+                        // 플레이어 방향
+                        m_playerDirection = en_Direction.BACK;
                     }
                 }
                 else
@@ -972,7 +1206,10 @@ public class GameManager : MonoBehaviour
                     // 화면상의 플레이어 이동
                     if (isPlayerActive)
                     {
+                        // 플레이어 좌표 이동
                         m_playerAction.MoveBackDown();
+                        // 플레이어 방향
+                        m_playerDirection = en_Direction.BACK;
                     }
                 }
             }
@@ -1062,7 +1299,10 @@ public class GameManager : MonoBehaviour
                     // 화면상의 플레이어 이동
                     if (isPlayerActive)
                     {
+                        // 플레이어 좌표 이동
                         m_playerAction.MoveLeftUp();
+                        // 플레이어 방향
+                        m_playerDirection = en_Direction.LEFT;
                     }
                 }
             }
@@ -1104,7 +1344,10 @@ public class GameManager : MonoBehaviour
                 // 화면상의 플레이어 이동
                 if (isPlayerActive)
                 {
+                    // 플레이어 좌표 이동
                     m_playerAction.MoveLeft();
+                    // 플레이어 방향
+                    m_playerDirection = en_Direction.LEFT;
                 }
             }
             else
@@ -1155,7 +1398,10 @@ public class GameManager : MonoBehaviour
                     // 화면상의 플레이어 이동
                     if (isPlayerActive)
                     {
+                        // 플레이어 좌표 이동
                         m_playerAction.MoveLeftDown();
+                        // 플레이어 방향
+                        m_playerDirection = en_Direction.LEFT;
                     }
                 }
                 else
@@ -1182,7 +1428,10 @@ public class GameManager : MonoBehaviour
                     // 화면상의 플레이어 이동
                     if (isPlayerActive)
                     {
+                        // 플레이어 좌표 이동
                         m_playerAction.MoveLeftDown();
+                        // 플레이어 방향
+                        m_playerDirection = en_Direction.LEFT;
                     }
                 }
             }
@@ -1273,7 +1522,10 @@ public class GameManager : MonoBehaviour
                     // 화면상의 플레이어 이동
                     if (isPlayerActive)
                     {
+                        // 플레이어 좌표 이동
                         m_playerAction.MoveRightUp();
+                        // 플레이어 방향
+                        m_playerDirection = en_Direction.RIGHT;
                     }
                 }
             }
@@ -1315,7 +1567,10 @@ public class GameManager : MonoBehaviour
                 // 화면상의 플레이어 이동
                 if (isPlayerActive)
                 {
+                    // 플레이어 좌표 이동
                     m_playerAction.MoveRight();
+                    // 플레이어 방향
+                    m_playerDirection = en_Direction.RIGHT;
                 }
             }
             else
@@ -1366,7 +1621,10 @@ public class GameManager : MonoBehaviour
                     // 화면상의 플레이어 이동
                     if (isPlayerActive)
                     {
+                        // 플레이어 좌표 이동
                         m_playerAction.MoveRightDown();
+                        // 플레이어 방향
+                        m_playerDirection = en_Direction.RIGHT;
                     }
                 }
                 else
@@ -1393,7 +1651,10 @@ public class GameManager : MonoBehaviour
                     // 화면상의 플레이어 이동
                     if (isPlayerActive)
                     {
+                        // 플레이어 좌표 이동
                         m_playerAction.MoveRightDown();
+                        // 플레이어 방향
+                        m_playerDirection = en_Direction.RIGHT;
                     }
                 }
             }
@@ -1404,7 +1665,107 @@ public class GameManager : MonoBehaviour
     // 붙잡기 앞
     private void PlayerGripForward()
     {
+        int iY = playerPosition.iY;     // 플레이어 위치 Y
+        int iZ = playerPosition.iZ;     // 플레이어 위치 Z
+        int iX = playerPosition.iX;     // 플레이어 위치 X
 
+        switch (m_playerDirection)
+        {
+            case en_Direction.FORWARD:
+                // 앞쪽
+
+                // 맵 바깥으로 나가면 안됨
+                if (iZ + 1 >= m_mapSizeZ)
+                {
+                    // 더이상 갈 수 없음
+                    Debug.Log("맵의 끝");
+                    return;
+                }
+
+                // 앞쪽에 큐브가 있나
+                if (m_arrMapData[iY, iZ + 1, iX].objectLayer == en_GameObjectLayer.CUBE)
+                {
+                    // 큐브 밀기
+                    PlayerPushForward();
+                }
+                else
+                {
+                    // 앞으로 이동
+                    PlayerMoveForward();
+                }
+                return;
+            case en_Direction.BACK:
+                // 뒤쪽
+
+                // 맵 바깥으로 나가면 안됨
+                if (iZ - 1 < 0)
+                {
+                    // 더이상 갈 수 없음
+                    Debug.Log("맵의 끝");
+                    return;
+                }
+
+                // 앞쪽에 큐브가 있나
+                if (m_arrMapData[iY, iZ - 1, iX].objectLayer == en_GameObjectLayer.CUBE)
+                {
+                    // 큐브 당기기
+                    PlayerPullForward();
+                }
+                else
+                {
+                    // 앞으로 이동
+                    PlayerMoveForward();
+                }
+                return;
+            case en_Direction.LEFT:
+                // 왼쪽
+
+                // 맵 바깥으로 나가면 안됨
+                if (iX - 1 < 0)
+                {
+                    // 더이상 갈 수 없음
+                    Debug.Log("맵의 끝");
+                    return;
+                }
+
+                // 앞쪽에 큐브가 있나
+                if (m_arrMapData[iY, iZ, iX - 1].objectLayer == en_GameObjectLayer.CUBE)
+                {
+                    // 큐브
+                    // 조작 불가
+                    return;
+                }
+                else
+                {
+                    // 앞으로 이동
+                    PlayerMoveForward();
+                }
+                return;
+            case en_Direction.RIGHT:
+                // 오른쪽
+
+                // 맵 바깥으로 나가면 안됨
+                if (iX + 1 >= m_mapSizeX)
+                {
+                    // 더이상 갈 수 없음
+                    Debug.Log("맵의 끝");
+                    return;
+                }
+
+                // 앞쪽에 큐브가 있나
+                if (m_arrMapData[iY, iZ, iX + 1].objectLayer == en_GameObjectLayer.CUBE)
+                {
+                    // 큐브
+                    // 조작 불가
+                    return;
+                }
+                else
+                {
+                    // 앞으로 이동
+                    PlayerMoveForward();
+                }
+                return;
+        }
     }
 
 
@@ -1424,6 +1785,55 @@ public class GameManager : MonoBehaviour
 
     // 붙잡기 오른쪽
     private void PlayerGripRight()
+    {
+
+    }
+
+
+    // 밀기 앞쪽
+    private void PlayerPushForward()
+    {
+
+    }
+
+    // 당기기 앞쪽
+    private void PlayerPullForward()
+    {
+
+    }
+
+    // 밀기 뒤쪽
+    private void PlayerPushBack()
+    {
+
+    }
+
+    // 당기기 뒤쪽
+    private void PlayerPullBack()
+    {
+
+    }
+
+    // 밀기 왼쪽
+    private void PlayerPushLeft()
+    {
+
+    }
+
+    // 당기기 왼쪽
+    private void PlayerPullLeft()
+    {
+
+    }
+
+    // 밀기 오른쪽
+    private void PlayerPushRight()
+    {
+
+    }
+
+    // 당기기 오른쪽
+    private void PlayerPullRight()
     {
 
     }
