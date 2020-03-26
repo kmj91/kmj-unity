@@ -8,7 +8,7 @@ public class PlayerAction : GameScript
 {
     public float m_speed;                   // 캐릭터 이동 속도
 
-    private GameManager m_gameManger;        // 게임 매니저
+    private GameManager m_gameManger;       // 게임 매니저
 
 
     // 초기화
@@ -19,7 +19,7 @@ public class PlayerAction : GameScript
         m_speed = speed;
     }
 
-    public void MoveForward()
+    public override void MoveForward()
     {
         // 좌표
         transform.position = transform.position + Vector3.forward;
@@ -27,10 +27,10 @@ public class PlayerAction : GameScript
         transform.eulerAngles = new Vector3(0, 0, 0);
     }
 
-    public void MoveForwardUp()
+    public void MoveForwardUp(int jumpPower = 1)
     {
         // 좌표
-        transform.position = transform.position + Vector3.forward + Vector3.up;
+        transform.position = transform.position + Vector3.forward + (Vector3.up * jumpPower);
         // 방향
         transform.eulerAngles = new Vector3(0, 0, 0);
     }
@@ -43,7 +43,7 @@ public class PlayerAction : GameScript
         transform.eulerAngles = new Vector3(0, 0, 0);
     }
 
-    public void MoveBack()
+    public override void MoveBack()
     {
         // 좌표
         transform.position = transform.position + Vector3.back;
@@ -51,7 +51,7 @@ public class PlayerAction : GameScript
         transform.eulerAngles = new Vector3(0, 180, 0);
     }
 
-    public void MoveBackUp()
+    public void MoveBackUp(int jumpPower = 1)
     {
         // 좌표
         transform.position = transform.position + Vector3.back + Vector3.up;
@@ -67,7 +67,7 @@ public class PlayerAction : GameScript
         transform.eulerAngles = new Vector3(0, 180, 0);
     }
 
-    public void MoveLeft()
+    public override void MoveLeft()
     {
         // 좌표
         transform.position = transform.position + Vector3.left;
@@ -75,7 +75,7 @@ public class PlayerAction : GameScript
         transform.eulerAngles = new Vector3(0, 270, 0);
     }
 
-    public void MoveLeftUp()
+    public void MoveLeftUp(int jumpPower = 1)
     {
         // 좌표
         transform.position = transform.position + Vector3.left + Vector3.up;
@@ -91,7 +91,7 @@ public class PlayerAction : GameScript
         transform.eulerAngles = new Vector3(0, 270, 0);
     }
 
-    public void MoveRight()
+    public override void MoveRight()
     {
         // 좌표
         transform.position = transform.position + Vector3.right;
@@ -99,7 +99,7 @@ public class PlayerAction : GameScript
         transform.eulerAngles = new Vector3(0, 90, 0);
     }
 
-    public void MoveRightUp()
+    public void MoveRightUp(int jumpPower = 1)
     {
         // 좌표
         transform.position = transform.position + Vector3.right + Vector3.up;
@@ -114,6 +114,92 @@ public class PlayerAction : GameScript
         // 방향
         transform.eulerAngles = new Vector3(0, 90, 0);
     }
+
+    // 당기기 앞쪽
+    public void PullForward()
+    {
+        // 좌표
+        transform.position = transform.position + Vector3.forward;
+    }
+
+    // 당기기 뒤쪽
+    public void PullBack()
+    {
+        // 좌표
+        transform.position = transform.position + Vector3.back;
+    }
+
+    // 당기기 왼쪽
+    public void PullLeft()
+    {
+        // 좌표
+        transform.position = transform.position + Vector3.left;
+    }
+
+    // 당기기 오른쪽
+    public void PullRight()
+    {
+        // 좌표
+        transform.position = transform.position + Vector3.right;
+    }
+
+
+    // 등반 앞쪽
+    public void ClimbingForward()
+    {
+        //--------------------------------
+        // ★    < 플레이어
+        // ■    < 큐브
+        //--------------------------------
+
+        // 좌표
+        transform.position = transform.position + Vector3.forward + Vector3.down;
+        // 방향
+        transform.eulerAngles = new Vector3(0, 180, 0);
+    }
+
+    // 등반 뒤쪽
+    public void ClimbingBack()
+    {
+        //--------------------------------
+        // ■    < 큐브
+        // ★    < 플레이어
+        //--------------------------------
+
+        // 좌표
+        transform.position = transform.position + Vector3.back + Vector3.down;
+        // 방향
+        transform.eulerAngles = new Vector3(0, 0, 0);
+    }
+
+    // 등반 왼쪽
+    public void ClimbingLeft()
+    {
+        //--------------------------------
+        // ★■    < 큐브
+        // ^ 플레이어
+        //--------------------------------
+
+        // 좌표
+        transform.position = transform.position + Vector3.left + Vector3.down;
+        // 방향
+        transform.eulerAngles = new Vector3(0, 90, 0);
+    }
+
+    // 등반 오른쪽
+    public void ClimbingRight()
+    {
+        //--------------------------------
+        // ■★    < 플레이어
+        // ^ 큐브
+        //--------------------------------
+
+        // 좌표
+        transform.position = transform.position + Vector3.right + Vector3.down;
+        // 방향
+        transform.eulerAngles = new Vector3(0, 270, 0);
+    }
+
 
     // 방향 앞으로
     public void DirectionForward()

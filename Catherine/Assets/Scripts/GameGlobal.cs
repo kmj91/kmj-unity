@@ -75,5 +75,10 @@ namespace GameGlobalScript
     public class GameScript : MonoBehaviour
     {
         public en_ActionScriptType m_scriptType;     // 스크립트 식별 타입
+
+        public virtual void MoveForward() { }
+        public virtual void MoveBack() { }
+        public virtual void MoveLeft() { }
+        public virtual void MoveRight() { }
     }
 }

@@ -15,25 +15,25 @@ public class CubeAction : GameScript
         m_speed = speed;
     }
 
-    public void MoveForward()
+    public override void MoveForward()
     {
         // 좌표
         transform.position = transform.position + Vector3.forward;
     }
 
-    public void MoveBack()
+    public override void MoveBack()
     {
         // 좌표
         transform.position = transform.position + Vector3.back;
     }
 
-    public void MoveLeft()
+    public override void MoveLeft()
     {
         // 좌표
         transform.position = transform.position + Vector3.left;
     }
 
-    public void MoveRight()
+    public override void MoveRight()
     {
         // 좌표
         transform.position = transform.position + Vector3.right;
