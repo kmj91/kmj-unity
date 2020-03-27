@@ -201,6 +201,64 @@ public class PlayerAction : GameScript
     }
 
 
+    // 등반 오르기 앞쪽
+    public void ClimbingUpForward()
+    {
+        // 좌표
+        transform.position = transform.position + Vector3.forward + Vector3.up;
+    }
+
+    // 등반 오르기 뒤쪽
+    public void ClimbingUpBack()
+    {
+        // 좌표
+        transform.position = transform.position + Vector3.back + Vector3.up;
+    }
+
+    // 등반 오르기 왼쪽
+    public void ClimbingUpLeft()
+    {
+        // 좌표
+        transform.position = transform.position + Vector3.left + Vector3.up;
+    }
+
+    // 등반 오르기 오른쪽
+    public void ClimbingUpRight()
+    {
+        // 좌표
+        transform.position = transform.position + Vector3.right + Vector3.up;
+    }
+
+
+    // 등반 이동 앞쪽
+    public void ClimbingMoveForward()
+    {
+        // 좌표
+        transform.position = transform.position + Vector3.forward;
+    }
+
+    // 등반 이동 뒤쪽
+    public void ClimbingMoveBack()
+    {
+        // 좌표
+        transform.position = transform.position + Vector3.back;
+    }
+
+    // 등반 이동 왼쪽
+    public void ClimbingMoveLeft()
+    {
+        // 좌표
+        transform.position = transform.position + Vector3.left;
+    }
+
+    // 등반 이동 오른쪽
+    public void ClimbingMoveRight()
+    {
+        // 좌표
+        transform.position = transform.position + Vector3.right;
+    }
+
+
     // 방향 앞으로
     public void DirectionForward()
     {
