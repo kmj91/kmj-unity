@@ -52,6 +52,30 @@ namespace GameGlobalScript
         CUBE
     }
 
+    // 큐브 상태
+    public enum en_CubeState 
+    {
+        STAY,
+        MOVE_FORWARD,
+        MOVE_BACK,
+        MOVE_LEFT,
+        MOVE_RIGHT,
+        MOVE_UP,
+        MOVE_DOWN,
+    }
+
+    // 플레이어 상태
+    public enum en_PlayerState
+    {
+        STAY,
+        MOVE_FORWARD,
+        MOVE_BACK,
+        MOVE_LEFT,
+        MOVE_RIGHT,
+        MOVE_UP,
+        MOVE_DOWN,
+    }
+
 
     //--------------------------------
     // struct

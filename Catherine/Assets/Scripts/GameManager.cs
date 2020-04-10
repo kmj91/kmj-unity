@@ -1000,6 +1000,8 @@ public class GameManager : MonoBehaviour
                     m_playerAction.MoveForward();
                     // 플레이어 방향
                     m_playerDirection = en_Direction.FORWARD;
+                    // 플레이어 조작 불가
+                    canPlayerControl = false;
                 }
             }
             else
@@ -1201,6 +1203,8 @@ public class GameManager : MonoBehaviour
                     m_playerAction.MoveBack();
                     // 플레이어 방향
                     m_playerDirection = en_Direction.BACK;
+                    // 플레이어 조작 불가
+                    canPlayerControl = false;
                 }
             }
             else
@@ -1402,6 +1406,8 @@ public class GameManager : MonoBehaviour
                     m_playerAction.MoveLeft();
                     // 플레이어 방향
                     m_playerDirection = en_Direction.LEFT;
+                    // 플레이어 조작 불가
+                    canPlayerControl = false;
                 }
             }
             else
@@ -1604,6 +1610,8 @@ public class GameManager : MonoBehaviour
                     m_playerAction.MoveRight();
                     // 플레이어 방향
                     m_playerDirection = en_Direction.RIGHT;
+                    // 플레이어 조작 불가
+                    canPlayerControl = false;
                 }
             }
             else

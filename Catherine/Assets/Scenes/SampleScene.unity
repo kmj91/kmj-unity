@@ -180,6 +180,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   playerSpeed: 3
+  cubeSpeed: 3
   undoToken: 0
   gameStage: {fileID: 994134778}
   playerPrefab: {fileID: 6091224378748023943, guid: fdd0baa319d76e145ba418df369d626b,
@@ -189,6 +190,7 @@ MonoBehaviour:
   iceCubePrefab: {fileID: 2508297667175379775, guid: b5c4421e61adfc44f87cb1e424f7d138,
     type: 3}
   followCam: {fileID: 462523341}
+  m_playerDirection: 0
   canPlayerControl: 0
 --- !u!4 &197667292
 Transform:
