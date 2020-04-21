@@ -10,7 +10,8 @@ public class PlayerAction : GameScript
 {
     public float m_speed;                           // 캐릭터 이동 속도
 
-    private Vector3 m_destPosition;                 // 이동 목표 좌표 
+    private Vector3 m_destPosition;                 // 이동 목표 좌표
+    private Quaternion m_destRotation;              // 회전 목표 값
     private en_PlayerState m_playerState;           // 플레이어 상태
     private Action[] m_arrPlayerStateProc;          // 플레이어 상태 처리 함수 배열
     private GameManager m_gameManager;              // 게임 매니저
@@ -33,20 +34,24 @@ public class PlayerAction : GameScript
         m_playerState = en_PlayerState.MOVE_FORWARD;
     }
 
-    public void MoveForwardUp(int jumpPower = 1)
+    public void MoveForwardClimbingUp(int jumpPower = 1)
     {
-        // 좌표
-        transform.position = transform.position + Vector3.forward + (Vector3.up * jumpPower);
+        // 이동 좌표
+        m_destPosition = transform.position + Vector3.forward + (Vector3.up * jumpPower);
         // 방향
         transform.eulerAngles = new Vector3(0, 0, 0);
+        // 플레이어 상태 앞쪽 위로 이동
+        m_playerState = en_PlayerState.MOVE_FORWARD_CLIMBING_UP;
     }
 
-    public void MoveForwardDown()
+    public void MoveForwardClimbingDown()
     {
-        // 좌표
-        transform.position = transform.position + Vector3.forward + Vector3.down;
+        // 이동 좌표
+        m_destPosition = transform.position + Vector3.forward + Vector3.down;
         // 방향
         transform.eulerAngles = new Vector3(0, 0, 0);
+        // 플레이어 상태 앞쪽 아래로 이동
+        m_playerState = en_PlayerState.MOVE_FORWARD_CLIMBING_DOWN;
     }
 
     public override void MoveBack()
@@ -59,20 +64,24 @@ public class PlayerAction : GameScript
         m_playerState = en_PlayerState.MOVE_BACK;
     }
 
-    public void MoveBackUp(int jumpPower = 1)
+    public void MoveBackClimbingUp(int jumpPower = 1)
     {
-        // 좌표
-        transform.position = transform.position + Vector3.back + Vector3.up;
+        // 이동 좌표
+        m_destPosition = transform.position + Vector3.back + Vector3.up;
         // 방향
         transform.eulerAngles = new Vector3(0, 180, 0);
+        // 플레이어 상태 뒤쪽 위로 이동
+        m_playerState = en_PlayerState.MOVE_BACK_CLIMBING_UP;
     }
 
-    public void MoveBackDown()
+    public void MoveBackClimbingDown()
     {
-        // 좌표
-        transform.position = transform.position + Vector3.back + Vector3.down;
+        // 이동 좌표
+        m_destPosition = transform.position + Vector3.back + Vector3.down;
         // 방향
         transform.eulerAngles = new Vector3(0, 180, 0);
+        // 플레이어 상태 뒤쪽 아래로 이동
+        m_playerState = en_PlayerState.MOVE_BACK_CLIMBING_DOWN;
     }
 
     public override void MoveLeft()
@@ -85,20 +94,24 @@ public class PlayerAction : GameScript
         m_playerState = en_PlayerState.MOVE_LEFT;
     }
 
-    public void MoveLeftUp(int jumpPower = 1)
+    public void MoveLeftClimbingUp(int jumpPower = 1)
     {
-        // 좌표
-        transform.position = transform.position + Vector3.left + Vector3.up;
+        // 이동 좌표
+        m_destPosition = transform.position + Vector3.left + Vector3.up;
         // 방향
         transform.eulerAngles = new Vector3(0, 270, 0);
+        // 플레이어 상태 왼쪽 위로 이동
+        m_playerState = en_PlayerState.MOVE_LEFT_CLIMBING_UP;
     }
 
-    public void MoveLeftDown()
+    public void MoveLeftClimbingDown()
     {
-        // 좌표
-        transform.position = transform.position + Vector3.left + Vector3.down;
+        // 이동 좌표
+        m_destPosition = transform.position + Vector3.left + Vector3.down;
         // 방향
         transform.eulerAngles = new Vector3(0, 270, 0);
+        // 플레이어 상태 왼쪽 위로 이동
+        m_playerState = en_PlayerState.MOVE_LEFT_CLIMBING_DOWN;
     }
 
     public override void MoveRight()
@@ -111,192 +124,317 @@ public class PlayerAction : GameScript
         m_playerState = en_PlayerState.MOVE_RIGHT;
     }
 
-    public void MoveRightUp(int jumpPower = 1)
+    public void MoveRightClimbingUp(int jumpPower = 1)
     {
-        // 좌표
-        transform.position = transform.position + Vector3.right + Vector3.up;
+        // 이동 좌표
+        m_destPosition = transform.position + Vector3.right + Vector3.up;
         // 방향
         transform.eulerAngles = new Vector3(0, 90, 0);
+        // 플레이어 상태 왼쪽 위로 이동
+        m_playerState = en_PlayerState.MOVE_RIGHT_CLIMBING_UP;
     }
 
-    public void MoveRightDown()
+    public void MoveRightClimbingDown()
     {
-        // 좌표
-        transform.position = transform.position + Vector3.right + Vector3.down;
+        // 이동 좌표
+        m_destPosition = transform.position + Vector3.right + Vector3.down;
         // 방향
         transform.eulerAngles = new Vector3(0, 90, 0);
+        // 플레이어 상태 왼쪽 위로 이동
+        m_playerState = en_PlayerState.MOVE_RIGHT_CLIMBING_DOWN;
     }
 
     // 당기기 앞쪽
     public void PullForward()
     {
-        // 좌표
-        transform.position = transform.position + Vector3.forward;
+        // 이동 좌표
+        m_destPosition = transform.position + Vector3.forward;
+        // 플레이어 상태 앞쪽 이동
+        m_playerState = en_PlayerState.MOVE_FORWARD;
     }
 
     // 당기기 뒤쪽
     public void PullBack()
     {
-        // 좌표
-        transform.position = transform.position + Vector3.back;
+        // 이동 좌표
+        m_destPosition = transform.position + Vector3.back;
+        // 플레이어 상태 뒤쪽 이동
+        m_playerState = en_PlayerState.MOVE_BACK;
     }
 
     // 당기기 왼쪽
     public void PullLeft()
     {
-        // 좌표
-        transform.position = transform.position + Vector3.left;
+        // 이동 좌표
+        m_destPosition = transform.position + Vector3.left;
+        // 플레이어 상태 왼쪽 이동
+        m_playerState = en_PlayerState.MOVE_LEFT;
     }
 
     // 당기기 오른쪽
     public void PullRight()
     {
-        // 좌표
-        transform.position = transform.position + Vector3.right;
+        // 이동 좌표
+        m_destPosition = transform.position + Vector3.right;
+        // 플레이어 상태 오른쪽 이동
+        m_playerState = en_PlayerState.MOVE_RIGHT;
     }
 
 
     // 등반 앞쪽
-    public void ClimbingForward()
+    public void MoveForwardClimbingState()
     {
         //--------------------------------
         // ★    < 플레이어
         // ■    < 큐브
         //--------------------------------
 
-        // 좌표
-        transform.position = transform.position + Vector3.forward + Vector3.down;
+        // 이동 좌표
+        m_destPosition = transform.position + Vector3.forward + Vector3.down;
         // 방향
         transform.eulerAngles = new Vector3(0, 180, 0);
+        // 플레이어 상태 앞쪽 등반 상태
+        m_playerState = en_PlayerState.MOVE_FORWARD_CLIMBING_STATE;
     }
 
     // 등반 뒤쪽
-    public void ClimbingBack()
+    public void MoveBackClimbingState()
     {
         //--------------------------------
         // ■    < 큐브
         // ★    < 플레이어
         //--------------------------------
 
-        // 좌표
-        transform.position = transform.position + Vector3.back + Vector3.down;
+        // 이동 좌표
+        m_destPosition = transform.position + Vector3.back + Vector3.down;
         // 방향
         transform.eulerAngles = new Vector3(0, 0, 0);
+        // 플레이어 상태 뒤쪽 등반 상태
+        m_playerState = en_PlayerState.MOVE_BACK_CLIMBING_STATE;
     }
 
     // 등반 왼쪽
-    public void ClimbingLeft()
+    public void MoveLeftClimbingState()
     {
         //--------------------------------
         // ★■    < 큐브
         // ^ 플레이어
         //--------------------------------
 
-        // 좌표
-        transform.position = transform.position + Vector3.left + Vector3.down;
+        // 이동 좌표
+        m_destPosition = transform.position + Vector3.left + Vector3.down;
         // 방향
         transform.eulerAngles = new Vector3(0, 90, 0);
+        // 플레이어 상태 왼쪽 등반 상태
+        m_playerState = en_PlayerState.MOVE_LEFT_CLIMBING_STATE;
     }
 
     // 등반 오른쪽
-    public void ClimbingRight()
+    public void MoveRightClimbingState()
     {
         //--------------------------------
         // ■★    < 플레이어
         // ^ 큐브
         //--------------------------------
 
-        // 좌표
-        transform.position = transform.position + Vector3.right + Vector3.down;
+        // 이동 좌표
+        m_destPosition = transform.position + Vector3.right + Vector3.down;
         // 방향
         transform.eulerAngles = new Vector3(0, 270, 0);
+        // 플레이어 상태 오른쪽 등반 상태
+        m_playerState = en_PlayerState.MOVE_RIGHT_CLIMBING_STATE;
     }
 
 
     // 등반 오르기 앞쪽
     public void ClimbingUpForward()
     {
-        // 좌표
-        transform.position = transform.position + Vector3.forward + Vector3.up;
+        // 이동 좌표
+        m_destPosition = transform.position + Vector3.forward + Vector3.up;
+        // 플레이어 상태 앞쪽 위로 이동
+        m_playerState = en_PlayerState.CLIMBING_UP_FORWARD;
     }
 
     // 등반 오르기 뒤쪽
     public void ClimbingUpBack()
     {
-        // 좌표
-        transform.position = transform.position + Vector3.back + Vector3.up;
+        // 이동 좌표
+        m_destPosition = transform.position + Vector3.back + Vector3.up;
+        // 플레이어 상태 뒤쪽 위로 이동
+        m_playerState = en_PlayerState.CLIMBING_UP_BACK;
     }
 
     // 등반 오르기 왼쪽
     public void ClimbingUpLeft()
     {
-        // 좌표
-        transform.position = transform.position + Vector3.left + Vector3.up;
+        // 이동 좌표
+        m_destPosition = transform.position + Vector3.left + Vector3.up;
+        // 플레이어 상태 왼쪽 위로 이동
+        m_playerState = en_PlayerState.CLIMBING_UP_LEFT;
     }
 
     // 등반 오르기 오른쪽
     public void ClimbingUpRight()
     {
-        // 좌표
-        transform.position = transform.position + Vector3.right + Vector3.up;
+        // 이동 좌표
+        m_destPosition = transform.position + Vector3.right + Vector3.up;
+        // 플레이어 상태 오른쪽 위로 이동
+        m_playerState = en_PlayerState.CLIMBING_UP_RIGHT;
     }
 
 
     // 등반 이동 앞쪽
     public void ClimbingMoveForward()
     {
-        // 좌표
-        transform.position = transform.position + Vector3.forward;
+        // 이동 좌표
+        m_destPosition = transform.position + Vector3.forward;
+        // 플레이어 상태 등반 앞쪽 이동
+        m_playerState = en_PlayerState.CLIMBING_MOVE_FORWARD;
     }
 
     // 등반 이동 뒤쪽
     public void ClimbingMoveBack()
     {
-        // 좌표
-        transform.position = transform.position + Vector3.back;
+        // 이동 좌표
+        m_destPosition = transform.position + Vector3.back;
+        // 플레이어 상태 등반 뒤쪽 이동
+        m_playerState = en_PlayerState.CLIMBING_MOVE_BACK;
     }
 
     // 등반 이동 왼쪽
     public void ClimbingMoveLeft()
     {
-        // 좌표
-        transform.position = transform.position + Vector3.left;
+        // 이동 좌표
+        m_destPosition = transform.position + Vector3.left;
+        // 플레이어 상태 등반 왼쪽 이동
+        m_playerState = en_PlayerState.CLIMBING_MOVE_LEFT;
     }
 
     // 등반 이동 오른쪽
     public void ClimbingMoveRight()
     {
-        // 좌표
-        transform.position = transform.position + Vector3.right;
+        // 이동 좌표
+        m_destPosition = transform.position + Vector3.right;
+        // 플레이어 상태 등반 앞쪽 이동
+        m_playerState = en_PlayerState.CLIMBING_MOVE_RIGHT;
+    }
+
+
+    public void ClimbingMoveForwardLeft()
+    {
+        // 이동 좌표
+        m_destPosition = transform.position + Vector3.forward + Vector3.left;
+        // 플레이어 상태 등반 앞쪽 왼쪽 이동
+        m_playerState = en_PlayerState.CLIMBING_MOVE_FORWARD_LEFT;
+        // 회전 방향
+        transform.eulerAngles = new Vector3(0, 180, 0);
+    }
+
+    public void ClimbingMoveForwardRight()
+    {
+        // 이동 좌표
+        m_destPosition = transform.position + Vector3.forward + Vector3.right;
+        // 플레이어 상태 등반 앞쪽 왼쪽 이동
+        m_playerState = en_PlayerState.CLIMBING_MOVE_FORWARD_RIGHT;
+        // 회전 방향
+        transform.eulerAngles = new Vector3(0, 180, 0);
+    }
+
+    public void ClimbingMoveBackLeft()
+    {
+        // 이동 좌표
+        m_destPosition = transform.position + Vector3.back + Vector3.left;
+        // 플레이어 상태 등반 앞쪽 왼쪽 이동
+        m_playerState = en_PlayerState.CLIMBING_MOVE_BACK_LEFT;
+        // 회전 방향
+        transform.eulerAngles = new Vector3(0, 0, 0);
+    }
+
+    public void ClimbingMoveBackRight()
+    {
+        // 이동 좌표
+        m_destPosition = transform.position + Vector3.back + Vector3.right;
+        // 플레이어 상태 등반 앞쪽 왼쪽 이동
+        m_playerState = en_PlayerState.CLIMBING_MOVE_BACK_RIGHT;
+        // 회전 방향
+        transform.eulerAngles = new Vector3(0, 0, 0);
+    }
+
+    public void ClimbingMoveLeftForward()
+    {
+        // 이동 좌표
+        m_destPosition = transform.position + Vector3.left + Vector3.forward;
+        // 플레이어 상태 등반 왼쪽 앞쪽 이동
+        m_playerState = en_PlayerState.CLIMBING_MOVE_LEFT_FORWARD;
+        // 회전 방향
+        transform.eulerAngles = new Vector3(0, 90, 0);
+    }
+
+    public void ClimbingMoveLeftBack()
+    {
+        // 이동 좌표
+        m_destPosition = transform.position + Vector3.left + Vector3.back;
+        // 플레이어 상태 등반 왼쪽 뒤쪽 이동
+        m_playerState = en_PlayerState.CLIMBING_MOVE_LEFT_BACK;
+        // 회전 방향
+        transform.eulerAngles = new Vector3(0, 90, 0);
+    }
+
+    public void ClimbingMoveRightForward()
+    {
+        // 이동 좌표
+        m_destPosition = transform.position + Vector3.right + Vector3.forward;
+        // 플레이어 상태 등반 오른쪽 앞쪽 이동
+        m_playerState = en_PlayerState.CLIMBING_MOVE_RIGHT_FORWARD;
+        // 회전 방향
+        transform.eulerAngles = new Vector3(0, 270, 0);
+    }
+
+    public void ClimbingMoveRightBack()
+    {
+        // 이동 좌표
+        m_destPosition = transform.position + Vector3.right + Vector3.back;
+        // 플레이어 상태 등반 오른쪽 뒤쪽 이동
+        m_playerState = en_PlayerState.CLIMBING_MOVE_RIGHT_BACK;
+        // 회전 방향
+        transform.eulerAngles = new Vector3(0, 270, 0);
     }
 
 
     // 방향 앞으로
     public void DirectionForward()
     {
-        // 방향
-        transform.eulerAngles = new Vector3(0, 0, 0);
+        // 회전 방향
+        m_destRotation = Quaternion.Euler(new Vector3(0, 0, 0));
+        // 플레이어 상태 회전
+        m_playerState = en_PlayerState.TURN;
     }
 
     // 방향 뒤로
     public void DirectionBack()
     {
-        // 방향
-        transform.eulerAngles = new Vector3(0, 180, 0);
+        // 회전 방향
+        m_destRotation = Quaternion.Euler(new Vector3(0, 180, 0));
+        // 플레이어 상태 회전
+        m_playerState = en_PlayerState.TURN;
     }
 
     // 방향 왼쪽
     public void DirectionLeft()
     {
-        // 방향
-        transform.eulerAngles = new Vector3(0, 270, 0);
+        // 회전 방향
+        m_destRotation = Quaternion.Euler(new Vector3(0, 270, 0));
+        // 플레이어 상태 회전
+        m_playerState = en_PlayerState.TURN;
     }
 
     // 방향 오른쪽
     public void DirectionRight()
     {
-        // 방향
-        transform.eulerAngles = new Vector3(0, 90, 0);
+        // 회전 방향
+        m_destRotation = Quaternion.Euler(new Vector3(0, 90, 0));
+        // 플레이어 상태 회전
+        m_playerState = en_PlayerState.TURN;
     }
 
 
@@ -313,7 +451,36 @@ public class PlayerAction : GameScript
             Left,
             Right,
             Up,
-            Down
+            Down,
+            ForwardClimbingUp,
+            BackClimbingUp,
+            LeftClimbingUp,
+            RightClimbingUp,
+            ForwardClimbingDown,
+            BackClimbingDown,
+            LeftClimbingDown,
+            RightClimbingDown,
+            ForwardClimbingState,
+            BackClimbingState,
+            LeftClimbingState,
+            RightClimbingState,
+            ForwardClimbingUp,  // CLIMBING_UP_FORWARD
+            BackClimbingUp,
+            LeftClimbingUp,
+            RightClimbingUp,
+            Forward,            // CLIMBING_MOVE_FORWARD
+            Back,
+            Left,
+            Right,
+            ClimbingForwardLeft,
+            ClimbingForwardRight,
+            ClimbingBackLeft,
+            ClimbingBackRight,
+            ClimbingLeftForward,
+            ClimbingLeftBack,
+            ClimbingRightForward,
+            ClimbingRightBack,
+            Turn
         };
     }
 
@@ -406,5 +573,502 @@ public class PlayerAction : GameScript
     private void Down()
     {
 
+    }
+
+    private void ForwardClimbingUp()
+    {
+        // 앞쪽 이동
+        transform.position = transform.position + (Vector3.forward * m_speed) * Time.deltaTime;
+
+        // 수직 이동 거리만큼 이동 하지 못했나
+        if (m_destPosition.y > transform.position.y)
+        {
+            // 위로 이동함
+            transform.position = transform.position + (Vector3.up * m_speed) * Time.deltaTime;
+        }
+
+        // 수평 이동 거리만큼 이동 했는가
+        if (m_destPosition.z <= transform.position.z)
+        {
+            // 위치 맞추기
+            transform.position = m_destPosition;
+            // 플레이어 정지
+            m_playerState = en_PlayerState.STAY;
+            // 플레이어 조작 가능
+            m_gameManager.canPlayerControl = true;
+        }
+    }
+
+    private void BackClimbingUp() 
+    {
+        // 뒤쪽 이동
+        transform.position = transform.position + (Vector3.back * m_speed) * Time.deltaTime;
+
+        // 수직 이동 거리만큼 이동 하지 못했나
+        if (m_destPosition.y > transform.position.y)
+        {
+            // 위로 이동함
+            transform.position = transform.position + (Vector3.up * m_speed) * Time.deltaTime;
+        }
+
+        // 수평 이동 거리만큼 이동 했는가
+        if (m_destPosition.z >= transform.position.z)
+        {
+            // 위치 맞추기
+            transform.position = m_destPosition;
+            // 플레이어 정지
+            m_playerState = en_PlayerState.STAY;
+            // 플레이어 조작 가능
+            m_gameManager.canPlayerControl = true;
+        }
+    }
+
+    private void LeftClimbingUp()
+    {
+        // 왼쪽 이동
+        transform.position = transform.position + (Vector3.left * m_speed) * Time.deltaTime;
+
+        // 수직 이동 거리만큼 이동 하지 못했나
+        if (m_destPosition.y > transform.position.y)
+        {
+            // 위로 이동함
+            transform.position = transform.position + (Vector3.up * m_speed) * Time.deltaTime;
+        }
+
+        // 수평 이동 거리만큼 이동 했는가
+        if (m_destPosition.x >= transform.position.x)
+        {
+            // 위치 맞추기
+            transform.position = m_destPosition;
+            // 플레이어 정지
+            m_playerState = en_PlayerState.STAY;
+            // 플레이어 조작 가능
+            m_gameManager.canPlayerControl = true;
+        }
+    }
+
+    private void RightClimbingUp()
+    {
+        // 오른쪽 이동
+        transform.position = transform.position + (Vector3.right * m_speed) * Time.deltaTime;
+
+        // 수직 이동 거리만큼 이동 하지 못했나
+        if (m_destPosition.y > transform.position.y)
+        {
+            // 위로 이동함
+            transform.position = transform.position + (Vector3.up * m_speed) * Time.deltaTime;
+        }
+
+        // 수평 이동 거리만큼 이동 했는가
+        if (m_destPosition.x <= transform.position.x)
+        {
+            // 위치 맞추기
+            transform.position = m_destPosition;
+            // 플레이어 정지
+            m_playerState = en_PlayerState.STAY;
+            // 플레이어 조작 가능
+            m_gameManager.canPlayerControl = true;
+        }
+    }
+
+
+    private void ForwardClimbingDown()
+    {
+        // 앞쪽 이동
+        transform.position = transform.position + (Vector3.forward * m_speed) * Time.deltaTime;
+
+        // 수직 이동 거리만큼 이동 하지 못했나
+        if (m_destPosition.y < transform.position.y)
+        {
+            // 아래로 이동함
+            transform.position = transform.position + (Vector3.down * m_speed) * Time.deltaTime;
+        }
+
+        // 수평 이동 거리만큼 이동 했는가
+        if (m_destPosition.z <= transform.position.z)
+        {
+            // 위치 맞추기
+            transform.position = m_destPosition;
+            // 플레이어 정지
+            m_playerState = en_PlayerState.STAY;
+            // 플레이어 조작 가능
+            m_gameManager.canPlayerControl = true;
+        }
+    }
+
+    private void BackClimbingDown()
+    {
+        // 뒤쪽 이동
+        transform.position = transform.position + (Vector3.back * m_speed) * Time.deltaTime;
+
+        // 수직 이동 거리만큼 이동 하지 못했나
+        if (m_destPosition.y < transform.position.y)
+        {
+            // 아래로 이동함
+            transform.position = transform.position + (Vector3.down * m_speed) * Time.deltaTime;
+        }
+
+        // 수평 이동 거리만큼 이동 했는가
+        if (m_destPosition.z >= transform.position.z)
+        {
+            // 위치 맞추기
+            transform.position = m_destPosition;
+            // 플레이어 정지
+            m_playerState = en_PlayerState.STAY;
+            // 플레이어 조작 가능
+            m_gameManager.canPlayerControl = true;
+        }
+    }
+
+    private void LeftClimbingDown()
+    {
+        // 왼쪽 이동
+        transform.position = transform.position + (Vector3.left * m_speed) * Time.deltaTime;
+
+        // 수직 이동 거리만큼 이동 하지 못했나
+        if (m_destPosition.y < transform.position.y)
+        {
+            // 아래로 이동함
+            transform.position = transform.position + (Vector3.down * m_speed) * Time.deltaTime;
+        }
+
+        // 수평 이동 거리만큼 이동 했는가
+        if (m_destPosition.x >= transform.position.x)
+        {
+            // 위치 맞추기
+            transform.position = m_destPosition;
+            // 플레이어 정지
+            m_playerState = en_PlayerState.STAY;
+            // 플레이어 조작 가능
+            m_gameManager.canPlayerControl = true;
+        }
+    }
+
+    private void RightClimbingDown()
+    {
+        // 오른쪽 이동
+        transform.position = transform.position + (Vector3.right * m_speed) * Time.deltaTime;
+
+        // 수직 이동 거리만큼 이동 하지 못했나
+        if (m_destPosition.y < transform.position.y)
+        {
+            // 아래로 이동함
+            transform.position = transform.position + (Vector3.down * m_speed) * Time.deltaTime;
+        }
+
+        // 수평 이동 거리만큼 이동 했는가
+        if (m_destPosition.x <= transform.position.x)
+        {
+            // 위치 맞추기
+            transform.position = m_destPosition;
+            // 플레이어 정지
+            m_playerState = en_PlayerState.STAY;
+            // 플레이어 조작 가능
+            m_gameManager.canPlayerControl = true;
+        }
+    }
+
+
+    private void ForwardClimbingState()
+    {
+        // 앞쪽 이동
+        transform.position = transform.position + (Vector3.forward * m_speed) * Time.deltaTime;
+
+        // 수직 이동 거리만큼 이동 하지 못했나
+        if (m_destPosition.y < transform.position.y)
+        {
+            // 아래로 이동함
+            transform.position = transform.position + (Vector3.down * m_speed) * Time.deltaTime;
+        }
+
+        // 수평 이동 거리만큼 이동 했는가
+        if (m_destPosition.z <= transform.position.z)
+        {
+            // 위치 맞추기
+            transform.position = m_destPosition;
+            // 플레이어 정지
+            m_playerState = en_PlayerState.STAY;
+            // 플레이어 조작 가능
+            m_gameManager.canPlayerControl = true;
+        }
+    }
+
+    private void BackClimbingState()
+    {
+        // 뒤쪽 이동
+        transform.position = transform.position + (Vector3.back * m_speed) * Time.deltaTime;
+
+        // 수직 이동 거리만큼 이동 하지 못했나
+        if (m_destPosition.y < transform.position.y)
+        {
+            // 아래로 이동함
+            transform.position = transform.position + (Vector3.down * m_speed) * Time.deltaTime;
+        }
+
+        // 수평 이동 거리만큼 이동 했는가
+        if (m_destPosition.z >= transform.position.z)
+        {
+            // 위치 맞추기
+            transform.position = m_destPosition;
+            // 플레이어 정지
+            m_playerState = en_PlayerState.STAY;
+            // 플레이어 조작 가능
+            m_gameManager.canPlayerControl = true;
+        }
+    }
+
+    private void LeftClimbingState()
+    {
+        // 왼쪽 이동
+        transform.position = transform.position + (Vector3.left * m_speed) * Time.deltaTime;
+
+        // 수직 이동 거리만큼 이동 하지 못했나
+        if (m_destPosition.y < transform.position.y)
+        {
+            // 아래로 이동함
+            transform.position = transform.position + (Vector3.down * m_speed) * Time.deltaTime;
+        }
+
+        // 수평 이동 거리만큼 이동 했는가
+        if (m_destPosition.x >= transform.position.x)
+        {
+            // 위치 맞추기
+            transform.position = m_destPosition;
+            // 플레이어 정지
+            m_playerState = en_PlayerState.STAY;
+            // 플레이어 조작 가능
+            m_gameManager.canPlayerControl = true;
+        }
+    }
+
+    private void RightClimbingState()
+    {
+        // 오른쪽 이동
+        transform.position = transform.position + (Vector3.right * m_speed) * Time.deltaTime;
+
+        // 수직 이동 거리만큼 이동 하지 못했나
+        if (m_destPosition.y < transform.position.y)
+        {
+            // 아래로 이동함
+            transform.position = transform.position + (Vector3.down * m_speed) * Time.deltaTime;
+        }
+
+        // 수평 이동 거리만큼 이동 했는가
+        if (m_destPosition.x <= transform.position.x)
+        {
+            // 위치 맞추기
+            transform.position = m_destPosition;
+            // 플레이어 정지
+            m_playerState = en_PlayerState.STAY;
+            // 플레이어 조작 가능
+            m_gameManager.canPlayerControl = true;
+        }
+    }
+
+
+    private void ClimbingForwardLeft()
+    {
+        // 왼쪽 이동
+        transform.position = transform.position + (Vector3.left * m_speed) * Time.deltaTime;
+
+        // 수평 이동 거리만큼 이동 하지 못했나
+        if (m_destPosition.z > transform.position.z)
+        {
+            // 앞쪽 이동
+            transform.position = transform.position + (Vector3.forward * m_speed) * Time.deltaTime;
+        }
+
+        // 수평 이동 거리만큼 이동 했는가
+        if (m_destPosition.x >= transform.position.x)
+        {
+            // 위치 맞추기
+            transform.position = m_destPosition;
+            // 플레이어 정지
+            m_playerState = en_PlayerState.STAY;
+            // 플레이어 조작 가능
+            m_gameManager.canPlayerControl = true;
+        }
+    }
+
+    private void ClimbingForwardRight()
+    {
+        // 오른쪽 이동
+        transform.position = transform.position + (Vector3.right * m_speed) * Time.deltaTime;
+
+        // 수평 이동 거리만큼 이동 하지 못했나
+        if (m_destPosition.z > transform.position.z)
+        {
+            // 앞쪽 이동
+            transform.position = transform.position + (Vector3.forward * m_speed) * Time.deltaTime;
+        }
+
+        // 수평 이동 거리만큼 이동 했는가
+        if (m_destPosition.x <= transform.position.x)
+        {
+            // 위치 맞추기
+            transform.position = m_destPosition;
+            // 플레이어 정지
+            m_playerState = en_PlayerState.STAY;
+            // 플레이어 조작 가능
+            m_gameManager.canPlayerControl = true;
+        }
+    }
+
+    private void ClimbingBackLeft()
+    {
+        // 왼쪽 이동
+        transform.position = transform.position + (Vector3.left * m_speed) * Time.deltaTime;
+
+        // 수평 이동 거리만큼 이동 하지 못했나
+        if (m_destPosition.z < transform.position.z)
+        {
+            // 앞쪽 이동
+            transform.position = transform.position + (Vector3.back * m_speed) * Time.deltaTime;
+        }
+
+        // 수평 이동 거리만큼 이동 했는가
+        if (m_destPosition.x >= transform.position.x)
+        {
+            // 위치 맞추기
+            transform.position = m_destPosition;
+            // 플레이어 정지
+            m_playerState = en_PlayerState.STAY;
+            // 플레이어 조작 가능
+            m_gameManager.canPlayerControl = true;
+        }
+    }
+
+    private void ClimbingBackRight()
+    {
+        // 오른쪽 이동
+        transform.position = transform.position + (Vector3.right * m_speed) * Time.deltaTime;
+
+        // 수평 이동 거리만큼 이동 하지 못했나
+        if (m_destPosition.z < transform.position.z)
+        {
+            // 앞쪽 이동
+            transform.position = transform.position + (Vector3.back * m_speed) * Time.deltaTime;
+        }
+
+        // 수평 이동 거리만큼 이동 했는가
+        if (m_destPosition.x <= transform.position.x)
+        {
+            // 위치 맞추기
+            transform.position = m_destPosition;
+            // 플레이어 정지
+            m_playerState = en_PlayerState.STAY;
+            // 플레이어 조작 가능
+            m_gameManager.canPlayerControl = true;
+        }
+    }
+
+    private void ClimbingLeftForward()
+    {
+        // 앞쪽 이동
+        transform.position = transform.position + (Vector3.forward * m_speed) * Time.deltaTime;
+
+        // 수평 이동 거리만큼 이동 하지 못했나
+        if (m_destPosition.x < transform.position.x)
+        {
+            // 왼쪽 이동
+            transform.position = transform.position + (Vector3.left * m_speed) * Time.deltaTime;
+        }
+
+        // 수평 이동 거리만큼 이동 했는가
+        if (m_destPosition.z <= transform.position.z)
+        {
+            // 위치 맞추기
+            transform.position = m_destPosition;
+            // 플레이어 정지
+            m_playerState = en_PlayerState.STAY;
+            // 플레이어 조작 가능
+            m_gameManager.canPlayerControl = true;
+        }
+    }
+
+    private void ClimbingLeftBack()
+    {
+        // 앞쪽 이동
+        transform.position = transform.position + (Vector3.back * m_speed) * Time.deltaTime;
+
+        // 수평 이동 거리만큼 이동 하지 못했나
+        if (m_destPosition.x < transform.position.x)
+        {
+            // 왼쪽 이동
+            transform.position = transform.position + (Vector3.left * m_speed) * Time.deltaTime;
+        }
+
+        // 수평 이동 거리만큼 이동 했는가
+        if (m_destPosition.z >= transform.position.z)
+        {
+            // 위치 맞추기
+            transform.position = m_destPosition;
+            // 플레이어 정지
+            m_playerState = en_PlayerState.STAY;
+            // 플레이어 조작 가능
+            m_gameManager.canPlayerControl = true;
+        }
+    }
+
+    private void ClimbingRightForward()
+    {
+        // 앞쪽 이동
+        transform.position = transform.position + (Vector3.forward * m_speed) * Time.deltaTime;
+
+        // 수평 이동 거리만큼 이동 하지 못했나
+        if (m_destPosition.x > transform.position.x)
+        {
+            // 왼쪽 이동
+            transform.position = transform.position + (Vector3.right * m_speed) * Time.deltaTime;
+        }
+
+        // 수평 이동 거리만큼 이동 했는가
+        if (m_destPosition.z <= transform.position.z)
+        {
+            // 위치 맞추기
+            transform.position = m_destPosition;
+            // 플레이어 정지
+            m_playerState = en_PlayerState.STAY;
+            // 플레이어 조작 가능
+            m_gameManager.canPlayerControl = true;
+        }
+    }
+
+    private void ClimbingRightBack()
+    {
+        // 앞쪽 이동
+        transform.position = transform.position + (Vector3.back * m_speed) * Time.deltaTime;
+
+        // 수평 이동 거리만큼 이동 하지 못했나
+        if (m_destPosition.x > transform.position.x)
+        {
+            // 왼쪽 이동
+            transform.position = transform.position + (Vector3.right * m_speed) * Time.deltaTime;
+        }
+
+        // 수평 이동 거리만큼 이동 했는가
+        if (m_destPosition.z >= transform.position.z)
+        {
+            // 위치 맞추기
+            transform.position = m_destPosition;
+            // 플레이어 정지
+            m_playerState = en_PlayerState.STAY;
+            // 플레이어 조작 가능
+            m_gameManager.canPlayerControl = true;
+        }
+    }
+
+
+    private void Turn()
+    {
+        transform.rotation = Quaternion.Slerp(transform.rotation, m_destRotation, Time.deltaTime * m_speed * 2);
+
+        if (Quaternion.Angle(transform.rotation, m_destRotation) <= m_speed)
+        {
+            // 플레이어 정지
+            m_playerState = en_PlayerState.STAY;
+            // 플레이어 조작 가능
+            m_gameManager.canPlayerControl = true;
+        }
     }
 }

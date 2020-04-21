@@ -234,35 +234,29 @@ public class GameManager : MonoBehaviour
         int iCnt;
         int iSize;
 
-        
-        if (Input.anyKeyDown)
-        {
-            // 키 다운
-            iSize = arrKeyDownCode.Length;
-            iCnt = 0;
-            while (iCnt < iSize)
-            {
-                if (Input.GetKeyDown(arrKeyDownCode[iCnt]))
-                {
-                    arrKeyDownProc[iCnt]();
-                }
-                ++iCnt;
-            }
 
-            // 키 오토
-            //-----------------------------------------
-            // 나중에 getKey로 수정해야됨
-            //-----------------------------------------
-            iSize = arrKeyAutoCode.Length;
-            iCnt = 0;
-            while (iCnt < iSize)
+        // 키 다운
+        iSize = arrKeyDownCode.Length;
+        iCnt = 0;
+        while (iCnt < iSize)
+        {
+            if (Input.GetKeyDown(arrKeyDownCode[iCnt]))
             {
-                if (Input.GetKeyDown(arrKeyAutoCode[iCnt]))
-                {
-                    arrKeyAutoProc[iCnt]();
-                }
-                ++iCnt;
+                arrKeyDownProc[iCnt]();
             }
+            ++iCnt;
+        }
+
+        // 키 오토
+        iSize = arrKeyAutoCode.Length;
+        iCnt = 0;
+        while (iCnt < iSize)
+        {
+            if (Input.GetKey(arrKeyAutoCode[iCnt]))
+            {
+                arrKeyAutoProc[iCnt]();
+            }
+            ++iCnt;
         }
 
         // 키 업
@@ -335,7 +329,7 @@ public class GameManager : MonoBehaviour
                             // 배열에 게임 오브젝트 저장
                             m_arrMapData[iY, iZ, iX].gameObject = m_playerObject;
                             // 게임 오브젝트 이름 변경
-                            m_arrMapData[iY, iZ, iX].gameObject.name = "Player [" + iY + ", " + iZ + ", " + iX + "]";
+                            m_arrMapData[iY, iZ, iX].gameObject.name = "Player [" + iX + ", " + iY + ", " + iZ + "]";
                             // 오브젝트 위치 저장
                             m_arrMapData[iY, iZ, iX].gameObject.transform.position = new Vector3(iX, iY, iZ) + playerPrefab.transform.position;
                             // 배열에 태그, 레이어 메쉬 정보 저장
@@ -358,7 +352,7 @@ public class GameManager : MonoBehaviour
                             // 목적지 게임 오브젝트 추가 및 배열에 저장
                             m_arrMapData[iY, iZ, iX].gameObject = Instantiate<GameObject>(playerPrefab);
                             // 게임 오브젝트 이름 변경
-                            m_arrMapData[iY, iZ, iX].gameObject.name = "Dest [" + iY + ", " + iZ + ", " + iX + "]";
+                            m_arrMapData[iY, iZ, iX].gameObject.name = "Dest [" + iX + ", " + iY + ", " + iZ + "]";
                             // 오브젝트 위치 저장
                             m_arrMapData[iY, iZ, iX].gameObject.transform.position = new Vector3(iX, iY, iZ) + playerPrefab.transform.position;
                             // 이 게임 오브젝트를 게임 스테이지 하위 항목의 위치로 변경
@@ -373,7 +367,7 @@ public class GameManager : MonoBehaviour
                             // 일반 큐브 게임 오브젝트 추가 및 배열에 저장
                             m_arrMapData[iY, iZ, iX].gameObject = Instantiate<GameObject>(normalCubePrefab);
                             // 게임 오브젝트 이름 변경
-                            m_arrMapData[iY, iZ, iX].gameObject.name = "NormalCube [" + iY + ", " + iZ + ", " + iX + "]";
+                            m_arrMapData[iY, iZ, iX].gameObject.name = "NormalCube [" + iX + ", " + iY + ", " + iZ + "]";
                             // 오브젝트 위치 저장
                             m_arrMapData[iY, iZ, iX].gameObject.transform.position = new Vector3(iX, iY, iZ) + normalCubePrefab.transform.position;
                             // 이 게임 오브젝트를 게임 스테이지 하위 항목의 위치로 변경
@@ -393,7 +387,7 @@ public class GameManager : MonoBehaviour
                         case en_MenuElementType.ICE_CUBE:
                             // 얼음 큐브
                             m_arrMapData[iY, iZ, iX].gameObject = Instantiate<GameObject>(iceCubePrefab);
-                            m_arrMapData[iY, iZ, iX].gameObject.name = "IceCube [" + iY + ", " + iZ + ", " + iX + "]";
+                            m_arrMapData[iY, iZ, iX].gameObject.name = "IceCube [" + iX + ", " + iY + ", " + iZ + "]";
                             m_arrMapData[iY, iZ, iX].gameObject.transform.position = new Vector3(iX, iY, iZ) + iceCubePrefab.transform.position;
                             m_arrMapData[iY, iZ, iX].gameObject.transform.parent = gameStage.transform;
                             m_arrMapData[iY, iZ, iX].objectTag = en_GameObjectTag.ICE_CUBE;
@@ -561,6 +555,7 @@ public class GameManager : MonoBehaviour
             if (isGripKeyPressed)
             {
                 PlayerGripBack();
+                return;
             }
 
             // 이동
@@ -580,6 +575,7 @@ public class GameManager : MonoBehaviour
             if (isGripKeyPressed)
             {
                 PlayerGripLeft();
+                return;
             }
 
             // 이동
@@ -599,6 +595,7 @@ public class GameManager : MonoBehaviour
             if (isGripKeyPressed)
             {
                 PlayerGripForward();
+                return;
             }
 
             // 이동
@@ -625,58 +622,78 @@ public class GameManager : MonoBehaviour
         // 오른쪽 →
         if (45 <= CameraAngleY && CameraAngleY < 135)
         {
+            // 매달림
+            if (isPlayerClimbing)
+            {
+                return;
+            }
+
             // 붙잡기
             if (isGripKeyPressed)
             {
                 PlayerGripLeft();
+                return;
             }
-            // 일반
-            else
-            {
-                PlayerMoveLeft();
-            }
+
+            // 이동
+            PlayerMoveLeft();
         }
         // 뒤쪽 ↓
         else if (135 <= CameraAngleY && CameraAngleY < 225)
         {
+            // 매달림
+            if (isPlayerClimbing)
+            {
+                return;
+            }
+
             // 붙잡기
             if (isGripKeyPressed)
             {
                 PlayerGripForward();
+                return;
             }
-            // 일반
-            else
-            {
-                PlayerMoveForward();
-            }
+
+            // 이동
+            PlayerMoveForward();
         }
         // 왼쪽 ←
         else if (225 <= CameraAngleY && CameraAngleY < 315)
         {
+            // 매달림
+            if (isPlayerClimbing)
+            {
+                return;
+            }
+
             // 붙잡기
             if (isGripKeyPressed)
             {
                 PlayerGripRight();
+                return;
             }
-            // 일반
-            else
-            {
-                PlayerMoveRight();
-            }
+
+            // 이동
+            PlayerMoveRight();
         }
         // 앞쪽 ↑
         else
         {
+            // 매달림
+            if (isPlayerClimbing)
+            {
+                return;
+            }
+
             // 붙잡기
             if (isGripKeyPressed)
             {
                 PlayerGripBack();
+                return;
             }
+
             // 일반
-            else
-            {
-                PlayerMoveBack();
-            }
+            PlayerMoveBack();
         }
     }
 
@@ -885,6 +902,8 @@ public class GameManager : MonoBehaviour
             // 플레이어의 방향 앞쪽으로 변경
             m_playerAction.DirectionForward();
             m_playerDirection = en_Direction.FORWARD;
+            // 플레이어 조작 불가
+            canPlayerControl = false;
             return;
         }
 
@@ -960,9 +979,11 @@ public class GameManager : MonoBehaviour
                     if (isPlayerActive)
                     {
                         // 플레이어 좌표 이동
-                        m_playerAction.MoveForwardUp();
+                        m_playerAction.MoveForwardClimbingUp();
                         // 플레이어 방향
                         m_playerDirection = en_Direction.FORWARD;
+                        // 플레이어 조작 불가
+                        canPlayerControl = false;
                     }
                 }
             }
@@ -1045,9 +1066,11 @@ public class GameManager : MonoBehaviour
                     if (isPlayerActive)
                     {
                         // 플레이어 좌표 이동
-                        m_playerAction.MoveForwardDown();
+                        m_playerAction.MoveForwardClimbingDown();
                         // 플레이어 방향
                         m_playerDirection = en_Direction.FORWARD;
+                        // 플레이어 조작 불가
+                        canPlayerControl = false;
                     }
                 }
                 else
@@ -1067,11 +1090,13 @@ public class GameManager : MonoBehaviour
                     if (isPlayerActive)
                     {
                         // 플레이어 좌표 이동
-                        m_playerAction.ClimbingForward();
+                        m_playerAction.MoveForwardClimbingState();
                         // 플레이어 방향
                         m_playerDirection = en_Direction.BACK;
                         // 등반 플래그 활성화
                         isPlayerClimbing = true;
+                        // 플레이어 조작 불가
+                        canPlayerControl = false;
                     }
                 }
             }
@@ -1088,6 +1113,8 @@ public class GameManager : MonoBehaviour
             // 플레이어의 방향 뒤쪽으로 변경
             m_playerAction.DirectionBack();
             m_playerDirection = en_Direction.BACK;
+            // 플레이어 조작 불가
+            canPlayerControl = false;
             return;
         }
 
@@ -1163,9 +1190,11 @@ public class GameManager : MonoBehaviour
                     if (isPlayerActive)
                     {
                         // 플레이어 좌표 이동
-                        m_playerAction.MoveBackUp();
+                        m_playerAction.MoveBackClimbingUp();
                         // 플레이어 방향
                         m_playerDirection = en_Direction.BACK;
+                        // 플레이어 조작 불가
+                        canPlayerControl = false;
                     }
                 }
             }
@@ -1248,9 +1277,11 @@ public class GameManager : MonoBehaviour
                     if (isPlayerActive)
                     {
                         // 플레이어 좌표 이동
-                        m_playerAction.MoveBackDown();
+                        m_playerAction.MoveBackClimbingDown();
                         // 플레이어 방향
                         m_playerDirection = en_Direction.BACK;
+                        // 플레이어 조작 불가
+                        canPlayerControl = false;
                     }
                 }
                 else
@@ -1270,11 +1301,13 @@ public class GameManager : MonoBehaviour
                     if (isPlayerActive)
                     {
                         // 플레이어 좌표 이동
-                        m_playerAction.ClimbingBack();
+                        m_playerAction.MoveBackClimbingState();
                         // 플레이어 방향
                         m_playerDirection = en_Direction.FORWARD;
                         // 등반 플래그 활성화
                         isPlayerClimbing = true;
+                        // 플레이어 조작 불가
+                        canPlayerControl = false;
                     }
                 }
             }
@@ -1291,6 +1324,8 @@ public class GameManager : MonoBehaviour
             // 플레이어의 방향 왼쪽으로 변경
             m_playerAction.DirectionLeft();
             m_playerDirection = en_Direction.LEFT;
+            // 플레이어 조작 불가
+            canPlayerControl = false;
             return;
         }
 
@@ -1366,9 +1401,11 @@ public class GameManager : MonoBehaviour
                     if (isPlayerActive)
                     {
                         // 플레이어 좌표 이동
-                        m_playerAction.MoveLeftUp();
+                        m_playerAction.MoveLeftClimbingUp();
                         // 플레이어 방향
                         m_playerDirection = en_Direction.LEFT;
+                        // 플레이어 조작 불가
+                        canPlayerControl = false;
                     }
                 }
             }
@@ -1451,9 +1488,11 @@ public class GameManager : MonoBehaviour
                     if (isPlayerActive)
                     {
                         // 플레이어 좌표 이동
-                        m_playerAction.MoveLeftDown();
+                        m_playerAction.MoveLeftClimbingDown();
                         // 플레이어 방향
                         m_playerDirection = en_Direction.LEFT;
+                        // 플레이어 조작 불가
+                        canPlayerControl = false;
                     }
                 }
                 else
@@ -1473,11 +1512,13 @@ public class GameManager : MonoBehaviour
                     if (isPlayerActive)
                     {
                         // 플레이어 좌표 이동
-                        m_playerAction.ClimbingLeft();
+                        m_playerAction.MoveLeftClimbingState();
                         // 플레이어 방향
                         m_playerDirection = en_Direction.RIGHT;
                         // 등반 플래그 활성화
                         isPlayerClimbing = true;
+                        // 플레이어 조작 불가
+                        canPlayerControl = false;
                     }
                 }
             }
@@ -1494,6 +1535,8 @@ public class GameManager : MonoBehaviour
             // 플레이어의 방향 오른쪽으로 변경
             m_playerAction.DirectionRight();
             m_playerDirection = en_Direction.RIGHT;
+            // 플레이어 조작 불가
+            canPlayerControl = false;
             return;
         }
 
@@ -1570,9 +1613,11 @@ public class GameManager : MonoBehaviour
                     if (isPlayerActive)
                     {
                         // 플레이어 좌표 이동
-                        m_playerAction.MoveRightUp();
+                        m_playerAction.MoveRightClimbingUp();
                         // 플레이어 방향
                         m_playerDirection = en_Direction.RIGHT;
+                        // 플레이어 조작 불가
+                        canPlayerControl = false;
                     }
                 }
             }
@@ -1655,9 +1700,11 @@ public class GameManager : MonoBehaviour
                     if (isPlayerActive)
                     {
                         // 플레이어 좌표 이동
-                        m_playerAction.MoveRightDown();
+                        m_playerAction.MoveRightClimbingDown();
                         // 플레이어 방향
                         m_playerDirection = en_Direction.RIGHT;
+                        // 플레이어 조작 불가
+                        canPlayerControl = false;
                     }
                 }
                 else
@@ -1677,11 +1724,13 @@ public class GameManager : MonoBehaviour
                     if (isPlayerActive)
                     {
                         // 플레이어 좌표 이동
-                        m_playerAction.ClimbingRight();
+                        m_playerAction.MoveRightClimbingState();
                         // 플레이어 방향
                         m_playerDirection = en_Direction.LEFT;
                         // 등반 플래그 활성화
                         isPlayerClimbing = true;
+                        // 플레이어 조작 불가
+                        canPlayerControl = false;
                     }
                 }
             }
@@ -2157,6 +2206,8 @@ public class GameManager : MonoBehaviour
         m_playerAction.PullForward();
         // 화면상의 큐브 이동
         m_arrMapData[iY, iZ, iX].actionScript.MoveForward();
+        // 플레이어 조작 불가
+        canPlayerControl = false;
     }
 
     // 플레이어 밀기 뒤쪽
@@ -2207,6 +2258,8 @@ public class GameManager : MonoBehaviour
         m_playerAction.PullBack();
         // 화면상의 큐브 이동
         m_arrMapData[iY, iZ, iX].actionScript.MoveBack();
+        // 플레이어 조작 불가
+        canPlayerControl = false;
     }
 
     // 플레이어 밀기 왼쪽
@@ -2257,6 +2310,8 @@ public class GameManager : MonoBehaviour
         m_playerAction.PullLeft();
         // 화면상의 큐브 이동
         m_arrMapData[iY, iZ, iX].actionScript.MoveLeft();
+        // 플레이어 조작 불가
+        canPlayerControl = false;
     }
 
     // 플레이어 밀기 오른쪽
@@ -2307,6 +2362,8 @@ public class GameManager : MonoBehaviour
         m_playerAction.PullRight();
         // 화면상의 큐브 이동
         m_arrMapData[iY, iZ, iX].actionScript.MoveRight();
+        // 플레이어 조작 불가
+        canPlayerControl = false;
     }
 
 
@@ -2372,8 +2429,10 @@ public class GameManager : MonoBehaviour
                 {
                     // 플레이어 좌표 이동
                     m_playerAction.ClimbingUpForward();
-                    // 등반 플래그 활성화
+                    // 등반 플래그 비활성화
                     isPlayerClimbing = false;
+                    // 플레이어 조작 불가
+                    canPlayerControl = false;
                 }
                 return;
             case en_Direction.BACK:     // 뒤쪽
@@ -2429,8 +2488,10 @@ public class GameManager : MonoBehaviour
                 {
                     // 플레이어 좌표 이동
                     m_playerAction.ClimbingUpBack();
-                    // 등반 플래그 활성화
+                    // 등반 플래그 비활성화
                     isPlayerClimbing = false;
+                    // 플레이어 조작 불가
+                    canPlayerControl = false;
                 }
                 return;
             case en_Direction.LEFT:     // 왼쪽
@@ -2486,8 +2547,10 @@ public class GameManager : MonoBehaviour
                 {
                     // 플레이어 좌표 이동
                     m_playerAction.ClimbingUpLeft();
-                    // 등반 플래그 활성화
+                    // 등반 플래그 비활성화
                     isPlayerClimbing = false;
+                    // 플레이어 조작 불가
+                    canPlayerControl = false;
                 }
                 return;
             case en_Direction.RIGHT:    // 오른쪽
@@ -2532,7 +2595,7 @@ public class GameManager : MonoBehaviour
                 }
 
                 // 배열의 데이터 이동
-                MoveData(iY, iZ, iX, iY + 1, iZ + 1, (iX + 1));
+                MoveData(iY, iZ, iX, iY + 1, iZ, (iX + 1));
 
                 // 플레이어 좌표 이동
                 m_playerPosition.iY = iY + 1;
@@ -2543,8 +2606,10 @@ public class GameManager : MonoBehaviour
                 {
                     // 플레이어 좌표 이동
                     m_playerAction.ClimbingUpRight();
-                    // 등반 플래그 활성화
+                    // 등반 플래그 비활성화
                     isPlayerClimbing = false;
+                    // 플레이어 조작 불가
+                    canPlayerControl = false;
                 }
                 return;
         }
@@ -2617,6 +2682,8 @@ public class GameManager : MonoBehaviour
                         {
                             // 플레이어 좌표 이동
                             m_playerAction.ClimbingMoveLeft();
+                            // 플레이어 조작 불가
+                            canPlayerControl = false;
                         }
                     }
                     else
@@ -2637,10 +2704,10 @@ public class GameManager : MonoBehaviour
                         if (isPlayerActive)
                         {
                             // 플레이어 좌표 이동
-                            m_playerAction.ClimbingMoveLeft();
-                            m_playerAction.ClimbingMoveForward();
-                            m_playerAction.DirectionRight();
+                            m_playerAction.ClimbingMoveLeftForward();
                             m_playerDirection = en_Direction.RIGHT;
+                            // 플레이어 조작 불가
+                            canPlayerControl = false;
                         }
                     }
                 }
@@ -2709,6 +2776,8 @@ public class GameManager : MonoBehaviour
                         {
                             // 플레이어 좌표 이동
                             m_playerAction.ClimbingMoveLeft();
+                            // 플레이어 조작 불가
+                            canPlayerControl = false;
                         }
                     }
                     else
@@ -2729,10 +2798,10 @@ public class GameManager : MonoBehaviour
                         if (isPlayerActive)
                         {
                             // 플레이어 좌표 이동
-                            m_playerAction.ClimbingMoveLeft();
-                            m_playerAction.ClimbingMoveBack();
-                            m_playerAction.DirectionRight();
+                            m_playerAction.ClimbingMoveLeftBack();
                             m_playerDirection = en_Direction.RIGHT;
+                            // 플레이어 조작 불가
+                            canPlayerControl = false;
                         }
                     }
                 }
@@ -2794,6 +2863,8 @@ public class GameManager : MonoBehaviour
                         {
                             // 플레이어 좌표 이동
                             m_playerAction.ClimbingMoveBack();
+                            // 플레이어 조작 불가
+                            canPlayerControl = false;
                         }
                     }
                     else
@@ -2814,10 +2885,10 @@ public class GameManager : MonoBehaviour
                         if (isPlayerActive)
                         {
                             // 플레이어 좌표 이동
-                            m_playerAction.ClimbingMoveLeft();
-                            m_playerAction.ClimbingMoveBack();
-                            m_playerAction.DirectionForward();
+                            m_playerAction.ClimbingMoveBackLeft();
                             m_playerDirection = en_Direction.FORWARD;
+                            // 플레이어 조작 불가
+                            canPlayerControl = false;
                         }
                     }
                 }
@@ -2844,6 +2915,8 @@ public class GameManager : MonoBehaviour
                         // 플레이어의 방향 왼쪽으로 변경
                         m_playerAction.DirectionForward();
                         m_playerDirection = en_Direction.FORWARD;
+                        // 플레이어 조작 불가
+                        canPlayerControl = false;
                     }
                 }
                 else
@@ -2879,6 +2952,8 @@ public class GameManager : MonoBehaviour
                         {
                             // 플레이어 좌표 이동
                             m_playerAction.ClimbingMoveForward();
+                            // 플레이어 조작 불가
+                            canPlayerControl = false;
                         }
                     }
                     else
@@ -2899,10 +2974,10 @@ public class GameManager : MonoBehaviour
                         if (isPlayerActive)
                         {
                             // 플레이어 좌표 이동
-                            m_playerAction.ClimbingMoveRight();
-                            m_playerAction.ClimbingMoveForward();
-                            m_playerAction.DirectionBack();
+                            m_playerAction.ClimbingMoveForwardRight();
                             m_playerDirection = en_Direction.BACK;
+                            // 플레이어 조작 불가
+                            canPlayerControl = false;
                         }
                     }
                 }
@@ -2977,6 +3052,8 @@ public class GameManager : MonoBehaviour
                         {
                             // 플레이어 좌표 이동
                             m_playerAction.ClimbingMoveRight();
+                            // 플레이어 조작 불가
+                            canPlayerControl = false;
                         }
                     }
                     else
@@ -2997,10 +3074,10 @@ public class GameManager : MonoBehaviour
                         if (isPlayerActive)
                         {
                             // 플레이어 좌표 이동
-                            m_playerAction.ClimbingMoveRight();
-                            m_playerAction.ClimbingMoveForward();
-                            m_playerAction.DirectionLeft();
+                            m_playerAction.ClimbingMoveRightForward();
                             m_playerDirection = en_Direction.LEFT;
+                            // 플레이어 조작 불가
+                            canPlayerControl = false;
                         }
                     }
                 }
@@ -3069,6 +3146,8 @@ public class GameManager : MonoBehaviour
                         {
                             // 플레이어 좌표 이동
                             m_playerAction.ClimbingMoveRight();
+                            // 플레이어 조작 불가
+                            canPlayerControl = false;
                         }
                     }
                     else
@@ -3089,10 +3168,10 @@ public class GameManager : MonoBehaviour
                         if (isPlayerActive)
                         {
                             // 플레이어 좌표 이동
-                            m_playerAction.ClimbingMoveRight();
-                            m_playerAction.ClimbingMoveBack();
-                            m_playerAction.DirectionLeft();
+                            m_playerAction.ClimbingMoveRightBack();
                             m_playerDirection = en_Direction.LEFT;
+                            // 플레이어 조작 불가
+                            canPlayerControl = false;
                         }
                     }
                 }
@@ -3154,6 +3233,8 @@ public class GameManager : MonoBehaviour
                         {
                             // 플레이어 좌표 이동
                             m_playerAction.ClimbingMoveForward();
+                            // 플레이어 조작 불가
+                            canPlayerControl = false;
                         }
                     }
                     else
@@ -3174,10 +3255,10 @@ public class GameManager : MonoBehaviour
                         if (isPlayerActive)
                         {
                             // 플레이어 좌표 이동
-                            m_playerAction.ClimbingMoveLeft();
-                            m_playerAction.ClimbingMoveForward();
-                            m_playerAction.DirectionBack();
+                            m_playerAction.ClimbingMoveForwardLeft();
                             m_playerDirection = en_Direction.BACK;
+                            // 플레이어 조작 불가
+                            canPlayerControl = false;
                         }
                     }
                 }
@@ -3239,6 +3320,8 @@ public class GameManager : MonoBehaviour
                         {
                             // 플레이어 좌표 이동
                             m_playerAction.ClimbingMoveBack();
+                            // 플레이어 조작 불가
+                            canPlayerControl = false;
                         }
                     }
                     else
@@ -3259,10 +3342,10 @@ public class GameManager : MonoBehaviour
                         if (isPlayerActive)
                         {
                             // 플레이어 좌표 이동
-                            m_playerAction.ClimbingMoveRight();
-                            m_playerAction.ClimbingMoveBack();
-                            m_playerAction.DirectionForward();
+                            m_playerAction.ClimbingMoveBackRight();
                             m_playerDirection = en_Direction.FORWARD;
+                            // 플레이어 조작 불가
+                            canPlayerControl = false;
                         }
                     }
                 }
@@ -3440,7 +3523,7 @@ public class GameManager : MonoBehaviour
                 break;
         }
 
-        m_arrMapData[iDestY, iDestZ, iDestX].gameObject.name = objectName + " [" + iDestY + ", " + iDestZ + ", " + iDestX + "]";
+        m_arrMapData[iDestY, iDestZ, iDestX].gameObject.name = objectName + " [" + iDestX + ", " + iDestY + ", " + iDestZ + "]";
 
         // 이전 위치의 큐브 정보 삭제
         m_arrMapData[iY, iZ, iX].objectTag = en_GameObjectTag.EMPTY;
