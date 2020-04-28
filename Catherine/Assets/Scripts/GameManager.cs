@@ -382,7 +382,7 @@ public class GameManager : MonoBehaviour
                             cubeScript = m_arrMapData[iY, iZ, iX].gameObject.GetComponent<CubeAction>();
                             m_arrMapData[iY, iZ, iX].actionScript = cubeScript;
                             // 스크립트 초기화
-                            cubeScript.Init(cubeSpeed);
+                            cubeScript.Init(this, cubeSpeed, iX, iY, iZ);
                             break;
                         case en_MenuElementType.ICE_CUBE:
                             // 얼음 큐브
@@ -399,7 +399,7 @@ public class GameManager : MonoBehaviour
                             cubeScript = m_arrMapData[iY, iZ, iX].gameObject.GetComponent<CubeAction>();
                             m_arrMapData[iY, iZ, iX].actionScript = cubeScript;
                             // 스크립트 초기화
-                            cubeScript.Init(cubeSpeed);
+                            cubeScript.Init(this, cubeSpeed, iX, iY, iZ);
                             break;
                         default:
                             // 비어 있음
@@ -3368,7 +3368,10 @@ public class GameManager : MonoBehaviour
         // 앞쪽에 큐브가 있나
         if (m_arrMapData[iY, iZ + 1, iX].objectLayer == en_GameObjectLayer.CUBE)
         {
+            //--------------------------------
+            // 재귀 호출
             // 이동 방향의 큐브도 이동처리
+            //--------------------------------
             if (!CubeMoveForward(iY, iZ + 1, iX))
             {
                 //--------------------------------
@@ -3531,5 +3534,136 @@ public class GameManager : MonoBehaviour
         m_arrMapData[iY, iZ, iX].meshData = en_MeshType.EMPTY;
         m_arrMapData[iY, iZ, iX].gameObject = null;
         m_arrMapData[iY, iZ, iX].actionScript = null;
+    }
+
+
+    // 아래에 큐브 발판이 있는지 체크합니다
+    public void CeilingCheck(int iY, int iZ, int iX)
+    {
+        int iCeilingY = iY + 1;
+        int iCntZ = iZ - 1;
+        int iCntX = iX - 1;
+        int iMaxZ = iZ + 1;
+        int iMaxX = iX + 1;
+        int iTempX;
+
+        // 범위를 벗어남
+        if (iCeilingY >= m_mapSizeY)
+        {
+            return;
+        }
+        
+        if (iCntZ < 0)
+        {
+            iCntZ = 0;
+        }
+        if (iCntX < 0)
+        {
+            iCntX = 0;
+        }
+        if (iMaxZ >= m_mapSizeZ)
+        {
+            iMaxZ = m_mapSizeZ - 1;
+        }
+        if (iMaxX >= m_mapSizeX)
+        {
+            iMaxX = m_mapSizeX - 1;
+        }
+
+        while (iCntZ <= iMaxZ)
+        {
+            iTempX = iCntX;
+            while (iTempX <= iMaxX)
+            {
+                if (iCntZ != iZ && iTempX != iX) 
+                {
+                    ++iTempX;
+                    continue;
+                }
+
+                if (m_arrMapData[iCeilingY, iCntZ, iTempX].objectLayer != en_GameObjectLayer.CUBE)
+                {
+                    ++iTempX;
+                    continue;
+                }
+
+                // 아래에 큐브가 있는지
+                if (!FloorCheck(iCeilingY, iCntZ, iTempX))
+                {
+                    // 아래에 큐브가 없다 떨어짐
+
+                    //--------------------------------
+                    // 재귀 호출
+                    // 위에 큐브들 떨어지는지
+                    //--------------------------------
+                    CeilingCheck(iCeilingY, iCntZ, iTempX);
+                }
+                ++iTempX;
+            }
+            ++iCntZ;
+        }
+    }
+
+    // 아래에 큐브가 있으면 true 없으면 false
+    public bool FloorCheck(int iY, int iZ, int iX)
+    {
+        int iFloorY = iY - 1;
+        int iCntZ = iZ - 1;
+        int iCntX = iX - 1;
+        int iMaxZ = iZ + 1;
+        int iMaxX = iX + 1;
+        int iTempX;
+
+        // 범위를 벗어남
+        if (iFloorY < 0)
+        {
+            return true;
+        }
+
+        if (iCntZ < 0)
+        {
+            iCntZ = 0;
+        }
+        if (iCntX < 0)
+        {
+            iCntX = 0;
+        }
+        if (iMaxZ >= m_mapSizeZ)
+        {
+            iMaxZ = m_mapSizeZ - 1;
+        }
+        if (iMaxX >= m_mapSizeX)
+        {
+            iMaxX = m_mapSizeX - 1;
+        }
+
+        while (iCntZ <= iMaxZ)
+        {
+            iTempX = iCntX;
+            while (iTempX <= iMaxX)
+            {
+                if (iCntZ != iZ && iTempX != iX)
+                {
+                    ++iTempX;
+                    continue;
+                }
+
+                if (m_arrMapData[iFloorY, iCntZ, iTempX].objectLayer == en_GameObjectLayer.CUBE)
+                {
+                    // 떨어지지 않음
+                    return true;
+                }
+                ++iTempX;
+            }
+            ++iCntZ;
+        }
+
+        // 화면상의 큐브 이동
+        m_arrMapData[iY, iZ, iX].actionScript.MoveDown();
+        // 배열의 데이터 이동
+        MoveData(iY, iZ, iX, iFloorY, iZ, iX);
+
+        // 떨어짐
+        return false;
     }
 }

@@ -133,5 +133,7 @@ namespace GameGlobalScript
         public virtual void MoveBack() { }
         public virtual void MoveLeft() { }
         public virtual void MoveRight() { }
+        public virtual void MoveUp() { }
+        public virtual void MoveDown() { }
     }
 }
