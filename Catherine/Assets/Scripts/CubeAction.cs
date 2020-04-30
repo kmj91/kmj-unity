@@ -34,6 +34,8 @@ public class CubeAction : GameScript
         m_destPosition = transform.position + Vector3.forward;
         // 큐브 상태 앞으로 이동
         m_cubeState = en_CubeState.MOVE_FORWARD;
+        // 데이터 잘라내기
+        m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
     public override void MoveBack()
@@ -42,6 +44,8 @@ public class CubeAction : GameScript
         m_destPosition = transform.position + Vector3.back;
         // 큐브 상태 뒤쪽으로 이동
         m_cubeState = en_CubeState.MOVE_BACK;
+        // 데이터 잘라내기
+        m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
     public override void MoveLeft()
@@ -50,6 +54,8 @@ public class CubeAction : GameScript
         m_destPosition = transform.position + Vector3.left;
         // 큐브 상태 왼쪽으로 이동
         m_cubeState = en_CubeState.MOVE_LEFT;
+        // 데이터 잘라내기
+        m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
     public override void MoveRight()
@@ -58,6 +64,8 @@ public class CubeAction : GameScript
         m_destPosition = transform.position + Vector3.right;
         // 큐브 상태 오른쪽으로 이동
         m_cubeState = en_CubeState.MOVE_RIGHT;
+        // 데이터 잘라내기
+        m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
     public override void MoveUp()
@@ -66,8 +74,8 @@ public class CubeAction : GameScript
         m_destPosition = transform.position + Vector3.up;
         // 큐브 상태 위쪽으로 이동
         m_cubeState = en_CubeState.MOVE_UP;
-        // 인덱스 이동
-        m_iY = m_iY + 1;
+        // 데이터 잘라내기
+        m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
     public override void MoveDown()
@@ -76,6 +84,8 @@ public class CubeAction : GameScript
         m_destPosition = transform.position + Vector3.down;
         // 큐브 상태 아래쪽으로 이동
         m_cubeState = en_CubeState.MOVE_DOWN;
+        // 데이터 잘라내기
+        m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
 
@@ -121,6 +131,8 @@ public class CubeAction : GameScript
             transform.position = m_destPosition;
             // 큐브 정지
             m_cubeState = en_CubeState.STAY;
+            // 데이터 붙여넣기
+            m_gameManager.PasteData(m_iY, m_iZ, m_iX, m_iY, m_iZ + 1, m_iX);
             // 위에 큐브들 떨어지는지
             m_gameManager.CeilingCheck(m_iY, m_iZ, m_iX);
             // 인덱스 이동
@@ -142,6 +154,8 @@ public class CubeAction : GameScript
             transform.position = m_destPosition;
             // 큐브 정지
             m_cubeState = en_CubeState.STAY;
+            // 데이터 붙여넣기
+            m_gameManager.PasteData(m_iY, m_iZ, m_iX, m_iY, m_iZ - 1, m_iX);
             // 위에 큐브들 떨어지는지
             m_gameManager.CeilingCheck(m_iY, m_iZ, m_iX);
             // 인덱스 이동
@@ -163,6 +177,8 @@ public class CubeAction : GameScript
             transform.position = m_destPosition;
             // 큐브 정지
             m_cubeState = en_CubeState.STAY;
+            // 데이터 붙여넣기
+            m_gameManager.PasteData(m_iY, m_iZ, m_iX, m_iY, m_iZ, m_iX - 1);
             // 위에 큐브들 떨어지는지
             m_gameManager.CeilingCheck(m_iY, m_iZ, m_iX);
             // 인덱스 이동
@@ -184,6 +200,8 @@ public class CubeAction : GameScript
             transform.position = m_destPosition;
             // 큐브 정지
             m_cubeState = en_CubeState.STAY;
+            // 데이터 붙여넣기
+            m_gameManager.PasteData(m_iY, m_iZ, m_iX, m_iY, m_iZ, m_iX + 1);
             // 위에 큐브들 떨어지는지
             m_gameManager.CeilingCheck(m_iY, m_iZ, m_iX);
             // 인덱스 이동
@@ -220,6 +238,8 @@ public class CubeAction : GameScript
             transform.position = m_destPosition;
             // 큐브 정지
             m_cubeState = en_CubeState.STAY;
+            // 데이터 붙여넣기
+            m_gameManager.PasteData(m_iY, m_iZ, m_iX, m_iY - 1, m_iZ, m_iX);
             // 위에 큐브들 떨어지는지
             m_gameManager.CeilingCheck(m_iY, m_iZ, m_iX);
             // 인덱스 이동

@@ -10,6 +10,9 @@ public class PlayerAction : GameScript
 {
     public float m_speed;                           // 캐릭터 이동 속도
 
+    private int m_iX;                               // 인덱스 x
+    private int m_iY;                               // 인덱스 y
+    private int m_iZ;                               // 인덱스 z
     private Vector3 m_destPosition;                 // 이동 목표 좌표
     private Quaternion m_destRotation;              // 회전 목표 값
     private en_PlayerState m_playerState;           // 플레이어 상태
@@ -17,11 +20,14 @@ public class PlayerAction : GameScript
     private GameManager m_gameManager;              // 게임 매니저
 
     // 초기화
-    public void Init(GameManager gameManager, float speed)
+    public void Init(GameManager gameManager, float speed, int iX, int iY, int iZ)
     {
         m_scriptType = en_ActionScriptType.PLAYER;
         m_gameManager = gameManager;
         m_speed = speed;
+        m_iX = iX;
+        m_iY = iY;
+        m_iZ = iZ;
     }
 
     public override void MoveForward()
@@ -32,6 +38,8 @@ public class PlayerAction : GameScript
         transform.eulerAngles = new Vector3(0, 0, 0);
         // 플레이어 상태 앞으로 이동
         m_playerState = en_PlayerState.MOVE_FORWARD;
+        // 데이터 잘라내기
+        m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
     public void MoveForwardClimbingUp(int jumpPower = 1)
@@ -42,6 +50,8 @@ public class PlayerAction : GameScript
         transform.eulerAngles = new Vector3(0, 0, 0);
         // 플레이어 상태 앞쪽 위로 이동
         m_playerState = en_PlayerState.MOVE_FORWARD_CLIMBING_UP;
+        // 데이터 잘라내기
+        m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
     public void MoveForwardClimbingDown()
@@ -52,6 +62,8 @@ public class PlayerAction : GameScript
         transform.eulerAngles = new Vector3(0, 0, 0);
         // 플레이어 상태 앞쪽 아래로 이동
         m_playerState = en_PlayerState.MOVE_FORWARD_CLIMBING_DOWN;
+        // 데이터 잘라내기
+        m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
     public override void MoveBack()
@@ -62,6 +74,8 @@ public class PlayerAction : GameScript
         transform.eulerAngles = new Vector3(0, 180, 0);
         // 플레이어 상태 뒤쪽으로 이동
         m_playerState = en_PlayerState.MOVE_BACK;
+        // 데이터 잘라내기
+        m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
     public void MoveBackClimbingUp(int jumpPower = 1)
@@ -72,6 +86,8 @@ public class PlayerAction : GameScript
         transform.eulerAngles = new Vector3(0, 180, 0);
         // 플레이어 상태 뒤쪽 위로 이동
         m_playerState = en_PlayerState.MOVE_BACK_CLIMBING_UP;
+        // 데이터 잘라내기
+        m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
     public void MoveBackClimbingDown()
@@ -82,6 +98,8 @@ public class PlayerAction : GameScript
         transform.eulerAngles = new Vector3(0, 180, 0);
         // 플레이어 상태 뒤쪽 아래로 이동
         m_playerState = en_PlayerState.MOVE_BACK_CLIMBING_DOWN;
+        // 데이터 잘라내기
+        m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
     public override void MoveLeft()
@@ -92,6 +110,8 @@ public class PlayerAction : GameScript
         transform.eulerAngles = new Vector3(0, 270, 0);
         // 플레이어 상태 왼쪽으로 이동
         m_playerState = en_PlayerState.MOVE_LEFT;
+        // 데이터 잘라내기
+        m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
     public void MoveLeftClimbingUp(int jumpPower = 1)
@@ -102,6 +122,8 @@ public class PlayerAction : GameScript
         transform.eulerAngles = new Vector3(0, 270, 0);
         // 플레이어 상태 왼쪽 위로 이동
         m_playerState = en_PlayerState.MOVE_LEFT_CLIMBING_UP;
+        // 데이터 잘라내기
+        m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
     public void MoveLeftClimbingDown()
@@ -112,6 +134,8 @@ public class PlayerAction : GameScript
         transform.eulerAngles = new Vector3(0, 270, 0);
         // 플레이어 상태 왼쪽 위로 이동
         m_playerState = en_PlayerState.MOVE_LEFT_CLIMBING_DOWN;
+        // 데이터 잘라내기
+        m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
     public override void MoveRight()
@@ -122,6 +146,8 @@ public class PlayerAction : GameScript
         transform.eulerAngles = new Vector3(0, 90, 0);
         // 플레이어 상태 오른쪽으로 이동
         m_playerState = en_PlayerState.MOVE_RIGHT;
+        // 데이터 잘라내기
+        m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
     public void MoveRightClimbingUp(int jumpPower = 1)
@@ -132,6 +158,8 @@ public class PlayerAction : GameScript
         transform.eulerAngles = new Vector3(0, 90, 0);
         // 플레이어 상태 왼쪽 위로 이동
         m_playerState = en_PlayerState.MOVE_RIGHT_CLIMBING_UP;
+        // 데이터 잘라내기
+        m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
     public void MoveRightClimbingDown()
@@ -142,6 +170,8 @@ public class PlayerAction : GameScript
         transform.eulerAngles = new Vector3(0, 90, 0);
         // 플레이어 상태 왼쪽 위로 이동
         m_playerState = en_PlayerState.MOVE_RIGHT_CLIMBING_DOWN;
+        // 데이터 잘라내기
+        m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
     // 당기기 앞쪽
@@ -151,6 +181,8 @@ public class PlayerAction : GameScript
         m_destPosition = transform.position + Vector3.forward;
         // 플레이어 상태 앞쪽 이동
         m_playerState = en_PlayerState.MOVE_FORWARD;
+        // 데이터 잘라내기
+        m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
     // 당기기 뒤쪽
@@ -160,6 +192,8 @@ public class PlayerAction : GameScript
         m_destPosition = transform.position + Vector3.back;
         // 플레이어 상태 뒤쪽 이동
         m_playerState = en_PlayerState.MOVE_BACK;
+        // 데이터 잘라내기
+        m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
     // 당기기 왼쪽
@@ -169,6 +203,8 @@ public class PlayerAction : GameScript
         m_destPosition = transform.position + Vector3.left;
         // 플레이어 상태 왼쪽 이동
         m_playerState = en_PlayerState.MOVE_LEFT;
+        // 데이터 잘라내기
+        m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
     // 당기기 오른쪽
@@ -178,6 +214,8 @@ public class PlayerAction : GameScript
         m_destPosition = transform.position + Vector3.right;
         // 플레이어 상태 오른쪽 이동
         m_playerState = en_PlayerState.MOVE_RIGHT;
+        // 데이터 잘라내기
+        m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
 
@@ -195,6 +233,8 @@ public class PlayerAction : GameScript
         transform.eulerAngles = new Vector3(0, 180, 0);
         // 플레이어 상태 앞쪽 등반 상태
         m_playerState = en_PlayerState.MOVE_FORWARD_CLIMBING_STATE;
+        // 데이터 잘라내기
+        m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
     // 등반 뒤쪽
@@ -211,6 +251,8 @@ public class PlayerAction : GameScript
         transform.eulerAngles = new Vector3(0, 0, 0);
         // 플레이어 상태 뒤쪽 등반 상태
         m_playerState = en_PlayerState.MOVE_BACK_CLIMBING_STATE;
+        // 데이터 잘라내기
+        m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
     // 등반 왼쪽
@@ -227,6 +269,8 @@ public class PlayerAction : GameScript
         transform.eulerAngles = new Vector3(0, 90, 0);
         // 플레이어 상태 왼쪽 등반 상태
         m_playerState = en_PlayerState.MOVE_LEFT_CLIMBING_STATE;
+        // 데이터 잘라내기
+        m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
     // 등반 오른쪽
@@ -243,6 +287,8 @@ public class PlayerAction : GameScript
         transform.eulerAngles = new Vector3(0, 270, 0);
         // 플레이어 상태 오른쪽 등반 상태
         m_playerState = en_PlayerState.MOVE_RIGHT_CLIMBING_STATE;
+        // 데이터 잘라내기
+        m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
 
@@ -253,6 +299,8 @@ public class PlayerAction : GameScript
         m_destPosition = transform.position + Vector3.forward + Vector3.up;
         // 플레이어 상태 앞쪽 위로 이동
         m_playerState = en_PlayerState.CLIMBING_UP_FORWARD;
+        // 데이터 잘라내기
+        m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
     // 등반 오르기 뒤쪽
@@ -262,6 +310,8 @@ public class PlayerAction : GameScript
         m_destPosition = transform.position + Vector3.back + Vector3.up;
         // 플레이어 상태 뒤쪽 위로 이동
         m_playerState = en_PlayerState.CLIMBING_UP_BACK;
+        // 데이터 잘라내기
+        m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
     // 등반 오르기 왼쪽
@@ -271,6 +321,8 @@ public class PlayerAction : GameScript
         m_destPosition = transform.position + Vector3.left + Vector3.up;
         // 플레이어 상태 왼쪽 위로 이동
         m_playerState = en_PlayerState.CLIMBING_UP_LEFT;
+        // 데이터 잘라내기
+        m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
     // 등반 오르기 오른쪽
@@ -280,6 +332,8 @@ public class PlayerAction : GameScript
         m_destPosition = transform.position + Vector3.right + Vector3.up;
         // 플레이어 상태 오른쪽 위로 이동
         m_playerState = en_PlayerState.CLIMBING_UP_RIGHT;
+        // 데이터 잘라내기
+        m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
 
@@ -290,6 +344,8 @@ public class PlayerAction : GameScript
         m_destPosition = transform.position + Vector3.forward;
         // 플레이어 상태 등반 앞쪽 이동
         m_playerState = en_PlayerState.CLIMBING_MOVE_FORWARD;
+        // 데이터 잘라내기
+        m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
     // 등반 이동 뒤쪽
@@ -299,6 +355,8 @@ public class PlayerAction : GameScript
         m_destPosition = transform.position + Vector3.back;
         // 플레이어 상태 등반 뒤쪽 이동
         m_playerState = en_PlayerState.CLIMBING_MOVE_BACK;
+        // 데이터 잘라내기
+        m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
     // 등반 이동 왼쪽
@@ -308,6 +366,8 @@ public class PlayerAction : GameScript
         m_destPosition = transform.position + Vector3.left;
         // 플레이어 상태 등반 왼쪽 이동
         m_playerState = en_PlayerState.CLIMBING_MOVE_LEFT;
+        // 데이터 잘라내기
+        m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
     // 등반 이동 오른쪽
@@ -317,6 +377,8 @@ public class PlayerAction : GameScript
         m_destPosition = transform.position + Vector3.right;
         // 플레이어 상태 등반 앞쪽 이동
         m_playerState = en_PlayerState.CLIMBING_MOVE_RIGHT;
+        // 데이터 잘라내기
+        m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
 
@@ -328,6 +390,8 @@ public class PlayerAction : GameScript
         m_playerState = en_PlayerState.CLIMBING_MOVE_FORWARD_LEFT;
         // 회전 방향
         transform.eulerAngles = new Vector3(0, 180, 0);
+        // 데이터 잘라내기
+        m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
     public void ClimbingMoveForwardRight()
@@ -338,6 +402,8 @@ public class PlayerAction : GameScript
         m_playerState = en_PlayerState.CLIMBING_MOVE_FORWARD_RIGHT;
         // 회전 방향
         transform.eulerAngles = new Vector3(0, 180, 0);
+        // 데이터 잘라내기
+        m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
     public void ClimbingMoveBackLeft()
@@ -348,6 +414,8 @@ public class PlayerAction : GameScript
         m_playerState = en_PlayerState.CLIMBING_MOVE_BACK_LEFT;
         // 회전 방향
         transform.eulerAngles = new Vector3(0, 0, 0);
+        // 데이터 잘라내기
+        m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
     public void ClimbingMoveBackRight()
@@ -358,6 +426,8 @@ public class PlayerAction : GameScript
         m_playerState = en_PlayerState.CLIMBING_MOVE_BACK_RIGHT;
         // 회전 방향
         transform.eulerAngles = new Vector3(0, 0, 0);
+        // 데이터 잘라내기
+        m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
     public void ClimbingMoveLeftForward()
@@ -368,6 +438,8 @@ public class PlayerAction : GameScript
         m_playerState = en_PlayerState.CLIMBING_MOVE_LEFT_FORWARD;
         // 회전 방향
         transform.eulerAngles = new Vector3(0, 90, 0);
+        // 데이터 잘라내기
+        m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
     public void ClimbingMoveLeftBack()
@@ -378,6 +450,8 @@ public class PlayerAction : GameScript
         m_playerState = en_PlayerState.CLIMBING_MOVE_LEFT_BACK;
         // 회전 방향
         transform.eulerAngles = new Vector3(0, 90, 0);
+        // 데이터 잘라내기
+        m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
     public void ClimbingMoveRightForward()
@@ -388,6 +462,8 @@ public class PlayerAction : GameScript
         m_playerState = en_PlayerState.CLIMBING_MOVE_RIGHT_FORWARD;
         // 회전 방향
         transform.eulerAngles = new Vector3(0, 270, 0);
+        // 데이터 잘라내기
+        m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
     public void ClimbingMoveRightBack()
@@ -398,6 +474,8 @@ public class PlayerAction : GameScript
         m_playerState = en_PlayerState.CLIMBING_MOVE_RIGHT_BACK;
         // 회전 방향
         transform.eulerAngles = new Vector3(0, 270, 0);
+        // 데이터 잘라내기
+        m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
 
@@ -511,6 +589,10 @@ public class PlayerAction : GameScript
             m_playerState = en_PlayerState.STAY;
             // 플레이어 조작 가능
             m_gameManager.canPlayerControl = true;
+            // 데이터 붙여넣기
+            m_gameManager.PasteData(m_iY, m_iZ, m_iX, m_iY, m_iZ + 1, m_iX);
+            // 인덱스 이동
+            m_iZ = m_iZ + 1;
         }
     }
 
@@ -528,6 +610,10 @@ public class PlayerAction : GameScript
             m_playerState = en_PlayerState.STAY;
             // 플레이어 조작 가능
             m_gameManager.canPlayerControl = true;
+            // 데이터 붙여넣기
+            m_gameManager.PasteData(m_iY, m_iZ, m_iX, m_iY, m_iZ - 1, m_iX);
+            // 인덱스 이동
+            m_iZ = m_iZ - 1;
         }
     }
 
@@ -545,6 +631,10 @@ public class PlayerAction : GameScript
             m_playerState = en_PlayerState.STAY;
             // 플레이어 조작 가능
             m_gameManager.canPlayerControl = true;
+            // 데이터 붙여넣기
+            m_gameManager.PasteData(m_iY, m_iZ, m_iX, m_iY, m_iZ, m_iX - 1);
+            // 인덱스 이동
+            m_iX = m_iX - 1;
         }
     }
 
@@ -562,6 +652,10 @@ public class PlayerAction : GameScript
             m_playerState = en_PlayerState.STAY;
             // 플레이어 조작 가능
             m_gameManager.canPlayerControl = true;
+            // 데이터 붙여넣기
+            m_gameManager.PasteData(m_iY, m_iZ, m_iX, m_iY, m_iZ, m_iX + 1);
+            // 인덱스 이동
+            m_iX = m_iX + 1;
         }
     }
 
@@ -596,6 +690,11 @@ public class PlayerAction : GameScript
             m_playerState = en_PlayerState.STAY;
             // 플레이어 조작 가능
             m_gameManager.canPlayerControl = true;
+            // 데이터 붙여넣기
+            m_gameManager.PasteData(m_iY, m_iZ, m_iX, m_iY + 1, m_iZ + 1, m_iX);
+            // 인덱스 이동
+            m_iY = m_iY + 1;
+            m_iZ = m_iZ + 1;
         }
     }
 
@@ -620,6 +719,11 @@ public class PlayerAction : GameScript
             m_playerState = en_PlayerState.STAY;
             // 플레이어 조작 가능
             m_gameManager.canPlayerControl = true;
+            // 데이터 붙여넣기
+            m_gameManager.PasteData(m_iY, m_iZ, m_iX, m_iY + 1, m_iZ - 1, m_iX);
+            // 인덱스 이동
+            m_iY = m_iY + 1;
+            m_iZ = m_iZ - 1;
         }
     }
 
@@ -644,6 +748,11 @@ public class PlayerAction : GameScript
             m_playerState = en_PlayerState.STAY;
             // 플레이어 조작 가능
             m_gameManager.canPlayerControl = true;
+            // 데이터 붙여넣기
+            m_gameManager.PasteData(m_iY, m_iZ, m_iX, m_iY + 1, m_iZ, m_iX - 1);
+            // 인덱스 이동
+            m_iY = m_iY + 1;
+            m_iX = m_iX - 1;
         }
     }
 
@@ -668,6 +777,11 @@ public class PlayerAction : GameScript
             m_playerState = en_PlayerState.STAY;
             // 플레이어 조작 가능
             m_gameManager.canPlayerControl = true;
+            // 데이터 붙여넣기
+            m_gameManager.PasteData(m_iY, m_iZ, m_iX, m_iY + 1, m_iZ, m_iX + 1);
+            // 인덱스 이동
+            m_iY = m_iY + 1;
+            m_iX = m_iX + 1;
         }
     }
 
@@ -693,6 +807,11 @@ public class PlayerAction : GameScript
             m_playerState = en_PlayerState.STAY;
             // 플레이어 조작 가능
             m_gameManager.canPlayerControl = true;
+            // 데이터 붙여넣기
+            m_gameManager.PasteData(m_iY, m_iZ, m_iX, m_iY - 1, m_iZ + 1, m_iX);
+            // 인덱스 이동
+            m_iY = m_iY - 1;
+            m_iZ = m_iZ + 1;
         }
     }
 
@@ -717,6 +836,11 @@ public class PlayerAction : GameScript
             m_playerState = en_PlayerState.STAY;
             // 플레이어 조작 가능
             m_gameManager.canPlayerControl = true;
+            // 데이터 붙여넣기
+            m_gameManager.PasteData(m_iY, m_iZ, m_iX, m_iY - 1, m_iZ - 1, m_iX);
+            // 인덱스 이동
+            m_iY = m_iY - 1;
+            m_iZ = m_iZ - 1;
         }
     }
 
@@ -741,6 +865,11 @@ public class PlayerAction : GameScript
             m_playerState = en_PlayerState.STAY;
             // 플레이어 조작 가능
             m_gameManager.canPlayerControl = true;
+            // 데이터 붙여넣기
+            m_gameManager.PasteData(m_iY, m_iZ, m_iX, m_iY - 1, m_iZ, m_iX - 1);
+            // 인덱스 이동
+            m_iY = m_iY - 1;
+            m_iX = m_iX - 1;
         }
     }
 
@@ -765,6 +894,11 @@ public class PlayerAction : GameScript
             m_playerState = en_PlayerState.STAY;
             // 플레이어 조작 가능
             m_gameManager.canPlayerControl = true;
+            // 데이터 붙여넣기
+            m_gameManager.PasteData(m_iY, m_iZ, m_iX, m_iY - 1, m_iZ, m_iX + 1);
+            // 인덱스 이동
+            m_iY = m_iY - 1;
+            m_iX = m_iX + 1;
         }
     }
 
@@ -790,6 +924,11 @@ public class PlayerAction : GameScript
             m_playerState = en_PlayerState.STAY;
             // 플레이어 조작 가능
             m_gameManager.canPlayerControl = true;
+            // 데이터 붙여넣기
+            m_gameManager.PasteData(m_iY, m_iZ, m_iX, m_iY - 1, m_iZ + 1, m_iX);
+            // 인덱스 이동
+            m_iY = m_iY - 1;
+            m_iZ = m_iZ + 1;
         }
     }
 
@@ -814,6 +953,11 @@ public class PlayerAction : GameScript
             m_playerState = en_PlayerState.STAY;
             // 플레이어 조작 가능
             m_gameManager.canPlayerControl = true;
+            // 데이터 붙여넣기
+            m_gameManager.PasteData(m_iY, m_iZ, m_iX, m_iY - 1, m_iZ - 1, m_iX);
+            // 인덱스 이동
+            m_iY = m_iY - 1;
+            m_iZ = m_iZ - 1;
         }
     }
 
@@ -838,6 +982,11 @@ public class PlayerAction : GameScript
             m_playerState = en_PlayerState.STAY;
             // 플레이어 조작 가능
             m_gameManager.canPlayerControl = true;
+            // 데이터 붙여넣기
+            m_gameManager.PasteData(m_iY, m_iZ, m_iX, m_iY - 1, m_iZ, m_iX - 1);
+            // 인덱스 이동
+            m_iY = m_iY - 1;
+            m_iX = m_iX - 1;
         }
     }
 
@@ -862,6 +1011,11 @@ public class PlayerAction : GameScript
             m_playerState = en_PlayerState.STAY;
             // 플레이어 조작 가능
             m_gameManager.canPlayerControl = true;
+            // 데이터 붙여넣기
+            m_gameManager.PasteData(m_iY, m_iZ, m_iX, m_iY - 1, m_iZ, m_iX + 1);
+            // 인덱스 이동
+            m_iY = m_iY - 1;
+            m_iX = m_iX + 1;
         }
     }
 
@@ -887,6 +1041,11 @@ public class PlayerAction : GameScript
             m_playerState = en_PlayerState.STAY;
             // 플레이어 조작 가능
             m_gameManager.canPlayerControl = true;
+            // 데이터 붙여넣기
+            m_gameManager.PasteData(m_iY, m_iZ, m_iX, m_iY, m_iZ + 1, m_iX - 1);
+            // 인덱스 이동
+            m_iZ = m_iZ + 1;
+            m_iX = m_iX - 1;
         }
     }
 
@@ -911,6 +1070,11 @@ public class PlayerAction : GameScript
             m_playerState = en_PlayerState.STAY;
             // 플레이어 조작 가능
             m_gameManager.canPlayerControl = true;
+            // 데이터 붙여넣기
+            m_gameManager.PasteData(m_iY, m_iZ, m_iX, m_iY, m_iZ + 1, m_iX + 1);
+            // 인덱스 이동
+            m_iZ = m_iZ + 1;
+            m_iX = m_iX + 1;
         }
     }
 
@@ -935,6 +1099,11 @@ public class PlayerAction : GameScript
             m_playerState = en_PlayerState.STAY;
             // 플레이어 조작 가능
             m_gameManager.canPlayerControl = true;
+            // 데이터 붙여넣기
+            m_gameManager.PasteData(m_iY, m_iZ, m_iX, m_iY, m_iZ - 1, m_iX - 1);
+            // 인덱스 이동
+            m_iZ = m_iZ - 1;
+            m_iX = m_iX - 1;
         }
     }
 
@@ -959,6 +1128,11 @@ public class PlayerAction : GameScript
             m_playerState = en_PlayerState.STAY;
             // 플레이어 조작 가능
             m_gameManager.canPlayerControl = true;
+            // 데이터 붙여넣기
+            m_gameManager.PasteData(m_iY, m_iZ, m_iX, m_iY, m_iZ - 1, m_iX + 1);
+            // 인덱스 이동
+            m_iZ = m_iZ - 1;
+            m_iX = m_iX + 1;
         }
     }
 
@@ -983,6 +1157,11 @@ public class PlayerAction : GameScript
             m_playerState = en_PlayerState.STAY;
             // 플레이어 조작 가능
             m_gameManager.canPlayerControl = true;
+            // 데이터 붙여넣기
+            m_gameManager.PasteData(m_iY, m_iZ, m_iX, m_iY, m_iZ + 1, m_iX - 1);
+            // 인덱스 이동
+            m_iZ = m_iZ + 1;
+            m_iX = m_iX - 1;
         }
     }
 
@@ -1007,6 +1186,11 @@ public class PlayerAction : GameScript
             m_playerState = en_PlayerState.STAY;
             // 플레이어 조작 가능
             m_gameManager.canPlayerControl = true;
+            // 데이터 붙여넣기
+            m_gameManager.PasteData(m_iY, m_iZ, m_iX, m_iY, m_iZ - 1, m_iX - 1);
+            // 인덱스 이동
+            m_iZ = m_iZ - 1;
+            m_iX = m_iX - 1;
         }
     }
 
@@ -1031,6 +1215,11 @@ public class PlayerAction : GameScript
             m_playerState = en_PlayerState.STAY;
             // 플레이어 조작 가능
             m_gameManager.canPlayerControl = true;
+            // 데이터 붙여넣기
+            m_gameManager.PasteData(m_iY, m_iZ, m_iX, m_iY, m_iZ + 1, m_iX + 1);
+            // 인덱스 이동
+            m_iZ = m_iZ + 1;
+            m_iX = m_iX + 1;
         }
     }
 
@@ -1055,6 +1244,11 @@ public class PlayerAction : GameScript
             m_playerState = en_PlayerState.STAY;
             // 플레이어 조작 가능
             m_gameManager.canPlayerControl = true;
+            // 데이터 붙여넣기
+            m_gameManager.PasteData(m_iY, m_iZ, m_iX, m_iY, m_iZ - 1, m_iX + 1);
+            // 인덱스 이동
+            m_iZ = m_iZ - 1;
+            m_iX = m_iX + 1;
         }
     }
 

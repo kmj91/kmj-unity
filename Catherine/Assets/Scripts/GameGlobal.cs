@@ -119,6 +119,7 @@ namespace GameGlobalScript
         public GameObject gameObject;               // 맵툴에 생성된 게임 오브젝트
         public GameScript actionScript;                 // 게임 오브젝트 액션 스크립트
     }
+    
 
     //--------------------------------
     // class
