@@ -181,6 +181,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   playerSpeed: 3
   cubeSpeed: 3
+  cubeShakeAmout: 0.03
+  cubeShakeTime: 0.5
   undoToken: 0
   gameStage: {fileID: 994134778}
   playerPrefab: {fileID: 6091224378748023943, guid: fdd0baa319d76e145ba418df369d626b,

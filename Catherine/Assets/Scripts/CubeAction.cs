@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 using System;
+using Random = UnityEngine.Random;
 
 using GameGlobalScript;
 
@@ -13,19 +14,25 @@ public class CubeAction : GameScript
     private int m_iX;                               // 인덱스 x
     private int m_iY;                               // 인덱스 y
     private int m_iZ;                               // 인덱스 z
+    private float m_fShakeAmount;                   // 흔들리는 힘
+    private float m_fShakeTime;                     // 흔들리는 시간
+    private float m_fShakeTick;                     // 0이되면 흔들림을 멈추는 틱
+    private Vector3 m_backupPosition;               // 흔들리기 전 포지션 값
     private Vector3 m_destPosition;                 // 이동 목표 좌표
     private en_CubeState m_cubeState;               // 큐브 상태
     private Action[] m_arrCubeStateProc;            // 큐브 상태 처리 함수 배열
     private GameManager m_gameManager;              // 게임 매니저
 
     // 초기화
-    public void Init(GameManager gameManager, float speed, int iX, int iY, int iZ)
+    public void Init(GameManager gameManager, float speed, int iX, int iY, int iZ, float fShakeAmout, float fShakeTime)
     {
         m_gameManager = gameManager;
         m_speed = speed;
         m_iX = iX;
         m_iY = iY;
         m_iZ = iZ;
+        m_fShakeAmount = fShakeAmout;
+        m_fShakeTime = fShakeTime;
     }
 
     public override void MoveForward()
@@ -83,9 +90,12 @@ public class CubeAction : GameScript
         // 이동 좌표
         m_destPosition = transform.position + Vector3.down;
         // 큐브 상태 아래쪽으로 이동
-        m_cubeState = en_CubeState.MOVE_DOWN;
+        m_cubeState = en_CubeState.SHAKE;
         // 데이터 잘라내기
         m_gameManager.CutData(m_iY, m_iZ, m_iX);
+
+        m_backupPosition = transform.position;
+        m_fShakeTick = m_fShakeTime;
     }
 
 
@@ -102,7 +112,8 @@ public class CubeAction : GameScript
             Left,
             Right,
             Up,
-            Down
+            Down,
+            Shake
         };
     }
 
@@ -134,11 +145,14 @@ public class CubeAction : GameScript
             // 데이터 붙여넣기
             m_gameManager.PasteData(m_iY, m_iZ, m_iX, m_iY, m_iZ + 1, m_iX);
             // 위에 큐브들 떨어지는지
-            m_gameManager.CeilingCheck(m_iY, m_iZ, m_iX);
+            m_gameManager.CheckCeiling(m_iY, m_iZ, m_iX);
             // 인덱스 이동
             m_iZ = m_iZ + 1;
             // 큐브가 이동 한 후 아래에 큐브가 있는지
-            m_gameManager.FloorCheck(m_iY, m_iZ, m_iX);
+            if (m_gameManager.CheckFloor(m_iY, m_iZ, m_iX))
+            {
+                m_gameManager.MoveDownGameObject(m_iY, m_iZ, m_iX);
+            }
         }
     }
 
@@ -157,11 +171,14 @@ public class CubeAction : GameScript
             // 데이터 붙여넣기
             m_gameManager.PasteData(m_iY, m_iZ, m_iX, m_iY, m_iZ - 1, m_iX);
             // 위에 큐브들 떨어지는지
-            m_gameManager.CeilingCheck(m_iY, m_iZ, m_iX);
+            m_gameManager.CheckCeiling(m_iY, m_iZ, m_iX);
             // 인덱스 이동
             m_iZ = m_iZ - 1;
             // 큐브가 이동 한 후 아래에 큐브가 있는지
-            m_gameManager.FloorCheck(m_iY, m_iZ, m_iX);
+            if (m_gameManager.CheckFloor(m_iY, m_iZ, m_iX))
+            {
+                m_gameManager.MoveDownGameObject(m_iY, m_iZ, m_iX);
+            }
         }
     }
 
@@ -180,11 +197,14 @@ public class CubeAction : GameScript
             // 데이터 붙여넣기
             m_gameManager.PasteData(m_iY, m_iZ, m_iX, m_iY, m_iZ, m_iX - 1);
             // 위에 큐브들 떨어지는지
-            m_gameManager.CeilingCheck(m_iY, m_iZ, m_iX);
+            m_gameManager.CheckCeiling(m_iY, m_iZ, m_iX);
             // 인덱스 이동
             m_iX = m_iX - 1;
             // 큐브가 이동 한 후 아래에 큐브가 있는지
-            m_gameManager.FloorCheck(m_iY, m_iZ, m_iX);
+            if (m_gameManager.CheckFloor(m_iY, m_iZ, m_iX))
+            {
+                m_gameManager.MoveDownGameObject(m_iY, m_iZ, m_iX);
+            }
         }
     }
 
@@ -203,11 +223,14 @@ public class CubeAction : GameScript
             // 데이터 붙여넣기
             m_gameManager.PasteData(m_iY, m_iZ, m_iX, m_iY, m_iZ, m_iX + 1);
             // 위에 큐브들 떨어지는지
-            m_gameManager.CeilingCheck(m_iY, m_iZ, m_iX);
+            m_gameManager.CheckCeiling(m_iY, m_iZ, m_iX);
             // 인덱스 이동
             m_iX = m_iX + 1;
             // 큐브가 이동 한 후 아래에 큐브가 있는지
-            m_gameManager.FloorCheck(m_iY, m_iZ, m_iX);
+            if (m_gameManager.CheckFloor(m_iY, m_iZ, m_iX))
+            {
+                m_gameManager.MoveDownGameObject(m_iY, m_iZ, m_iX);
+            }
         }
     }
 
@@ -241,11 +264,48 @@ public class CubeAction : GameScript
             // 데이터 붙여넣기
             m_gameManager.PasteData(m_iY, m_iZ, m_iX, m_iY - 1, m_iZ, m_iX);
             // 위에 큐브들 떨어지는지
-            m_gameManager.CeilingCheck(m_iY, m_iZ, m_iX);
+            m_gameManager.CheckCeiling(m_iY, m_iZ, m_iX);
             // 인덱스 이동
             m_iY = m_iY - 1;
             // 큐브가 이동 한 후 아래에 큐브가 있는지
-            m_gameManager.FloorCheck(m_iY, m_iZ, m_iX);
+            if (m_gameManager.CheckFloor(m_iY, m_iZ, m_iX))
+            {
+                // 이동 좌표
+                m_destPosition = transform.position + Vector3.down;
+                // 데이터 잘라내기
+                m_gameManager.CutData(m_iY, m_iZ, m_iX);
+                // 떨어짐
+                m_cubeState = en_CubeState.MOVE_DOWN;
+            }
+        }
+    }
+
+    private void Shake()
+    {
+        if (m_fShakeTick > 0)
+        {
+            // 흔들기
+            transform.position = Random.insideUnitSphere * m_fShakeAmount + m_backupPosition;
+            m_fShakeTick = m_fShakeTick - Time.deltaTime;
+        }
+        else
+        {
+            // 흔들기로 흐트러진 포지션 맞추기
+            transform.position = m_backupPosition;
+            // 다시 아래쪽 검사
+            if (m_gameManager.CheckFloor(m_iY, m_iZ, m_iX))
+            {
+                // 떨어짐
+                m_cubeState = en_CubeState.MOVE_DOWN;
+            }
+            else
+            {
+                // 떨어지지 않음
+                // 큐브 정지
+                m_cubeState = en_CubeState.STAY;
+                // 데이터 붙여넣기
+                m_gameManager.PasteData(m_iY, m_iZ, m_iX, m_iY, m_iZ, m_iX);
+            }
         }
     }
 }

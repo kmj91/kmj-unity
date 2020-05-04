@@ -62,6 +62,7 @@ namespace GameGlobalScript
         MOVE_RIGHT,
         MOVE_UP,
         MOVE_DOWN,
+        SHAKE
     }
 
     // 플레이어 상태

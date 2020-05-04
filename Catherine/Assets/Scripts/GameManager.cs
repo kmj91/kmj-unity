@@ -22,6 +22,8 @@ public class GameManager : MonoBehaviour
 
     public float playerSpeed;                       // 플레이어 이동 속도
     public float cubeSpeed;                         // 큐브 이동 속도
+    public float cubeShakeAmout;                    // 흔들리는 힘
+    public float cubeShakeTime;                     // 흔들리는 시간
     public int undoToken;                           // 복원 지점 토큰
     public Queue<GameMessage> messageQueue;         // 게임 매니저 큐
     public UnityDeque<UndoData> undoDeque;
@@ -385,7 +387,7 @@ public class GameManager : MonoBehaviour
                             cubeScript = m_arrMapData[iY, iZ, iX].gameObject.GetComponent<CubeAction>();
                             m_arrMapData[iY, iZ, iX].actionScript = cubeScript;
                             // 스크립트 초기화
-                            cubeScript.Init(this, cubeSpeed, iX, iY, iZ);
+                            cubeScript.Init(this, cubeSpeed, iX, iY, iZ, cubeShakeAmout, cubeShakeTime);
                             break;
                         case en_MenuElementType.ICE_CUBE:
                             // 얼음 큐브
@@ -402,7 +404,7 @@ public class GameManager : MonoBehaviour
                             cubeScript = m_arrMapData[iY, iZ, iX].gameObject.GetComponent<CubeAction>();
                             m_arrMapData[iY, iZ, iX].actionScript = cubeScript;
                             // 스크립트 초기화
-                            cubeScript.Init(this, cubeSpeed, iX, iY, iZ);
+                            cubeScript.Init(this, cubeSpeed, iX, iY, iZ, cubeShakeAmout, cubeShakeTime);
                             break;
                         default:
                             // 비어 있음
@@ -2093,7 +2095,7 @@ public class GameManager : MonoBehaviour
         // 화면상의 플레이어 이동
         m_playerAction.PullForward();
         // 화면상의 큐브 이동
-        m_arrMapData[iY, iZ, iX].actionScript.MoveForward();
+        m_arrMapData[iY, iZ - 1, iX].actionScript.MoveForward();
         // 플레이어 조작 불가
         canPlayerControl = false;
     }
@@ -2142,7 +2144,7 @@ public class GameManager : MonoBehaviour
         // 화면상의 플레이어 이동
         m_playerAction.PullBack();
         // 화면상의 큐브 이동
-        m_arrMapData[iY, iZ, iX].actionScript.MoveBack();
+        m_arrMapData[iY, iZ + 1, iX].actionScript.MoveBack();
         // 플레이어 조작 불가
         canPlayerControl = false;
     }
@@ -2191,7 +2193,7 @@ public class GameManager : MonoBehaviour
         // 화면상의 플레이어 이동
         m_playerAction.PullLeft();
         // 화면상의 큐브 이동
-        m_arrMapData[iY, iZ, iX].actionScript.MoveLeft();
+        m_arrMapData[iY, iZ, iX + 1].actionScript.MoveLeft();
         // 플레이어 조작 불가
         canPlayerControl = false;
     }
@@ -2240,7 +2242,7 @@ public class GameManager : MonoBehaviour
         // 화면상의 플레이어 이동
         m_playerAction.PullRight();
         // 화면상의 큐브 이동
-        m_arrMapData[iY, iZ, iX].actionScript.MoveRight();
+        m_arrMapData[iY, iZ, iX - 1].actionScript.MoveRight();
         // 플레이어 조작 불가
         canPlayerControl = false;
     }
@@ -3219,6 +3221,31 @@ public class GameManager : MonoBehaviour
     //------------------------------------------------------------
     public void CutData(int iY, int iZ, int iX)
     {
+        if (iY < 0)
+        {
+            return;
+        }
+        if (iZ < 0)
+        {
+            return;
+        }
+        if (iX < 0)
+        {
+            return;
+        }
+        if (iY >= m_mapSizeY)
+        {
+            return;
+        }
+        if (iZ >= m_mapSizeZ)
+        {
+            return;
+        }
+        if (iX >= m_mapSizeX)
+        {
+            return;
+        }
+
         m_arrTempMapData[iY, iZ, iX] = m_arrMapData[iY, iZ, iX];
 
         // 원본 배열의 큐브 정보 삭제
@@ -3236,6 +3263,31 @@ public class GameManager : MonoBehaviour
     public void PasteData(int iY, int iZ, int iX, int iDestY, int iDestZ, int iDestX)
     {
         string objectName;
+
+        if (iDestY < 0)
+        {
+            return;
+        }
+        if (iDestZ < 0)
+        {
+            return;
+        }
+        if (iDestX < 0)
+        {
+            return;
+        }
+        if (iDestY >= m_mapSizeY)
+        {
+            return;
+        }
+        if (iDestZ >= m_mapSizeZ)
+        {
+            return;
+        }
+        if (iDestX >= m_mapSizeX)
+        {
+            return;
+        }
 
         m_arrMapData[iDestY, iDestZ, iDestX] = m_arrTempMapData[iY, iZ, iX];
 
@@ -3264,7 +3316,7 @@ public class GameManager : MonoBehaviour
 
 
     // 아래에 큐브 발판이 있는지 체크합니다
-    public void CeilingCheck(int iY, int iZ, int iX)
+    public void CheckCeiling(int iY, int iZ, int iX)
     {
         int iCeilingY = iY + 1;
         int iCntZ = iZ - 1;
@@ -3314,15 +3366,16 @@ public class GameManager : MonoBehaviour
                 }
 
                 // 아래에 큐브가 있는지
-                if (!FloorCheck(iCeilingY, iCntZ, iTempX))
+                if (CheckFloor(iCeilingY, iCntZ, iTempX))
                 {
                     // 아래에 큐브가 없다 떨어짐
+                    m_arrMapData[iCeilingY, iCntZ, iTempX].actionScript.MoveDown();
 
                     //--------------------------------
                     // 재귀 호출
                     // 위에 큐브들 떨어지는지
                     //--------------------------------
-                    CeilingCheck(iCeilingY, iCntZ, iTempX);
+                    CheckCeiling(iCeilingY, iCntZ, iTempX);
                 }
                 ++iTempX;
             }
@@ -3330,8 +3383,8 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    // 아래에 큐브가 있으면 true 없으면 false
-    public bool FloorCheck(int iY, int iZ, int iX)
+    // 아래에 큐브가 있으면 false 없으면 true
+    public bool CheckFloor(int iY, int iZ, int iX)
     {
         int iFloorY = iY - 1;
         int iCntZ = iZ - 1;
@@ -3343,7 +3396,7 @@ public class GameManager : MonoBehaviour
         // 범위를 벗어남
         if (iFloorY < 0)
         {
-            return true;
+            return false;
         }
 
         if (iCntZ < 0)
@@ -3377,17 +3430,48 @@ public class GameManager : MonoBehaviour
                 if (m_arrMapData[iFloorY, iCntZ, iTempX].objectLayer == en_GameObjectLayer.CUBE)
                 {
                     // 떨어지지 않음
-                    return true;
+                    return false;
                 }
                 ++iTempX;
             }
             ++iCntZ;
         }
+        // 떨어짐
+        return true;
+    }
+
+    public void MoveDownGameObject(int iY, int iZ, int iX)
+    {
+        if (iY < 0)
+        {
+            return;
+        }
+        if (iY - 1 < 0)
+        {
+            return;
+        }
+        if (iZ < 0)
+        {
+            return;
+        }
+        if (iX < 0)
+        {
+            return;
+        }
+        if (iY >= m_mapSizeY)
+        {
+            return;
+        }
+        if (iZ >= m_mapSizeZ)
+        {
+            return;
+        }
+        if (iX >= m_mapSizeX)
+        {
+            return;
+        }
 
         // 화면상의 큐브 이동
         m_arrMapData[iY, iZ, iX].actionScript.MoveDown();
-
-        // 떨어짐
-        return false;
     }
 }
