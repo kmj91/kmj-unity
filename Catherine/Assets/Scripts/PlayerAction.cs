@@ -9,10 +9,10 @@ using GameGlobalScript;
 public class PlayerAction : GameScript
 {
     public float m_speed;                           // 캐릭터 이동 속도
+    public int m_iX;                               // 인덱스 x
+    public int m_iY;                               // 인덱스 y
+    public int m_iZ;                               // 인덱스 z
 
-    private int m_iX;                               // 인덱스 x
-    private int m_iY;                               // 인덱스 y
-    private int m_iZ;                               // 인덱스 z
     private Vector3 m_destPosition;                 // 이동 목표 좌표
     private Quaternion m_destRotation;              // 회전 목표 값
     private en_PlayerState m_playerState;           // 플레이어 상태
@@ -585,6 +585,14 @@ public class PlayerAction : GameScript
         {
             // 위치 맞추기
             transform.position = m_destPosition;
+
+            // 미끄러짐 체크
+            if (m_gameManager.CheckSlideForward(m_iY, m_iZ + 1, m_iX))
+            {
+                SlideForward();
+                return;
+            }
+
             // 플레이어 정지
             m_playerState = en_PlayerState.STAY;
             // 플레이어 조작 가능
@@ -606,6 +614,14 @@ public class PlayerAction : GameScript
         {
             // 위치 맞추기
             transform.position = m_destPosition;
+
+            // 미끄러짐 체크
+            if (m_gameManager.CheckSlideBack(m_iY, m_iZ - 1, m_iX))
+            {
+                SlideBack();
+                return;
+            }
+
             // 플레이어 정지
             m_playerState = en_PlayerState.STAY;
             // 플레이어 조작 가능
@@ -627,6 +643,14 @@ public class PlayerAction : GameScript
         {
             // 위치 맞추기
             transform.position = m_destPosition;
+
+            // 미끄러짐 체크
+            if (m_gameManager.CheckSlideLeft(m_iY, m_iZ, m_iX - 1))
+            {
+                SlideLeft();
+                return;
+            }
+
             // 플레이어 정지
             m_playerState = en_PlayerState.STAY;
             // 플레이어 조작 가능
@@ -648,6 +672,14 @@ public class PlayerAction : GameScript
         {
             // 위치 맞추기
             transform.position = m_destPosition;
+
+            // 미끄러짐 체크
+            if (m_gameManager.CheckSlideRight(m_iY, m_iZ, m_iX + 1))
+            {
+                SlideRight();
+                return;
+            }
+
             // 플레이어 정지
             m_playerState = en_PlayerState.STAY;
             // 플레이어 조작 가능
@@ -1264,5 +1296,62 @@ public class PlayerAction : GameScript
             // 플레이어 조작 가능
             m_gameManager.canPlayerControl = true;
         }
+    }
+
+
+    private void SlideForward()
+    {
+        // 데이터 붙여넣기
+        m_gameManager.PasteData(m_iY, m_iZ, m_iX, m_iY, m_iZ + 1, m_iX);
+        // 인덱스 이동
+        m_iZ = m_iZ + 1;
+        // 이동 좌표
+        m_destPosition = transform.position + Vector3.forward;
+        // 플레이어 상태 앞쪽으로 이동
+        m_playerState = en_PlayerState.MOVE_FORWARD;
+        // 데이터 잘라내기
+        m_gameManager.CutData(m_iY, m_iZ, m_iX);
+    }
+
+    private void SlideBack()
+    {
+        // 데이터 붙여넣기
+        m_gameManager.PasteData(m_iY, m_iZ, m_iX, m_iY, m_iZ - 1, m_iX);
+        // 인덱스 이동
+        m_iZ = m_iZ - 1;
+        // 이동 좌표
+        m_destPosition = transform.position + Vector3.back;
+        // 플레이어 상태 뒤쪽으로 이동
+        m_playerState = en_PlayerState.MOVE_BACK;
+        // 데이터 잘라내기
+        m_gameManager.CutData(m_iY, m_iZ, m_iX);
+    }
+
+    private void SlideLeft()
+    {
+        // 데이터 붙여넣기
+        m_gameManager.PasteData(m_iY, m_iZ, m_iX, m_iY, m_iZ, m_iX - 1);
+        // 인덱스 이동
+        m_iX = m_iX - 1;
+        // 이동 좌표
+        m_destPosition = transform.position + Vector3.left;
+        // 플레이어 상태 왼쪽으로 이동
+        m_playerState = en_PlayerState.MOVE_LEFT;
+        // 데이터 잘라내기
+        m_gameManager.CutData(m_iY, m_iZ, m_iX);
+    }
+
+    private void SlideRight()
+    {
+        // 데이터 붙여넣기
+        m_gameManager.PasteData(m_iY, m_iZ, m_iX, m_iY, m_iZ, m_iX + 1);
+        // 인덱스 이동
+        m_iX = m_iX + 1;
+        // 이동 좌표
+        m_destPosition = transform.position + Vector3.right;
+        // 플레이어 상태 오른쪽으로 이동
+        m_playerState = en_PlayerState.MOVE_RIGHT;
+        // 데이터 잘라내기
+        m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 }

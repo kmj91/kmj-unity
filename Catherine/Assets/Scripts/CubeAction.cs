@@ -19,12 +19,14 @@ public class CubeAction : GameScript
     private float m_fShakeTick;                     // 0이되면 흔들림을 멈추는 틱
     private Vector3 m_backupPosition;               // 흔들리기 전 포지션 값
     private Vector3 m_destPosition;                 // 이동 목표 좌표
+    private en_GameObjectTag m_cubeTag;             // 큐브 태그
     private en_CubeState m_cubeState;               // 큐브 상태
     private Action[] m_arrCubeStateProc;            // 큐브 상태 처리 함수 배열
     private GameManager m_gameManager;              // 게임 매니저
+    private bool m_isSlide;                         // 미끄러짐
 
     // 초기화
-    public void Init(GameManager gameManager, float speed, int iX, int iY, int iZ, float fShakeAmout, float fShakeTime)
+    public void Init(GameManager gameManager, float speed, int iX, int iY, int iZ, float fShakeAmout, float fShakeTime, en_GameObjectTag cubeTag)
     {
         m_gameManager = gameManager;
         m_speed = speed;
@@ -33,6 +35,11 @@ public class CubeAction : GameScript
         m_iZ = iZ;
         m_fShakeAmount = fShakeAmout;
         m_fShakeTime = fShakeTime;
+        m_fShakeTick = 0f;
+        m_backupPosition = Vector3.zero;
+        m_destPosition = Vector3.zero;
+        m_cubeTag = cubeTag;
+        m_isSlide = false;
     }
 
     public override void MoveForward()
@@ -140,6 +147,23 @@ public class CubeAction : GameScript
         {
             // 위치 맞추기
             transform.position = m_destPosition;
+
+            // 큐브 종류에 따른 처리
+            switch (m_cubeTag)
+            {
+                case en_GameObjectTag.NORMAL_CUBE:
+                    // 미끄러짐 체크
+                    if (m_gameManager.CheckSlideForward(m_iY, m_iZ + 1, m_iX))
+                    {
+                        SlideForward();
+                        return;
+                    }
+                    break;
+                case en_GameObjectTag.ICE_CUBE:
+
+                    break;
+            }
+
             // 큐브 정지
             m_cubeState = en_CubeState.STAY;
             // 데이터 붙여넣기
@@ -166,6 +190,23 @@ public class CubeAction : GameScript
         {
             // 위치 맞추기
             transform.position = m_destPosition;
+
+            // 큐브 종류에 따른 처리
+            switch (m_cubeTag)
+            {
+                case en_GameObjectTag.NORMAL_CUBE:
+                    // 미끄러짐 체크
+                    if (m_gameManager.CheckSlideBack(m_iY, m_iZ - 1, m_iX))
+                    {
+                        SlideBack();
+                        return;
+                    }
+                    break;
+                case en_GameObjectTag.ICE_CUBE:
+
+                    break;
+            }
+
             // 큐브 정지
             m_cubeState = en_CubeState.STAY;
             // 데이터 붙여넣기
@@ -192,6 +233,23 @@ public class CubeAction : GameScript
         {
             // 위치 맞추기
             transform.position = m_destPosition;
+
+            // 큐브 종류에 따른 처리
+            switch (m_cubeTag)
+            {
+                case en_GameObjectTag.NORMAL_CUBE:
+                    // 미끄러짐 체크
+                    if (m_gameManager.CheckSlideLeft(m_iY, m_iZ, m_iX - 1))
+                    {
+                        SlideLeft();
+                        return;
+                    }
+                    break;
+                case en_GameObjectTag.ICE_CUBE:
+
+                    break;
+            }
+
             // 큐브 정지
             m_cubeState = en_CubeState.STAY;
             // 데이터 붙여넣기
@@ -218,6 +276,23 @@ public class CubeAction : GameScript
         {
             // 위치 맞추기
             transform.position = m_destPosition;
+
+            // 큐브 종류에 따른 처리
+            switch (m_cubeTag)
+            {
+                case en_GameObjectTag.NORMAL_CUBE:
+                    // 미끄러짐 체크
+                    if (m_gameManager.CheckSlideRight(m_iY, m_iZ, m_iX + 1))
+                    {
+                        SlideRight();
+                        return;
+                    }
+                    break;
+                case en_GameObjectTag.ICE_CUBE:
+
+                    break;
+            }
+
             // 큐브 정지
             m_cubeState = en_CubeState.STAY;
             // 데이터 붙여넣기
@@ -278,6 +353,70 @@ public class CubeAction : GameScript
                 m_cubeState = en_CubeState.MOVE_DOWN;
             }
         }
+    }
+
+    private void SlideForward()
+    {
+        // 데이터 붙여넣기
+        m_gameManager.PasteData(m_iY, m_iZ, m_iX, m_iY, m_iZ + 1, m_iX);
+        // 위에 큐브들 떨어지는지
+        m_gameManager.CheckCeiling(m_iY, m_iZ, m_iX);
+        // 인덱스 이동
+        m_iZ = m_iZ + 1;
+        // 이동 좌표
+        m_destPosition = transform.position + Vector3.forward;
+        // 큐브 상태 앞쪽으로 이동
+        m_cubeState = en_CubeState.MOVE_FORWARD;
+        // 데이터 잘라내기
+        m_gameManager.CutData(m_iY, m_iZ, m_iX);
+    }
+
+    private void SlideBack()
+    {
+        // 데이터 붙여넣기
+        m_gameManager.PasteData(m_iY, m_iZ, m_iX, m_iY, m_iZ - 1, m_iX);
+        // 위에 큐브들 떨어지는지
+        m_gameManager.CheckCeiling(m_iY, m_iZ, m_iX);
+        // 인덱스 이동
+        m_iZ = m_iZ - 1;
+        // 이동 좌표
+        m_destPosition = transform.position + Vector3.back;
+        // 큐브 상태 뒤쪽으로 이동
+        m_cubeState = en_CubeState.MOVE_BACK;
+        // 데이터 잘라내기
+        m_gameManager.CutData(m_iY, m_iZ, m_iX);
+    }
+
+    private void SlideLeft()
+    {
+        // 데이터 붙여넣기
+        m_gameManager.PasteData(m_iY, m_iZ, m_iX, m_iY, m_iZ, m_iX - 1);
+        // 위에 큐브들 떨어지는지
+        m_gameManager.CheckCeiling(m_iY, m_iZ, m_iX);
+        // 인덱스 이동
+        m_iX = m_iX - 1;
+        // 이동 좌표
+        m_destPosition = transform.position + Vector3.left;
+        // 큐브 상태 왼쪽으로 이동
+        m_cubeState = en_CubeState.MOVE_LEFT;
+        // 데이터 잘라내기
+        m_gameManager.CutData(m_iY, m_iZ, m_iX);
+    }
+
+    private void SlideRight()
+    {
+        // 데이터 붙여넣기
+        m_gameManager.PasteData(m_iY, m_iZ, m_iX, m_iY, m_iZ, m_iX + 1);
+        // 위에 큐브들 떨어지는지
+        m_gameManager.CheckCeiling(m_iY, m_iZ, m_iX);
+        // 인덱스 이동
+        m_iX = m_iX + 1;
+        // 이동 좌표
+        m_destPosition = transform.position + Vector3.right;
+        // 큐브 상태 오른쪽으로 이동
+        m_cubeState = en_CubeState.MOVE_RIGHT;
+        // 데이터 잘라내기
+        m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
     private void Shake()
