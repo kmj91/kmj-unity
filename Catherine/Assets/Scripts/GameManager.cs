@@ -317,6 +317,10 @@ public class GameManager : MonoBehaviour
         {
             return false;
         }
+        if (CheckMapIndexOverflow(iY, iZ + 1, iX))
+        {
+            return false;
+        }
 
         // 뒤쪽 검사
         if (m_arrMapData[iY, iZ + 1, iX].objectLayer == en_GameObjectLayer.CUBE)
@@ -339,6 +343,10 @@ public class GameManager : MonoBehaviour
     public bool CheckSlideBack(int iY, int iZ, int iX)
     {
         if (CheckMapIndexOverflow(iY - 1, iZ, iX))
+        {
+            return false;
+        }
+        if (CheckMapIndexOverflow(iY, iZ - 1, iX))
         {
             return false;
         }
@@ -367,6 +375,10 @@ public class GameManager : MonoBehaviour
         {
             return false;
         }
+        if (CheckMapIndexOverflow(iY, iZ, iX - 1))
+        {
+            return false;
+        }
 
         // 왼쪽 검사
         if (m_arrMapData[iY, iZ, iX - 1].objectLayer == en_GameObjectLayer.CUBE)
@@ -389,6 +401,10 @@ public class GameManager : MonoBehaviour
     public bool CheckSlideRight(int iY, int iZ, int iX)
     {
         if (CheckMapIndexOverflow(iY - 1, iZ, iX))
+        {
+            return false;
+        }
+        if (CheckMapIndexOverflow(iY, iZ, iX + 1))
         {
             return false;
         }
@@ -1308,7 +1324,7 @@ public class GameManager : MonoBehaviour
                     //--------------------------------
 
                     // 플레이어 이동
-                    m_playerAction.MoveForwardClimbingUp();
+                    m_playerAction.MoveForwardClimbUp();
                     // 플레이어 방향
                     m_playerDirection = en_Direction.FORWARD;
                     // 플레이어 조작 불가
@@ -1374,7 +1390,7 @@ public class GameManager : MonoBehaviour
                     //--------------------------------
 
                     // 플레이어 좌표 이동
-                    m_playerAction.MoveForwardClimbingDown();
+                    m_playerAction.MoveForwardClimbDown();
                     // 플레이어 방향
                     m_playerDirection = en_Direction.FORWARD;
                     // 플레이어 조작 불가
@@ -1387,7 +1403,7 @@ public class GameManager : MonoBehaviour
                     // 매달림
 
                     // 플레이어 좌표 이동
-                    m_playerAction.MoveForwardClimbingState();
+                    m_playerAction.MoveForwardClimbIdle();
                     // 플레이어 방향
                     m_playerDirection = en_Direction.BACK;
                     // 등반 플래그 활성화
@@ -1476,7 +1492,7 @@ public class GameManager : MonoBehaviour
                     //--------------------------------
 
                     // 플레이어 좌표 이동
-                    m_playerAction.MoveBackClimbingUp();
+                    m_playerAction.MoveBackClimbUp();
                     // 플레이어 방향
                     m_playerDirection = en_Direction.BACK;
                     // 플레이어 조작 불가
@@ -1542,7 +1558,7 @@ public class GameManager : MonoBehaviour
                     //--------------------------------
 
                     // 플레이어 좌표 이동
-                    m_playerAction.MoveBackClimbingDown();
+                    m_playerAction.MoveBackClimbDown();
                     // 플레이어 방향
                     m_playerDirection = en_Direction.BACK;
                     // 플레이어 조작 불가
@@ -1555,7 +1571,7 @@ public class GameManager : MonoBehaviour
                     // 매달림
 
                     // 플레이어 좌표 이동
-                    m_playerAction.MoveBackClimbingState();
+                    m_playerAction.MoveBackClimbIdle();
                     // 플레이어 방향
                     m_playerDirection = en_Direction.FORWARD;
                     // 등반 플래그 활성화
@@ -1644,7 +1660,7 @@ public class GameManager : MonoBehaviour
                     //--------------------------------
 
                     // 플레이어 좌표 이동
-                    m_playerAction.MoveLeftClimbingUp();
+                    m_playerAction.MoveLeftClimbUp();
                     // 플레이어 방향
                     m_playerDirection = en_Direction.LEFT;
                     // 플레이어 조작 불가
@@ -1710,7 +1726,7 @@ public class GameManager : MonoBehaviour
                     //--------------------------------
 
                     // 플레이어 좌표 이동
-                    m_playerAction.MoveLeftClimbingDown();
+                    m_playerAction.MoveLeftClimbDown();
                     // 플레이어 방향
                     m_playerDirection = en_Direction.LEFT;
                     // 플레이어 조작 불가
@@ -1723,7 +1739,7 @@ public class GameManager : MonoBehaviour
                     // 매달림
 
                     // 플레이어 좌표 이동
-                    m_playerAction.MoveLeftClimbingState();
+                    m_playerAction.MoveLeftClimbIdle();
                     // 플레이어 방향
                     m_playerDirection = en_Direction.RIGHT;
                     // 등반 플래그 활성화
@@ -1813,7 +1829,7 @@ public class GameManager : MonoBehaviour
                     //--------------------------------
 
                     // 플레이어 좌표 이동
-                    m_playerAction.MoveRightClimbingUp();
+                    m_playerAction.MoveRightClimbUp();
                     // 플레이어 방향
                     m_playerDirection = en_Direction.RIGHT;
                     // 플레이어 조작 불가
@@ -1879,7 +1895,7 @@ public class GameManager : MonoBehaviour
                     //--------------------------------
 
                     // 플레이어 좌표 이동
-                    m_playerAction.MoveRightClimbingDown();
+                    m_playerAction.MoveRightClimbDown();
                     // 플레이어 방향
                     m_playerDirection = en_Direction.RIGHT;
                     // 플레이어 조작 불가
@@ -1892,7 +1908,7 @@ public class GameManager : MonoBehaviour
                     // 매달림
 
                     // 플레이어 좌표 이동
-                    m_playerAction.MoveRightClimbingState();
+                    m_playerAction.MoveRightClimbIdle();
                     // 플레이어 방향
                     m_playerDirection = en_Direction.LEFT;
                     // 등반 플래그 활성화
@@ -2339,38 +2355,6 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    // 플레이어 당기기 앞쪽
-    private void PlayerPullForward()
-    {
-        int iY = m_playerAction.m_iY;     // 플레이어 위치 Y
-        int iZ = m_playerAction.m_iZ;     // 플레이어 위치 Z
-        int iX = m_playerAction.m_iX;     // 플레이어 위치 X
-
-        // 맵 바깥으로 나가면 안됨
-        if (iZ + 1 >= m_mapSizeZ)
-        {
-            // 더이상 갈 수 없음
-            Debug.Log("맵의 끝");
-            return;
-        }
-
-        // 당기는 쪽이 블록인가
-        if (m_arrMapData[iY, iZ + 1, iX].meshData == en_MeshType.BLOCK)
-        {
-            // 블록
-            // 이동할 수 없음
-            Debug.Log(iY + ", " + (iZ + 1) + ", " + iX + " 좌표로 이동할 수 없음");
-            return;
-        }
-
-        // 화면상의 플레이어 이동
-        m_playerAction.PullForward();
-        // 화면상의 큐브 이동
-        m_arrMapData[iY, iZ - 1, iX].actionScript.MoveForward();
-        // 플레이어 조작 불가
-        canPlayerControl = false;
-    }
-
     // 플레이어 밀기 뒤쪽
     private void PlayerPushBack()
     {
@@ -2383,38 +2367,6 @@ public class GameManager : MonoBehaviour
             // 밀지 못함
             return;
         }
-    }
-
-    // 플레이어 당기기 뒤쪽
-    private void PlayerPullBack()
-    {
-        int iY = m_playerAction.m_iY;     // 플레이어 위치 Y
-        int iZ = m_playerAction.m_iZ;     // 플레이어 위치 Z
-        int iX = m_playerAction.m_iX;     // 플레이어 위치 X
-
-        // 맵 바깥으로 나가면 안됨
-        if (iZ - 1 < 0)
-        {
-            // 더이상 갈 수 없음
-            Debug.Log("맵의 끝");
-            return;
-        }
-
-        // 당기는 쪽이 블록인가
-        if (m_arrMapData[iY, iZ - 1, iX].meshData == en_MeshType.BLOCK)
-        {
-            // 블록
-            // 이동할 수 없음
-            Debug.Log(iY + ", " + (iZ - 1) + ", " + iX + " 좌표로 이동할 수 없음");
-            return;
-        }
-
-        // 화면상의 플레이어 이동
-        m_playerAction.PullBack();
-        // 화면상의 큐브 이동
-        m_arrMapData[iY, iZ + 1, iX].actionScript.MoveBack();
-        // 플레이어 조작 불가
-        canPlayerControl = false;
     }
 
     // 플레이어 밀기 왼쪽
@@ -2431,38 +2383,6 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    // 플레이어 당기기 왼쪽
-    private void PlayerPullLeft()
-    {
-        int iY = m_playerAction.m_iY;     // 플레이어 위치 Y
-        int iZ = m_playerAction.m_iZ;     // 플레이어 위치 Z
-        int iX = m_playerAction.m_iX;     // 플레이어 위치 X
-
-        // 맵 바깥으로 나가면 안됨
-        if (iX - 1 < 0)
-        {
-            // 더이상 갈 수 없음
-            Debug.Log("맵의 끝");
-            return;
-        }
-
-        // 당기는 쪽이 블록인가
-        if (m_arrMapData[iY, iZ, iX - 1].meshData == en_MeshType.BLOCK)
-        {
-            // 블록
-            // 이동할 수 없음
-            Debug.Log(iY + ", " + iZ + ", " + (iX - 1) + " 좌표로 이동할 수 없음");
-            return;
-        }
-
-        // 화면상의 플레이어 이동
-        m_playerAction.PullLeft();
-        // 화면상의 큐브 이동
-        m_arrMapData[iY, iZ, iX + 1].actionScript.MoveLeft();
-        // 플레이어 조작 불가
-        canPlayerControl = false;
-    }
-
     // 플레이어 밀기 오른쪽
     private void PlayerPushRight()
     {
@@ -2477,6 +2397,163 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    // 플레이어 당기기 앞쪽
+    private void PlayerPullForward()
+    {
+        int iY = m_playerAction.m_iY;     // 플레이어 위치 Y
+        int iZ = m_playerAction.m_iZ;     // 플레이어 위치 Z
+        int iX = m_playerAction.m_iX;     // 플레이어 위치 X
+
+        if (CheckMapIndexOverflow(iY, iZ + 1, iX))
+        {
+            Debug.Log("PlayerPullForward() index overflow");
+            Debug.Log("Y : " + iY + ", Z : " + (iZ + 1) + ", X : " + iX);
+            return;
+        }
+
+        // 당기는 쪽이 블록인가
+        if (m_arrMapData[iY, iZ + 1, iX].meshData == en_MeshType.BLOCK)
+        {
+            // 블록
+            // 이동할 수 없음
+            Debug.Log("PlayerPullForward() move fail");
+            Debug.Log("Y : " + iY + ", Z : " + (iZ + 1) + ", X : " + iX + " object \"BLOCK\"");
+            return;
+        }
+
+        if (CheckMapIndexOverflow(iY - 1, iZ + 1, iX))
+        {
+            Debug.Log("PlayerPullForward() index overflow");
+            Debug.Log("Y : " + (iY - 1) + ", Z : " + (iZ + 1) + ", X : " + iX);
+            return;
+        }
+
+        // 당기는 쪽 바닥이 블록인가
+        if (m_arrMapData[iY - 1, iZ + 1, iX].meshData == en_MeshType.BLOCK)
+        {
+            // 화면상의 플레이어 이동
+            m_playerAction.PullForward();
+            // 화면상의 큐브 이동
+            m_arrMapData[iY, iZ - 1, iX].actionScript.MoveForward();
+            // 플레이어 조작 불가
+            canPlayerControl = false;
+            return;
+        }
+
+        // 화면상의 플레이어 이동
+        m_playerAction.PullForwardDown();
+        // 화면상의 큐브 이동
+        m_arrMapData[iY, iZ - 1, iX].actionScript.MoveForward();
+        // 등반 플래그 활성화
+        isPlayerClimbing = true;
+        // 플레이어 조작 불가
+        canPlayerControl = false;
+    }
+
+    // 플레이어 당기기 뒤쪽
+    private void PlayerPullBack()
+    {
+        int iY = m_playerAction.m_iY;     // 플레이어 위치 Y
+        int iZ = m_playerAction.m_iZ;     // 플레이어 위치 Z
+        int iX = m_playerAction.m_iX;     // 플레이어 위치 X
+
+        if (CheckMapIndexOverflow(iY, iZ - 1, iX))
+        {
+            Debug.Log("PlayerPullBack() index overflow");
+            Debug.Log("Y : " + iY + ", Z : " + (iZ - 1) + ", X : " + iX);
+            return;
+        }
+
+        // 당기는 쪽이 블록인가
+        if (m_arrMapData[iY, iZ - 1, iX].meshData == en_MeshType.BLOCK)
+        {
+            // 블록
+            // 이동할 수 없음
+            Debug.Log(iY + ", " + (iZ - 1) + ", " + iX + " 좌표로 이동할 수 없음");
+            return;
+        }
+
+        if (CheckMapIndexOverflow(iY - 1, iZ - 1, iX))
+        {
+            Debug.Log("PlayerPullForward() index overflow");
+            Debug.Log("Y : " + (iY - 1) + ", Z : " + (iZ - 1) + ", X : " + iX);
+            return;
+        }
+
+        // 당기는 쪽 바닥이 블록인가
+        if (m_arrMapData[iY - 1, iZ - 1, iX].meshData == en_MeshType.BLOCK)
+        {
+            // 화면상의 플레이어 이동
+            m_playerAction.PullBack();
+            // 화면상의 큐브 이동
+            m_arrMapData[iY, iZ + 1, iX].actionScript.MoveBack();
+            // 플레이어 조작 불가
+            canPlayerControl = false;
+            return;
+        }
+
+        // 화면상의 플레이어 이동
+        m_playerAction.PullBackDown();
+        // 화면상의 큐브 이동
+        m_arrMapData[iY, iZ + 1, iX].actionScript.MoveBack();
+        // 등반 플래그 활성화
+        isPlayerClimbing = true;
+        // 플레이어 조작 불가
+        canPlayerControl = false;
+    }
+
+    // 플레이어 당기기 왼쪽
+    private void PlayerPullLeft()
+    {
+        int iY = m_playerAction.m_iY;     // 플레이어 위치 Y
+        int iZ = m_playerAction.m_iZ;     // 플레이어 위치 Z
+        int iX = m_playerAction.m_iX;     // 플레이어 위치 X
+
+        if (CheckMapIndexOverflow(iY, iZ, iX - 1))
+        {
+            Debug.Log("PlayerPullLeft() index overflow");
+            Debug.Log("Y : " + iY + ", Z : " + iZ + ", X : " + (iX - 1));
+            return;
+        }
+
+        // 당기는 쪽이 블록인가
+        if (m_arrMapData[iY, iZ, iX - 1].meshData == en_MeshType.BLOCK)
+        {
+            // 블록
+            // 이동할 수 없음
+            Debug.Log(iY + ", " + iZ + ", " + (iX - 1) + " 좌표로 이동할 수 없음");
+            return;
+        }
+
+        if (CheckMapIndexOverflow(iY - 1, iZ, iX - 1))
+        {
+            Debug.Log("PlayerPullLeft() index overflow");
+            Debug.Log("Y : " + (iY - 1) + ", Z : " + iZ + ", X : " + (iX - 1));
+            return;
+        }
+
+        // 당기는 쪽 바닥이 블록인가
+        if (m_arrMapData[iY - 1, iZ, iX - 1].meshData == en_MeshType.BLOCK)
+        {
+            // 화면상의 플레이어 이동
+            m_playerAction.PullLeft();
+            // 화면상의 큐브 이동
+            m_arrMapData[iY, iZ, iX + 1].actionScript.MoveLeft();
+            // 플레이어 조작 불가
+            canPlayerControl = false;
+            return;
+        }
+
+        // 화면상의 플레이어 이동
+        m_playerAction.PullLeftDown();
+        // 화면상의 큐브 이동
+        m_arrMapData[iY, iZ, iX + 1].actionScript.MoveLeft();
+        // 등반 플래그 활성화
+        isPlayerClimbing = true;
+        // 플레이어 조작 불가
+        canPlayerControl = false;
+    }
+
     // 플레이어 당기기 오른쪽
     private void PlayerPullRight()
     {
@@ -2484,11 +2561,10 @@ public class GameManager : MonoBehaviour
         int iZ = m_playerAction.m_iZ;     // 플레이어 위치 Z
         int iX = m_playerAction.m_iX;     // 플레이어 위치 X
 
-        // 맵 바깥으로 나가면 안됨
-        if (iX + 1 >= m_mapSizeX)
+        if (CheckMapIndexOverflow(iY, iZ, iX + 1))
         {
-            // 더이상 갈 수 없음
-            Debug.Log("맵의 끝");
+            Debug.Log("PlayerPullRight() index overflow");
+            Debug.Log("Y : " + iY + ", Z : " + iZ + ", X : " + (iX + 1));
             return;
         }
 
@@ -2501,10 +2577,31 @@ public class GameManager : MonoBehaviour
             return;
         }
 
+        if (CheckMapIndexOverflow(iY - 1, iZ, iX + 1))
+        {
+            Debug.Log("PlayerPullRight() index overflow");
+            Debug.Log("Y : " + (iY - 1) + ", Z : " + iZ + ", X : " + (iX + 1));
+            return;
+        }
+
+        // 당기는 쪽 바닥이 블록인가
+        if (m_arrMapData[iY - 1, iZ, iX + 1].meshData == en_MeshType.BLOCK)
+        {
+            // 화면상의 플레이어 이동
+            m_playerAction.PullRight();
+            // 화면상의 큐브 이동
+            m_arrMapData[iY, iZ, iX - 1].actionScript.MoveRight();
+            // 플레이어 조작 불가
+            canPlayerControl = false;
+            return;
+        }
+
         // 화면상의 플레이어 이동
-        m_playerAction.PullRight();
+        m_playerAction.PullRightDown();
         // 화면상의 큐브 이동
         m_arrMapData[iY, iZ, iX - 1].actionScript.MoveRight();
+        // 등반 플래그 활성화
+        isPlayerClimbing = true;
         // 플레이어 조작 불가
         canPlayerControl = false;
     }
@@ -2561,7 +2658,7 @@ public class GameManager : MonoBehaviour
                 }
 
                 // 플레이어 좌표 이동
-                m_playerAction.ClimbingUpForward();
+                m_playerAction.ClimbUpForward();
                 // 등반 플래그 비활성화
                 isPlayerClimbing = false;
                 // 플레이어 조작 불가
@@ -2609,7 +2706,7 @@ public class GameManager : MonoBehaviour
                 }
 
                 // 플레이어 좌표 이동
-                m_playerAction.ClimbingUpBack();
+                m_playerAction.ClimbUpBack();
                 // 등반 플래그 비활성화
                 isPlayerClimbing = false;
                 // 플레이어 조작 불가
@@ -2657,7 +2754,7 @@ public class GameManager : MonoBehaviour
                 }
 
                 // 플레이어 좌표 이동
-                m_playerAction.ClimbingUpLeft();
+                m_playerAction.ClimbUpLeft();
                 // 등반 플래그 비활성화
                 isPlayerClimbing = false;
                 // 플레이어 조작 불가
@@ -2705,7 +2802,7 @@ public class GameManager : MonoBehaviour
                 }
 
                 // 플레이어 좌표 이동
-                m_playerAction.ClimbingUpRight();
+                m_playerAction.ClimbUpRight();
                 // 등반 플래그 비활성화
                 isPlayerClimbing = false;
                 // 플레이어 조작 불가
@@ -2769,7 +2866,7 @@ public class GameManager : MonoBehaviour
                         //--------------------------------
 
                         // 플레이어 좌표 이동
-                        m_playerAction.ClimbingMoveLeft();
+                        m_playerAction.ClimbMoveLeft();
                         // 플레이어 조작 불가
                         canPlayerControl = false;
                     }
@@ -2782,7 +2879,7 @@ public class GameManager : MonoBehaviour
                         //--------------------------------
 
                         // 플레이어 좌표 이동
-                        m_playerAction.ClimbingMoveLeftForward();
+                        m_playerAction.ClimbMoveLeftForward();
                         m_playerDirection = en_Direction.RIGHT;
                         // 플레이어 조작 불가
                         canPlayerControl = false;
@@ -2841,7 +2938,7 @@ public class GameManager : MonoBehaviour
                         //--------------------------------
 
                         // 플레이어 좌표 이동
-                        m_playerAction.ClimbingMoveLeft();
+                        m_playerAction.ClimbMoveLeft();
                         // 플레이어 조작 불가
                         canPlayerControl = false;
                     }
@@ -2854,7 +2951,7 @@ public class GameManager : MonoBehaviour
                         //--------------------------------
 
                         // 플레이어 좌표 이동
-                        m_playerAction.ClimbingMoveLeftBack();
+                        m_playerAction.ClimbMoveLeftBack();
                         m_playerDirection = en_Direction.RIGHT;
                         // 플레이어 조작 불가
                         canPlayerControl = false;
@@ -2906,7 +3003,7 @@ public class GameManager : MonoBehaviour
                         //--------------------------------
 
                         // 플레이어 좌표 이동
-                        m_playerAction.ClimbingMoveBack();
+                        m_playerAction.ClimbMoveBack();
                         // 플레이어 조작 불가
                         canPlayerControl = false;
                     }
@@ -2919,7 +3016,7 @@ public class GameManager : MonoBehaviour
                         //--------------------------------
 
                         // 플레이어 좌표 이동
-                        m_playerAction.ClimbingMoveBackLeft();
+                        m_playerAction.ClimbMoveBackLeft();
                         m_playerDirection = en_Direction.FORWARD;
                         // 플레이어 조작 불가
                         canPlayerControl = false;
@@ -2973,7 +3070,7 @@ public class GameManager : MonoBehaviour
                         //--------------------------------
 
                         // 플레이어 좌표 이동
-                        m_playerAction.ClimbingMoveForward();
+                        m_playerAction.ClimbMoveForward();
                         // 플레이어 조작 불가
                         canPlayerControl = false;
                     }
@@ -2986,7 +3083,7 @@ public class GameManager : MonoBehaviour
                         //--------------------------------
 
                         // 플레이어 좌표 이동
-                        m_playerAction.ClimbingMoveForwardRight();
+                        m_playerAction.ClimbMoveForwardRight();
                         m_playerDirection = en_Direction.BACK;
                         // 플레이어 조작 불가
                         canPlayerControl = false;
@@ -3051,7 +3148,7 @@ public class GameManager : MonoBehaviour
                         //--------------------------------
 
                         // 플레이어 좌표 이동
-                        m_playerAction.ClimbingMoveRight();
+                        m_playerAction.ClimbMoveRight();
                         // 플레이어 조작 불가
                         canPlayerControl = false;
                     }
@@ -3064,7 +3161,7 @@ public class GameManager : MonoBehaviour
                         //--------------------------------
 
                         // 플레이어 좌표 이동
-                        m_playerAction.ClimbingMoveRightForward();
+                        m_playerAction.ClimbMoveRightForward();
                         m_playerDirection = en_Direction.LEFT;
                         // 플레이어 조작 불가
                         canPlayerControl = false;
@@ -3123,7 +3220,7 @@ public class GameManager : MonoBehaviour
                         //--------------------------------
 
                         // 플레이어 좌표 이동
-                        m_playerAction.ClimbingMoveRight();
+                        m_playerAction.ClimbMoveRight();
                         // 플레이어 조작 불가
                         canPlayerControl = false;
                     }
@@ -3136,7 +3233,7 @@ public class GameManager : MonoBehaviour
                         //--------------------------------
 
                         // 플레이어 좌표 이동
-                        m_playerAction.ClimbingMoveRightBack();
+                        m_playerAction.ClimbMoveRightBack();
                         m_playerDirection = en_Direction.LEFT;
                         // 플레이어 조작 불가
                         canPlayerControl = false;
@@ -3188,7 +3285,7 @@ public class GameManager : MonoBehaviour
                         //--------------------------------
 
                         // 플레이어 좌표 이동
-                        m_playerAction.ClimbingMoveForward();
+                        m_playerAction.ClimbMoveForward();
                         // 플레이어 조작 불가
                         canPlayerControl = false;
                     }
@@ -3201,7 +3298,7 @@ public class GameManager : MonoBehaviour
                         //--------------------------------
 
                         // 플레이어 좌표 이동
-                        m_playerAction.ClimbingMoveForwardLeft();
+                        m_playerAction.ClimbMoveForwardLeft();
                         m_playerDirection = en_Direction.BACK;
                         // 플레이어 조작 불가
                         canPlayerControl = false;
@@ -3253,7 +3350,7 @@ public class GameManager : MonoBehaviour
                         //--------------------------------
 
                         // 플레이어 좌표 이동
-                        m_playerAction.ClimbingMoveBack();
+                        m_playerAction.ClimbMoveBack();
                         // 플레이어 조작 불가
                         canPlayerControl = false;
                     }
@@ -3266,7 +3363,7 @@ public class GameManager : MonoBehaviour
                         //--------------------------------
 
                         // 플레이어 좌표 이동
-                        m_playerAction.ClimbingMoveBackRight();
+                        m_playerAction.ClimbMoveBackRight();
                         m_playerDirection = en_Direction.FORWARD;
                         // 플레이어 조작 불가
                         canPlayerControl = false;

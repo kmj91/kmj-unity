@@ -42,30 +42,6 @@ public class PlayerAction : GameScript
         m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
-    public void MoveForwardClimbingUp(int jumpPower = 1)
-    {
-        // 이동 좌표
-        m_destPosition = transform.position + Vector3.forward + (Vector3.up * jumpPower);
-        // 방향
-        transform.eulerAngles = new Vector3(0, 0, 0);
-        // 플레이어 상태 앞쪽 위로 이동
-        m_playerState = en_PlayerState.MOVE_FORWARD_CLIMBING_UP;
-        // 데이터 잘라내기
-        m_gameManager.CutData(m_iY, m_iZ, m_iX);
-    }
-
-    public void MoveForwardClimbingDown()
-    {
-        // 이동 좌표
-        m_destPosition = transform.position + Vector3.forward + Vector3.down;
-        // 방향
-        transform.eulerAngles = new Vector3(0, 0, 0);
-        // 플레이어 상태 앞쪽 아래로 이동
-        m_playerState = en_PlayerState.MOVE_FORWARD_CLIMBING_DOWN;
-        // 데이터 잘라내기
-        m_gameManager.CutData(m_iY, m_iZ, m_iX);
-    }
-
     public override void MoveBack()
     {
         // 이동 좌표
@@ -74,30 +50,6 @@ public class PlayerAction : GameScript
         transform.eulerAngles = new Vector3(0, 180, 0);
         // 플레이어 상태 뒤쪽으로 이동
         m_playerState = en_PlayerState.MOVE_BACK;
-        // 데이터 잘라내기
-        m_gameManager.CutData(m_iY, m_iZ, m_iX);
-    }
-
-    public void MoveBackClimbingUp(int jumpPower = 1)
-    {
-        // 이동 좌표
-        m_destPosition = transform.position + Vector3.back + Vector3.up;
-        // 방향
-        transform.eulerAngles = new Vector3(0, 180, 0);
-        // 플레이어 상태 뒤쪽 위로 이동
-        m_playerState = en_PlayerState.MOVE_BACK_CLIMBING_UP;
-        // 데이터 잘라내기
-        m_gameManager.CutData(m_iY, m_iZ, m_iX);
-    }
-
-    public void MoveBackClimbingDown()
-    {
-        // 이동 좌표
-        m_destPosition = transform.position + Vector3.back + Vector3.down;
-        // 방향
-        transform.eulerAngles = new Vector3(0, 180, 0);
-        // 플레이어 상태 뒤쪽 아래로 이동
-        m_playerState = en_PlayerState.MOVE_BACK_CLIMBING_DOWN;
         // 데이터 잘라내기
         m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
@@ -114,30 +66,6 @@ public class PlayerAction : GameScript
         m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
-    public void MoveLeftClimbingUp(int jumpPower = 1)
-    {
-        // 이동 좌표
-        m_destPosition = transform.position + Vector3.left + Vector3.up;
-        // 방향
-        transform.eulerAngles = new Vector3(0, 270, 0);
-        // 플레이어 상태 왼쪽 위로 이동
-        m_playerState = en_PlayerState.MOVE_LEFT_CLIMBING_UP;
-        // 데이터 잘라내기
-        m_gameManager.CutData(m_iY, m_iZ, m_iX);
-    }
-
-    public void MoveLeftClimbingDown()
-    {
-        // 이동 좌표
-        m_destPosition = transform.position + Vector3.left + Vector3.down;
-        // 방향
-        transform.eulerAngles = new Vector3(0, 270, 0);
-        // 플레이어 상태 왼쪽 위로 이동
-        m_playerState = en_PlayerState.MOVE_LEFT_CLIMBING_DOWN;
-        // 데이터 잘라내기
-        m_gameManager.CutData(m_iY, m_iZ, m_iX);
-    }
-
     public override void MoveRight()
     {
         // 이동 좌표
@@ -150,77 +78,104 @@ public class PlayerAction : GameScript
         m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
-    public void MoveRightClimbingUp(int jumpPower = 1)
+    public void MoveForwardClimbUp(int jumpPower = 1)
+    {
+        // 이동 좌표
+        m_destPosition = transform.position + Vector3.forward + (Vector3.up * jumpPower);
+        // 방향
+        transform.eulerAngles = new Vector3(0, 0, 0);
+        // 플레이어 상태 앞쪽 위로 이동
+        m_playerState = en_PlayerState.MOVE_FORWARD_CLIMB_UP;
+        // 데이터 잘라내기
+        m_gameManager.CutData(m_iY, m_iZ, m_iX);
+    }
+
+    public void MoveBackClimbUp(int jumpPower = 1)
+    {
+        // 이동 좌표
+        m_destPosition = transform.position + Vector3.back + Vector3.up;
+        // 방향
+        transform.eulerAngles = new Vector3(0, 180, 0);
+        // 플레이어 상태 뒤쪽 위로 이동
+        m_playerState = en_PlayerState.MOVE_BACK_CLIMB_UP;
+        // 데이터 잘라내기
+        m_gameManager.CutData(m_iY, m_iZ, m_iX);
+    }
+
+    public void MoveLeftClimbUp(int jumpPower = 1)
+    {
+        // 이동 좌표
+        m_destPosition = transform.position + Vector3.left + Vector3.up;
+        // 방향
+        transform.eulerAngles = new Vector3(0, 270, 0);
+        // 플레이어 상태 왼쪽 위로 이동
+        m_playerState = en_PlayerState.MOVE_LEFT_CLIMB_UP;
+        // 데이터 잘라내기
+        m_gameManager.CutData(m_iY, m_iZ, m_iX);
+    }
+
+    public void MoveRightClimbUp(int jumpPower = 1)
     {
         // 이동 좌표
         m_destPosition = transform.position + Vector3.right + Vector3.up;
         // 방향
         transform.eulerAngles = new Vector3(0, 90, 0);
         // 플레이어 상태 왼쪽 위로 이동
-        m_playerState = en_PlayerState.MOVE_RIGHT_CLIMBING_UP;
+        m_playerState = en_PlayerState.MOVE_RIGHT_CLIMB_UP;
         // 데이터 잘라내기
         m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
-    public void MoveRightClimbingDown()
+    public void MoveForwardClimbDown()
+    {
+        // 이동 좌표
+        m_destPosition = transform.position + Vector3.forward + Vector3.down;
+        // 방향
+        transform.eulerAngles = new Vector3(0, 0, 0);
+        // 플레이어 상태 앞쪽 아래로 이동
+        m_playerState = en_PlayerState.MOVE_FORWARD_CLIMB_DOWN;
+        // 데이터 잘라내기
+        m_gameManager.CutData(m_iY, m_iZ, m_iX);
+    }
+
+    public void MoveBackClimbDown()
+    {
+        // 이동 좌표
+        m_destPosition = transform.position + Vector3.back + Vector3.down;
+        // 방향
+        transform.eulerAngles = new Vector3(0, 180, 0);
+        // 플레이어 상태 뒤쪽 아래로 이동
+        m_playerState = en_PlayerState.MOVE_BACK_CLIMB_DOWN;
+        // 데이터 잘라내기
+        m_gameManager.CutData(m_iY, m_iZ, m_iX);
+    }
+
+    public void MoveLeftClimbDown()
+    {
+        // 이동 좌표
+        m_destPosition = transform.position + Vector3.left + Vector3.down;
+        // 방향
+        transform.eulerAngles = new Vector3(0, 270, 0);
+        // 플레이어 상태 왼쪽 위로 이동
+        m_playerState = en_PlayerState.MOVE_LEFT_CLIMB_DOWN;
+        // 데이터 잘라내기
+        m_gameManager.CutData(m_iY, m_iZ, m_iX);
+    }
+
+    public void MoveRightClimbDown()
     {
         // 이동 좌표
         m_destPosition = transform.position + Vector3.right + Vector3.down;
         // 방향
         transform.eulerAngles = new Vector3(0, 90, 0);
         // 플레이어 상태 왼쪽 위로 이동
-        m_playerState = en_PlayerState.MOVE_RIGHT_CLIMBING_DOWN;
+        m_playerState = en_PlayerState.MOVE_RIGHT_CLIMB_DOWN;
         // 데이터 잘라내기
         m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
-
-    // 당기기 앞쪽
-    public void PullForward()
-    {
-        // 이동 좌표
-        m_destPosition = transform.position + Vector3.forward;
-        // 플레이어 상태 앞쪽 이동
-        m_playerState = en_PlayerState.MOVE_FORWARD;
-        // 데이터 잘라내기
-        m_gameManager.CutData(m_iY, m_iZ, m_iX);
-    }
-
-    // 당기기 뒤쪽
-    public void PullBack()
-    {
-        // 이동 좌표
-        m_destPosition = transform.position + Vector3.back;
-        // 플레이어 상태 뒤쪽 이동
-        m_playerState = en_PlayerState.MOVE_BACK;
-        // 데이터 잘라내기
-        m_gameManager.CutData(m_iY, m_iZ, m_iX);
-    }
-
-    // 당기기 왼쪽
-    public void PullLeft()
-    {
-        // 이동 좌표
-        m_destPosition = transform.position + Vector3.left;
-        // 플레이어 상태 왼쪽 이동
-        m_playerState = en_PlayerState.MOVE_LEFT;
-        // 데이터 잘라내기
-        m_gameManager.CutData(m_iY, m_iZ, m_iX);
-    }
-
-    // 당기기 오른쪽
-    public void PullRight()
-    {
-        // 이동 좌표
-        m_destPosition = transform.position + Vector3.right;
-        // 플레이어 상태 오른쪽 이동
-        m_playerState = en_PlayerState.MOVE_RIGHT;
-        // 데이터 잘라내기
-        m_gameManager.CutData(m_iY, m_iZ, m_iX);
-    }
-
 
     // 등반 앞쪽
-    public void MoveForwardClimbingState()
+    public void MoveForwardClimbIdle()
     {
         //--------------------------------
         // ★    < 플레이어
@@ -232,13 +187,13 @@ public class PlayerAction : GameScript
         // 방향
         transform.eulerAngles = new Vector3(0, 180, 0);
         // 플레이어 상태 앞쪽 등반 상태
-        m_playerState = en_PlayerState.MOVE_FORWARD_CLIMBING_STATE;
+        m_playerState = en_PlayerState.MOVE_FORWARD_CLIMB_IDLE;
         // 데이터 잘라내기
         m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
     // 등반 뒤쪽
-    public void MoveBackClimbingState()
+    public void MoveBackClimbIdle()
     {
         //--------------------------------
         // ■    < 큐브
@@ -250,13 +205,13 @@ public class PlayerAction : GameScript
         // 방향
         transform.eulerAngles = new Vector3(0, 0, 0);
         // 플레이어 상태 뒤쪽 등반 상태
-        m_playerState = en_PlayerState.MOVE_BACK_CLIMBING_STATE;
+        m_playerState = en_PlayerState.MOVE_BACK_CLIMB_IDLE;
         // 데이터 잘라내기
         m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
     // 등반 왼쪽
-    public void MoveLeftClimbingState()
+    public void MoveLeftClimbIdle()
     {
         //--------------------------------
         // ★■    < 큐브
@@ -268,13 +223,13 @@ public class PlayerAction : GameScript
         // 방향
         transform.eulerAngles = new Vector3(0, 90, 0);
         // 플레이어 상태 왼쪽 등반 상태
-        m_playerState = en_PlayerState.MOVE_LEFT_CLIMBING_STATE;
+        m_playerState = en_PlayerState.MOVE_LEFT_CLIMB_IDLE;
         // 데이터 잘라내기
         m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
     // 등반 오른쪽
-    public void MoveRightClimbingState()
+    public void MoveRightClimbIdle()
     {
         //--------------------------------
         // ■★    < 플레이어
@@ -286,198 +241,309 @@ public class PlayerAction : GameScript
         // 방향
         transform.eulerAngles = new Vector3(0, 270, 0);
         // 플레이어 상태 오른쪽 등반 상태
-        m_playerState = en_PlayerState.MOVE_RIGHT_CLIMBING_STATE;
+        m_playerState = en_PlayerState.MOVE_RIGHT_CLIMB_IDLE;
         // 데이터 잘라내기
         m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
 
     // 등반 오르기 앞쪽
-    public void ClimbingUpForward()
+    public void ClimbUpForward()
     {
         // 이동 좌표
         m_destPosition = transform.position + Vector3.forward + Vector3.up;
         // 플레이어 상태 앞쪽 위로 이동
-        m_playerState = en_PlayerState.CLIMBING_UP_FORWARD;
+        m_playerState = en_PlayerState.CLIMB_UP_FORWARD;
         // 데이터 잘라내기
         m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
     // 등반 오르기 뒤쪽
-    public void ClimbingUpBack()
+    public void ClimbUpBack()
     {
         // 이동 좌표
         m_destPosition = transform.position + Vector3.back + Vector3.up;
         // 플레이어 상태 뒤쪽 위로 이동
-        m_playerState = en_PlayerState.CLIMBING_UP_BACK;
+        m_playerState = en_PlayerState.CLIMB_UP_BACK;
         // 데이터 잘라내기
         m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
     // 등반 오르기 왼쪽
-    public void ClimbingUpLeft()
+    public void ClimbUpLeft()
     {
         // 이동 좌표
         m_destPosition = transform.position + Vector3.left + Vector3.up;
         // 플레이어 상태 왼쪽 위로 이동
-        m_playerState = en_PlayerState.CLIMBING_UP_LEFT;
+        m_playerState = en_PlayerState.CLIMB_UP_LEFT;
         // 데이터 잘라내기
         m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
     // 등반 오르기 오른쪽
-    public void ClimbingUpRight()
+    public void ClimbUpRight()
     {
         // 이동 좌표
         m_destPosition = transform.position + Vector3.right + Vector3.up;
         // 플레이어 상태 오른쪽 위로 이동
-        m_playerState = en_PlayerState.CLIMBING_UP_RIGHT;
+        m_playerState = en_PlayerState.CLIMB_UP_RIGHT;
         // 데이터 잘라내기
         m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
 
     // 등반 이동 앞쪽
-    public void ClimbingMoveForward()
+    public void ClimbMoveForward()
     {
         // 이동 좌표
         m_destPosition = transform.position + Vector3.forward;
         // 플레이어 상태 등반 앞쪽 이동
-        m_playerState = en_PlayerState.CLIMBING_MOVE_FORWARD;
+        m_playerState = en_PlayerState.CLIMB_MOVE_FORWARD;
         // 데이터 잘라내기
         m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
     // 등반 이동 뒤쪽
-    public void ClimbingMoveBack()
+    public void ClimbMoveBack()
     {
         // 이동 좌표
         m_destPosition = transform.position + Vector3.back;
         // 플레이어 상태 등반 뒤쪽 이동
-        m_playerState = en_PlayerState.CLIMBING_MOVE_BACK;
+        m_playerState = en_PlayerState.CLIMB_MOVE_BACK;
         // 데이터 잘라내기
         m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
     // 등반 이동 왼쪽
-    public void ClimbingMoveLeft()
+    public void ClimbMoveLeft()
     {
         // 이동 좌표
         m_destPosition = transform.position + Vector3.left;
         // 플레이어 상태 등반 왼쪽 이동
-        m_playerState = en_PlayerState.CLIMBING_MOVE_LEFT;
+        m_playerState = en_PlayerState.CLIMB_MOVE_LEFT;
         // 데이터 잘라내기
         m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
     // 등반 이동 오른쪽
-    public void ClimbingMoveRight()
+    public void ClimbMoveRight()
     {
         // 이동 좌표
         m_destPosition = transform.position + Vector3.right;
         // 플레이어 상태 등반 앞쪽 이동
-        m_playerState = en_PlayerState.CLIMBING_MOVE_RIGHT;
+        m_playerState = en_PlayerState.CLIMB_MOVE_RIGHT;
         // 데이터 잘라내기
         m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
 
-    public void ClimbingMoveForwardLeft()
+    public void ClimbMoveForwardLeft()
     {
         // 이동 좌표
         m_destPosition = transform.position + Vector3.forward + Vector3.left;
         // 플레이어 상태 등반 앞쪽 왼쪽 이동
-        m_playerState = en_PlayerState.CLIMBING_MOVE_FORWARD_LEFT;
+        m_playerState = en_PlayerState.CLIMB_MOVE_FORWARD_LEFT;
         // 회전 방향
         transform.eulerAngles = new Vector3(0, 180, 0);
         // 데이터 잘라내기
         m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
-    public void ClimbingMoveForwardRight()
+    public void ClimbMoveForwardRight()
     {
         // 이동 좌표
         m_destPosition = transform.position + Vector3.forward + Vector3.right;
         // 플레이어 상태 등반 앞쪽 왼쪽 이동
-        m_playerState = en_PlayerState.CLIMBING_MOVE_FORWARD_RIGHT;
+        m_playerState = en_PlayerState.CLIMB_MOVE_FORWARD_RIGHT;
         // 회전 방향
         transform.eulerAngles = new Vector3(0, 180, 0);
         // 데이터 잘라내기
         m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
-    public void ClimbingMoveBackLeft()
+    public void ClimbMoveBackLeft()
     {
         // 이동 좌표
         m_destPosition = transform.position + Vector3.back + Vector3.left;
         // 플레이어 상태 등반 앞쪽 왼쪽 이동
-        m_playerState = en_PlayerState.CLIMBING_MOVE_BACK_LEFT;
+        m_playerState = en_PlayerState.CLIMB_MOVE_BACK_LEFT;
         // 회전 방향
         transform.eulerAngles = new Vector3(0, 0, 0);
         // 데이터 잘라내기
         m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
-    public void ClimbingMoveBackRight()
+    public void ClimbMoveBackRight()
     {
         // 이동 좌표
         m_destPosition = transform.position + Vector3.back + Vector3.right;
         // 플레이어 상태 등반 앞쪽 왼쪽 이동
-        m_playerState = en_PlayerState.CLIMBING_MOVE_BACK_RIGHT;
+        m_playerState = en_PlayerState.CLIMB_MOVE_BACK_RIGHT;
         // 회전 방향
         transform.eulerAngles = new Vector3(0, 0, 0);
         // 데이터 잘라내기
         m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
-    public void ClimbingMoveLeftForward()
+    public void ClimbMoveLeftForward()
     {
         // 이동 좌표
         m_destPosition = transform.position + Vector3.left + Vector3.forward;
         // 플레이어 상태 등반 왼쪽 앞쪽 이동
-        m_playerState = en_PlayerState.CLIMBING_MOVE_LEFT_FORWARD;
+        m_playerState = en_PlayerState.CLIMB_MOVE_LEFT_FORWARD;
         // 회전 방향
         transform.eulerAngles = new Vector3(0, 90, 0);
         // 데이터 잘라내기
         m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
-    public void ClimbingMoveLeftBack()
+    public void ClimbMoveLeftBack()
     {
         // 이동 좌표
         m_destPosition = transform.position + Vector3.left + Vector3.back;
         // 플레이어 상태 등반 왼쪽 뒤쪽 이동
-        m_playerState = en_PlayerState.CLIMBING_MOVE_LEFT_BACK;
+        m_playerState = en_PlayerState.CLIMB_MOVE_LEFT_BACK;
         // 회전 방향
         transform.eulerAngles = new Vector3(0, 90, 0);
         // 데이터 잘라내기
         m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
-    public void ClimbingMoveRightForward()
+    public void ClimbMoveRightForward()
     {
         // 이동 좌표
         m_destPosition = transform.position + Vector3.right + Vector3.forward;
         // 플레이어 상태 등반 오른쪽 앞쪽 이동
-        m_playerState = en_PlayerState.CLIMBING_MOVE_RIGHT_FORWARD;
+        m_playerState = en_PlayerState.CLIMB_MOVE_RIGHT_FORWARD;
         // 회전 방향
         transform.eulerAngles = new Vector3(0, 270, 0);
         // 데이터 잘라내기
         m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
-    public void ClimbingMoveRightBack()
+    public void ClimbMoveRightBack()
     {
         // 이동 좌표
         m_destPosition = transform.position + Vector3.right + Vector3.back;
         // 플레이어 상태 등반 오른쪽 뒤쪽 이동
-        m_playerState = en_PlayerState.CLIMBING_MOVE_RIGHT_BACK;
+        m_playerState = en_PlayerState.CLIMB_MOVE_RIGHT_BACK;
         // 회전 방향
         transform.eulerAngles = new Vector3(0, 270, 0);
         // 데이터 잘라내기
         m_gameManager.CutData(m_iY, m_iZ, m_iX);
     }
 
+    public void PushForward()
+    {
+        // 플레이어 상태 앞쪽 밀기
+        m_playerState = en_PlayerState.PUSH_FORWARD;
+    }
+
+    public void PushBack()
+    {
+        // 플레이어 상태 뒤쪽 밀기
+        m_playerState = en_PlayerState.PUSH_BACK;
+    }
+
+    public void PushLeft()
+    {
+        // 플레이어 상태 왼쪽 밀기
+        m_playerState = en_PlayerState.PUSH_LEFT;
+    }
+
+    public void PushRight()
+    {
+        // 플레이어 상태 오른쪽 밀기
+        m_playerState = en_PlayerState.PUSH_RIGHT;
+    }
+
+    // 당기기 앞쪽
+    public void PullForward()
+    {
+        // 이동 좌표
+        m_destPosition = transform.position + Vector3.forward;
+        // 플레이어 상태 앞쪽 이동 당기기
+        m_playerState = en_PlayerState.MOVE_FORWARD;
+        // 데이터 잘라내기
+        m_gameManager.CutData(m_iY, m_iZ, m_iX);
+    }
+
+    // 당기기 뒤쪽
+    public void PullBack()
+    {
+        // 이동 좌표
+        m_destPosition = transform.position + Vector3.back;
+        // 플레이어 상태 뒤쪽 이동 당기기
+        m_playerState = en_PlayerState.MOVE_BACK;
+        // 데이터 잘라내기
+        m_gameManager.CutData(m_iY, m_iZ, m_iX);
+    }
+
+    // 당기기 왼쪽
+    public void PullLeft()
+    {
+        // 이동 좌표
+        m_destPosition = transform.position + Vector3.left;
+        // 플레이어 상태 왼쪽 이동 당기기
+        m_playerState = en_PlayerState.MOVE_LEFT;
+        // 데이터 잘라내기
+        m_gameManager.CutData(m_iY, m_iZ, m_iX);
+    }
+
+    // 당기기 오른쪽
+    public void PullRight()
+    {
+        // 이동 좌표
+        m_destPosition = transform.position + Vector3.right;
+        // 플레이어 상태 오른쪽 이동 당기기
+        m_playerState = en_PlayerState.MOVE_RIGHT;
+        // 데이터 잘라내기
+        m_gameManager.CutData(m_iY, m_iZ, m_iX);
+    }
+
+    // 당기기 앞쪽 매달림
+    public void PullForwardDown()
+    {
+        // 이동 좌표
+        m_destPosition = transform.position + Vector3.forward + Vector3.down;
+        // 플레이어 상태 앞쪽 이동 매달림
+        m_playerState = en_PlayerState.MOVE_FORWARD_CLIMB_DOWN;
+        // 데이터 잘라내기
+        m_gameManager.CutData(m_iY, m_iZ, m_iX);
+    }
+
+    // 당기기 뒤쪽 매달림
+    public void PullBackDown()
+    {
+        // 이동 좌표
+        m_destPosition = transform.position + Vector3.back + Vector3.down;
+        // 플레이어 상태 뒤쪽 이동 당기기
+        m_playerState = en_PlayerState.MOVE_BACK_CLIMB_DOWN;
+        // 데이터 잘라내기
+        m_gameManager.CutData(m_iY, m_iZ, m_iX);
+    }
+
+    // 당기기 왼쪽
+    public void PullLeftDown()
+    {
+        // 이동 좌표
+        m_destPosition = transform.position + Vector3.left + Vector3.down;
+        // 플레이어 상태 왼쪽 이동 당기기
+        m_playerState = en_PlayerState.MOVE_LEFT_CLIMB_DOWN;
+        // 데이터 잘라내기
+        m_gameManager.CutData(m_iY, m_iZ, m_iX);
+    }
+
+    // 당기기 오른쪽
+    public void PullRightDown()
+    {
+        // 이동 좌표
+        m_destPosition = transform.position + Vector3.right + Vector3.down;
+        // 플레이어 상태 오른쪽 이동 당기기
+        m_playerState = en_PlayerState.MOVE_RIGHT_CLIMB_DOWN;
+        // 데이터 잘라내기
+        m_gameManager.CutData(m_iY, m_iZ, m_iX);
+    }
 
     // 방향 앞으로
     public void DirectionForward()
@@ -524,40 +590,48 @@ public class PlayerAction : GameScript
         m_arrPlayerStateProc = new Action[]
         {
             Stay,
-            Forward,
-            Back,
-            Left,
-            Right,
-            Up,
-            Down,
-            ForwardClimbingUp,
-            BackClimbingUp,
-            LeftClimbingUp,
-            RightClimbingUp,
-            ForwardClimbingDown,
-            BackClimbingDown,
-            LeftClimbingDown,
-            RightClimbingDown,
-            ForwardClimbingState,
-            BackClimbingState,
-            LeftClimbingState,
-            RightClimbingState,
-            ForwardClimbingUp,  // CLIMBING_UP_FORWARD
-            BackClimbingUp,
-            LeftClimbingUp,
-            RightClimbingUp,
-            Forward,            // CLIMBING_MOVE_FORWARD
-            Back,
-            Left,
-            Right,
-            ClimbingForwardLeft,
-            ClimbingForwardRight,
-            ClimbingBackLeft,
-            ClimbingBackRight,
-            ClimbingLeftForward,
-            ClimbingLeftBack,
-            ClimbingRightForward,
-            ClimbingRightBack,
+            MoveForwardProc,
+            MoveBackProc,
+            MoveLeftProc,
+            MoveRightProc,
+            MoveUpProc,
+            MoveDownProc,
+            MoveForwardClimbUpProc,
+            MoveBackClimbUpProc,
+            MoveLeftClimbUpProc,
+            MoveRightClimbUpProc,
+            MoveForwardClimbDownProc,
+            MoveBackClimbDownProc,
+            MoveLeftClimbDownProc,
+            MoveRightClimbDownProc,
+            MoveForwardClimbIdleProc,
+            MoveBackClimbIdleProc,
+            MoveLeftClimbIdleProc,
+            MoveRightClimbIdleProc,
+            MoveForwardClimbUpProc,  // CLIMB_UP_FORWARD
+            MoveBackClimbUpProc,
+            MoveLeftClimbUpProc,
+            MoveRightClimbUpProc,
+            MoveForwardProc,            // CLIMB_MOVE_FORWARD
+            MoveBackProc,
+            MoveLeftProc,
+            MoveRightProc,
+            ClimbMoveForwardLeftProc,
+            ClimbMoveForwardRightProc,
+            ClimbMoveBackLeftProc,
+            ClimbMoveBackRightProc,
+            ClimbMoveLeftForwardProc,
+            ClimbMoveLeftBackProc,
+            ClimbMoveRightForwardProc,
+            ClimbMoveRightBackProc,
+            PushForwardProc,
+            PushBackProc,
+            PushLeftProc,
+            PushRightProc,
+            PullForwardProc,
+            PullBackProc,
+            PullLeftProc,
+            PullRightProc,
             Turn
         };
     }
@@ -575,7 +649,7 @@ public class PlayerAction : GameScript
 
     }
 
-    private void Forward()
+    private void MoveForwardProc()
     {
         // 앞쪽 이동
         transform.position = transform.position + (Vector3.forward * m_speed) * Time.deltaTime;
@@ -604,7 +678,7 @@ public class PlayerAction : GameScript
         }
     }
 
-    private void Back()
+    private void MoveBackProc()
     {
         // 뒤쪽 이동
         transform.position = transform.position + (Vector3.back * m_speed) * Time.deltaTime;
@@ -633,7 +707,7 @@ public class PlayerAction : GameScript
         }
     }
 
-    private void Left()
+    private void MoveLeftProc()
     {
         // 왼쪽 이동
         transform.position = transform.position + (Vector3.left * m_speed) * Time.deltaTime;
@@ -662,7 +736,7 @@ public class PlayerAction : GameScript
         }
     }
 
-    private void Right()
+    private void MoveRightProc()
     {
         // 오른쪽 이동
         transform.position = transform.position + (Vector3.right * m_speed) * Time.deltaTime;
@@ -691,17 +765,17 @@ public class PlayerAction : GameScript
         }
     }
 
-    private void Up()
+    private void MoveUpProc()
     {
 
     }
 
-    private void Down()
+    private void MoveDownProc()
     {
 
     }
 
-    private void ForwardClimbingUp()
+    private void MoveForwardClimbUpProc()
     {
         // 앞쪽 이동
         transform.position = transform.position + (Vector3.forward * m_speed) * Time.deltaTime;
@@ -730,7 +804,7 @@ public class PlayerAction : GameScript
         }
     }
 
-    private void BackClimbingUp() 
+    private void MoveBackClimbUpProc() 
     {
         // 뒤쪽 이동
         transform.position = transform.position + (Vector3.back * m_speed) * Time.deltaTime;
@@ -759,7 +833,7 @@ public class PlayerAction : GameScript
         }
     }
 
-    private void LeftClimbingUp()
+    private void MoveLeftClimbUpProc()
     {
         // 왼쪽 이동
         transform.position = transform.position + (Vector3.left * m_speed) * Time.deltaTime;
@@ -788,7 +862,7 @@ public class PlayerAction : GameScript
         }
     }
 
-    private void RightClimbingUp()
+    private void MoveRightClimbUpProc()
     {
         // 오른쪽 이동
         transform.position = transform.position + (Vector3.right * m_speed) * Time.deltaTime;
@@ -818,7 +892,7 @@ public class PlayerAction : GameScript
     }
 
 
-    private void ForwardClimbingDown()
+    private void MoveForwardClimbDownProc()
     {
         // 앞쪽 이동
         transform.position = transform.position + (Vector3.forward * m_speed) * Time.deltaTime;
@@ -847,7 +921,7 @@ public class PlayerAction : GameScript
         }
     }
 
-    private void BackClimbingDown()
+    private void MoveBackClimbDownProc()
     {
         // 뒤쪽 이동
         transform.position = transform.position + (Vector3.back * m_speed) * Time.deltaTime;
@@ -876,7 +950,7 @@ public class PlayerAction : GameScript
         }
     }
 
-    private void LeftClimbingDown()
+    private void MoveLeftClimbDownProc()
     {
         // 왼쪽 이동
         transform.position = transform.position + (Vector3.left * m_speed) * Time.deltaTime;
@@ -905,7 +979,7 @@ public class PlayerAction : GameScript
         }
     }
 
-    private void RightClimbingDown()
+    private void MoveRightClimbDownProc()
     {
         // 오른쪽 이동
         transform.position = transform.position + (Vector3.right * m_speed) * Time.deltaTime;
@@ -935,7 +1009,7 @@ public class PlayerAction : GameScript
     }
 
 
-    private void ForwardClimbingState()
+    private void MoveForwardClimbIdleProc()
     {
         // 앞쪽 이동
         transform.position = transform.position + (Vector3.forward * m_speed) * Time.deltaTime;
@@ -964,7 +1038,7 @@ public class PlayerAction : GameScript
         }
     }
 
-    private void BackClimbingState()
+    private void MoveBackClimbIdleProc()
     {
         // 뒤쪽 이동
         transform.position = transform.position + (Vector3.back * m_speed) * Time.deltaTime;
@@ -993,7 +1067,7 @@ public class PlayerAction : GameScript
         }
     }
 
-    private void LeftClimbingState()
+    private void MoveLeftClimbIdleProc()
     {
         // 왼쪽 이동
         transform.position = transform.position + (Vector3.left * m_speed) * Time.deltaTime;
@@ -1022,7 +1096,7 @@ public class PlayerAction : GameScript
         }
     }
 
-    private void RightClimbingState()
+    private void MoveRightClimbIdleProc()
     {
         // 오른쪽 이동
         transform.position = transform.position + (Vector3.right * m_speed) * Time.deltaTime;
@@ -1052,7 +1126,7 @@ public class PlayerAction : GameScript
     }
 
 
-    private void ClimbingForwardLeft()
+    private void ClimbMoveForwardLeftProc()
     {
         // 왼쪽 이동
         transform.position = transform.position + (Vector3.left * m_speed) * Time.deltaTime;
@@ -1081,7 +1155,7 @@ public class PlayerAction : GameScript
         }
     }
 
-    private void ClimbingForwardRight()
+    private void ClimbMoveForwardRightProc()
     {
         // 오른쪽 이동
         transform.position = transform.position + (Vector3.right * m_speed) * Time.deltaTime;
@@ -1110,7 +1184,7 @@ public class PlayerAction : GameScript
         }
     }
 
-    private void ClimbingBackLeft()
+    private void ClimbMoveBackLeftProc()
     {
         // 왼쪽 이동
         transform.position = transform.position + (Vector3.left * m_speed) * Time.deltaTime;
@@ -1139,7 +1213,7 @@ public class PlayerAction : GameScript
         }
     }
 
-    private void ClimbingBackRight()
+    private void ClimbMoveBackRightProc()
     {
         // 오른쪽 이동
         transform.position = transform.position + (Vector3.right * m_speed) * Time.deltaTime;
@@ -1168,7 +1242,7 @@ public class PlayerAction : GameScript
         }
     }
 
-    private void ClimbingLeftForward()
+    private void ClimbMoveLeftForwardProc()
     {
         // 앞쪽 이동
         transform.position = transform.position + (Vector3.forward * m_speed) * Time.deltaTime;
@@ -1197,7 +1271,7 @@ public class PlayerAction : GameScript
         }
     }
 
-    private void ClimbingLeftBack()
+    private void ClimbMoveLeftBackProc()
     {
         // 앞쪽 이동
         transform.position = transform.position + (Vector3.back * m_speed) * Time.deltaTime;
@@ -1226,7 +1300,7 @@ public class PlayerAction : GameScript
         }
     }
 
-    private void ClimbingRightForward()
+    private void ClimbMoveRightForwardProc()
     {
         // 앞쪽 이동
         transform.position = transform.position + (Vector3.forward * m_speed) * Time.deltaTime;
@@ -1255,7 +1329,7 @@ public class PlayerAction : GameScript
         }
     }
 
-    private void ClimbingRightBack()
+    private void ClimbMoveRightBackProc()
     {
         // 앞쪽 이동
         transform.position = transform.position + (Vector3.back * m_speed) * Time.deltaTime;
@@ -1284,6 +1358,45 @@ public class PlayerAction : GameScript
         }
     }
 
+    private void PushForwardProc()
+    {
+    
+    }
+
+    private void PushBackProc()
+    {
+
+    }
+
+    private void PushLeftProc()
+    {
+
+    }
+
+    private void PushRightProc()
+    {
+
+    }
+
+    private void PullForwardProc()
+    {
+
+    }
+
+    private void PullBackProc()
+    {
+
+    }
+
+    private void PullLeftProc()
+    {
+
+    }
+
+    private void PullRightProc()
+    {
+
+    }
 
     private void Turn()
     {
