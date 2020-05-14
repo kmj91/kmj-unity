@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 2868266114294697948}
   - component: {fileID: 5199466321449514730}
   - component: {fileID: -426159391907212349}
-  m_Layer: 9
+  m_Layer: 10
   m_Name: StaticCube
   m_TagString: StaticCube
   m_Icon: {fileID: 0}
@@ -124,6 +124,42 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   horizontalSpeed: 4
   verticalSpeed: 2
+  downDelay: 0
+  iceEffectGravity:
+    m_Mode: 0
+    m_CurveMultiplier: 0
+    m_CurveMin:
+      serializedVersion: 2
+      m_Curve: []
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    m_CurveMax:
+      serializedVersion: 2
+      m_Curve: []
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    m_ConstantMin: 0
+    m_ConstantMax: 0
+  iceEffectSize:
+    m_Mode: 0
+    m_CurveMultiplier: 0
+    m_CurveMin:
+      serializedVersion: 2
+      m_Curve: []
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    m_CurveMax:
+      serializedVersion: 2
+      m_Curve: []
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    m_ConstantMin: 0
+    m_ConstantMax: 0
   destPos: {x: 0, y: 0, z: 0}
   slideEvent: 0
-  isMoveDown: 0
+  sparksEffect: {fileID: 0}
+  mate: {fileID: 0}

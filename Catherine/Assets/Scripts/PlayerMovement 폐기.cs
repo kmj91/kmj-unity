@@ -247,9 +247,7 @@ public class PlayerMovement : MonoBehaviour
     // delegate
     //--------------------------------
 
-    private delegate void UndoFunc();
-
-    private UndoFunc[] undoFunc;
+    private Action[] Action;
 
 
     //--------------------------------
@@ -265,7 +263,7 @@ public class PlayerMovement : MonoBehaviour
     // 되돌리기
     public void UndoProcess()
     {
-        undoFunc[(int)playerState]();
+        Action[(int)playerState]();
     }
 
     // 캐릭터 키 입력을 바라보는 곳 기준 뒤 방향으로
@@ -313,35 +311,35 @@ public class PlayerMovement : MonoBehaviour
 
     private void Awake()
     {
-        undoFunc = new UndoFunc[] { new UndoFunc(Undo_Idle),
-            new UndoFunc(Undo_Idle_Climbing), new UndoFunc(Undo_Idle_Climbing), new UndoFunc(Undo_Idle_Climbing), new UndoFunc(Undo_Idle_Climbing),
-            new UndoFunc(Undo_Idle_Interaction), new UndoFunc(Undo_Idle_Interaction), new UndoFunc(Undo_Idle_Interaction), new UndoFunc(Undo_Idle_Interaction),
-            new UndoFunc(Undo_Move), new UndoFunc(Undo_Move), new UndoFunc(Undo_Move), new UndoFunc(Undo_Move),
-            new UndoFunc(Undo_Move_Flinch),
-            new UndoFunc(Undo_Move_Collision), new UndoFunc(Undo_Move_Collision), new UndoFunc(Undo_Move_Collision), new UndoFunc(Undo_Move_Collision),
-            new UndoFunc(Undo_Move_Collision_End), new UndoFunc(Undo_Move_Collision_End), new UndoFunc(Undo_Move_Collision_End), new UndoFunc(Undo_Move_Collision_End),
-            new UndoFunc(Undo_Slide), new UndoFunc(Undo_Slide), new UndoFunc(Undo_Slide), new UndoFunc(Undo_Slide),
-            new UndoFunc(Undo_Up), new UndoFunc(Undo_Up), new UndoFunc(Undo_Up), new UndoFunc(Undo_Up),
-            new UndoFunc(Undo_Up_Flinch),
-            new UndoFunc(Undo_Up_Collision), new UndoFunc(Undo_Up_Collision), new UndoFunc(Undo_Up_Collision), new UndoFunc(Undo_Up_Collision),
-            new UndoFunc(Undo_Up_Collision_End), new UndoFunc(Undo_Up_Collision_End), new UndoFunc(Undo_Up_Collision_End), new UndoFunc(Undo_Up_Collision_End),
-            new UndoFunc(Undo_Down), new UndoFunc(Undo_Down), new UndoFunc(Undo_Down), new UndoFunc(Undo_Down),
-            new UndoFunc(Undo_Push_Ready), new UndoFunc(Undo_Push_Ready), new UndoFunc(Undo_Push_Ready), new UndoFunc(Undo_Push_Ready),
-            new UndoFunc(Undo_Push), new UndoFunc(Undo_Push), new UndoFunc(Undo_Push), new UndoFunc(Undo_Push),
-            new UndoFunc(Undo_Push_End), new UndoFunc(Undo_Push_End), new UndoFunc(Undo_Push_End), new UndoFunc(Undo_Push_End),
-            new UndoFunc(Undo_Pull), new UndoFunc(Undo_Pull), new UndoFunc(Undo_Pull), new UndoFunc(Undo_Pull),
-            new UndoFunc(Undo_Pull_Climbing), new UndoFunc(Undo_Pull_Climbing), new UndoFunc(Undo_Pull_Climbing), new UndoFunc(Undo_Pull_Climbing),
-            new UndoFunc(Undo_Climbing), new UndoFunc(Undo_Climbing), new UndoFunc(Undo_Climbing), new UndoFunc(Undo_Climbing),
-            new UndoFunc(Undo_Climbing_Move), new UndoFunc(Undo_Climbing_Move), new UndoFunc(Undo_Climbing_Move), new UndoFunc(Undo_Climbing_Move), new UndoFunc(Undo_Climbing_Move), new UndoFunc(Undo_Climbing_Move), new UndoFunc(Undo_Climbing_Move), new UndoFunc(Undo_Climbing_Move),
-            new UndoFunc(Undo_Change_Climbing), new UndoFunc(Undo_Change_Climbing), new UndoFunc(Undo_Change_Climbing), new UndoFunc(Undo_Change_Climbing), new UndoFunc(Undo_Change_Climbing), new UndoFunc(Undo_Change_Climbing), new UndoFunc(Undo_Change_Climbing), new UndoFunc(Undo_Change_Climbing),
-            new UndoFunc(Undo_Drop), new UndoFunc(Undo_Drop), new UndoFunc(Undo_Drop), new UndoFunc(Undo_Drop),
-            new UndoFunc(Undo_Drop_High), new UndoFunc(Undo_Drop_High), new UndoFunc(Undo_Drop_High), new UndoFunc(Undo_Drop_High),
-            new UndoFunc(Undo_Drop_Low), new UndoFunc(Undo_Drop_Low), new UndoFunc(Undo_Drop_Low), new UndoFunc(Undo_Drop_Low),
-            new UndoFunc(Undo_Drop_Cling), new UndoFunc(Undo_Drop_Cling), new UndoFunc(Undo_Drop_Cling), new UndoFunc(Undo_Drop_Cling),
-            new UndoFunc(Undo_Drop_CLIMBING), new UndoFunc(Undo_Drop_CLIMBING), new UndoFunc(Undo_Drop_CLIMBING), new UndoFunc(Undo_Drop_CLIMBING),
-            new UndoFunc(Undo_Crushed_To_Death),
-            new UndoFunc(Undo_Death),
-            new UndoFunc(Undo_Empty)
+        Action = new Action[] { new Action(Undo_Idle),
+            new Action(Undo_Idle_Climbing), new Action(Undo_Idle_Climbing), new Action(Undo_Idle_Climbing), new Action(Undo_Idle_Climbing),
+            new Action(Undo_Idle_Interaction), new Action(Undo_Idle_Interaction), new Action(Undo_Idle_Interaction), new Action(Undo_Idle_Interaction),
+            new Action(Undo_Move), new Action(Undo_Move), new Action(Undo_Move), new Action(Undo_Move),
+            new Action(Undo_Move_Flinch),
+            new Action(Undo_Move_Collision), new Action(Undo_Move_Collision), new Action(Undo_Move_Collision), new Action(Undo_Move_Collision),
+            new Action(Undo_Move_Collision_End), new Action(Undo_Move_Collision_End), new Action(Undo_Move_Collision_End), new Action(Undo_Move_Collision_End),
+            new Action(Undo_Slide), new Action(Undo_Slide), new Action(Undo_Slide), new Action(Undo_Slide),
+            new Action(Undo_Up), new Action(Undo_Up), new Action(Undo_Up), new Action(Undo_Up),
+            new Action(Undo_Up_Flinch),
+            new Action(Undo_Up_Collision), new Action(Undo_Up_Collision), new Action(Undo_Up_Collision), new Action(Undo_Up_Collision),
+            new Action(Undo_Up_Collision_End), new Action(Undo_Up_Collision_End), new Action(Undo_Up_Collision_End), new Action(Undo_Up_Collision_End),
+            new Action(Undo_Down), new Action(Undo_Down), new Action(Undo_Down), new Action(Undo_Down),
+            new Action(Undo_Push_Ready), new Action(Undo_Push_Ready), new Action(Undo_Push_Ready), new Action(Undo_Push_Ready),
+            new Action(Undo_Push), new Action(Undo_Push), new Action(Undo_Push), new Action(Undo_Push),
+            new Action(Undo_Push_End), new Action(Undo_Push_End), new Action(Undo_Push_End), new Action(Undo_Push_End),
+            new Action(Undo_Pull), new Action(Undo_Pull), new Action(Undo_Pull), new Action(Undo_Pull),
+            new Action(Undo_Pull_Climbing), new Action(Undo_Pull_Climbing), new Action(Undo_Pull_Climbing), new Action(Undo_Pull_Climbing),
+            new Action(Undo_Climbing), new Action(Undo_Climbing), new Action(Undo_Climbing), new Action(Undo_Climbing),
+            new Action(Undo_Climbing_Move), new Action(Undo_Climbing_Move), new Action(Undo_Climbing_Move), new Action(Undo_Climbing_Move), new Action(Undo_Climbing_Move), new Action(Undo_Climbing_Move), new Action(Undo_Climbing_Move), new Action(Undo_Climbing_Move),
+            new Action(Undo_Change_Climbing), new Action(Undo_Change_Climbing), new Action(Undo_Change_Climbing), new Action(Undo_Change_Climbing), new Action(Undo_Change_Climbing), new Action(Undo_Change_Climbing), new Action(Undo_Change_Climbing), new Action(Undo_Change_Climbing),
+            new Action(Undo_Drop), new Action(Undo_Drop), new Action(Undo_Drop), new Action(Undo_Drop),
+            new Action(Undo_Drop_High), new Action(Undo_Drop_High), new Action(Undo_Drop_High), new Action(Undo_Drop_High),
+            new Action(Undo_Drop_Low), new Action(Undo_Drop_Low), new Action(Undo_Drop_Low), new Action(Undo_Drop_Low),
+            new Action(Undo_Drop_Cling), new Action(Undo_Drop_Cling), new Action(Undo_Drop_Cling), new Action(Undo_Drop_Cling),
+            new Action(Undo_Drop_CLIMBING), new Action(Undo_Drop_CLIMBING), new Action(Undo_Drop_CLIMBING), new Action(Undo_Drop_CLIMBING),
+            new Action(Undo_Crushed_To_Death),
+            new Action(Undo_Death),
+            new Action(Undo_Empty)
             };
     }
 

@@ -32,15 +32,11 @@ public class CubeMovement : MonoBehaviour
     public Vector3 destPos;
     // 미끄러짐
     public bool slideEvent;
-    // 떨어짐
-    //public bool isMoveDown; 
     // 스파크 이펙트
-    public ParticleSystem RF_SparksEffect;
-    public ParticleSystem RB_SparksEffect;
-    public ParticleSystem LF_SparksEffect;
-    public ParticleSystem LB_SparksEffect;
-
+    public ParticleSystem sparksEffect;
+    // 마테리얼
     public Material mate;
+
 
     //--------------------------------
     // private 변수
@@ -66,7 +62,11 @@ public class CubeMovement : MonoBehaviour
     private ParticleSystem.MinMaxCurve originalEffectStartSize;
     // 게임 매니저 스크립트
     private GameManager gameManager;
-
+    // 스파크 이펙트
+    private ParticleSystem RF_SparksEffect;
+    private ParticleSystem RB_SparksEffect;
+    private ParticleSystem LF_SparksEffect;
+    private ParticleSystem LB_SparksEffect;
 
     //--------------------------------
     // enum
@@ -1055,6 +1055,16 @@ public class CubeMovement : MonoBehaviour
     // private 함수
     //--------------------------------
 
+    private void Awake()
+    {
+        horizontalSpeed = 4f;
+        verticalSpeed = 2f;
+        downDelay = 1.2f;
+        iceEffectGravity = 1.2f;
+        iceEffectSize = 1.5f;
+    }
+
+
     private void Start()
     {
         ParticleSystem.MainModule particleMain;     // 파티클 메인
@@ -1082,6 +1092,25 @@ public class CubeMovement : MonoBehaviour
         IceColor = mate.GetColor(Shader.PropertyToID("_EmissionColor"));
         // 재질 블럭
         materialBlock.SetColor(Shader.PropertyToID("_EmissionColor"), IceColor);
+
+
+        // 이펙트 생성
+        RF_SparksEffect = Instantiate<ParticleSystem>(sparksEffect);
+        RF_SparksEffect.gameObject.transform.position = new Vector3(transform.position.x + 0.5f, transform.position.y - 0.49f, transform.position.z + 0.5f);
+        RF_SparksEffect.transform.parent = transform;
+        RF_SparksEffect.name = "RF_SparksEffect";
+        RB_SparksEffect = Instantiate<ParticleSystem>(sparksEffect);
+        RB_SparksEffect.gameObject.transform.position = new Vector3(transform.position.x + 0.5f, transform.position.y - 0.49f, transform.position.z - 0.5f);
+        RB_SparksEffect.transform.parent = transform;
+        RB_SparksEffect.name = "RB_SparksEffect";
+        LF_SparksEffect = Instantiate<ParticleSystem>(sparksEffect);
+        LF_SparksEffect.gameObject.transform.position = new Vector3(transform.position.x - 0.5f, transform.position.y - 0.49f, transform.position.z + 0.5f);
+        LF_SparksEffect.transform.parent = transform;
+        LF_SparksEffect.name = "LF_SparksEffect";
+        LB_SparksEffect = Instantiate<ParticleSystem>(sparksEffect);
+        LB_SparksEffect.gameObject.transform.position = new Vector3(transform.position.x - 0.5f, transform.position.y - 0.49f, transform.position.z - 0.5f);
+        LB_SparksEffect.transform.parent = transform;
+        LB_SparksEffect.name = "LB_SparksEffect";
 
         // 중력 값, 크기 교체
         particleMain = RF_SparksEffect.main;

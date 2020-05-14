@@ -3,8 +3,16 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
+using System;
+using System.IO;
+using System.Runtime.Serialization.Formatters.Binary;
+
 using GameMessageScript;
 using UnityDequeScript;
+using MapToolGlobalScript;
+using GameGlobalScript;
+
+using Cinemachine;
 
 public class GameManager : MonoBehaviour
 {
@@ -12,29 +20,412 @@ public class GameManager : MonoBehaviour
     // public 변수
     //--------------------------------
 
-    public int undoToken;                       // 복원 지점 토큰
-    public Queue<GameMessage> messageQueue;     // 게임 매니저 큐
+    public float playerSpeed;                       // 플레이어 이동 속도
+    public float cubeSpeed;                         // 큐브 이동 속도
+    public float cubeShakeAmout;                    // 흔들리는 힘
+    public float cubeShakeTime;                     // 흔들리는 시간
+    public int undoToken;                           // 복원 지점 토큰
+    public Queue<GameMessage> messageQueue;         // 게임 매니저 큐
     public UnityDeque<UndoData> undoDeque;
-
+    public GameObject gameStage;                    // 생성된 게임 오브젝트가 자식으로 들어갈 부모
+    public GameObject playerPrefab;                 // 플레이어 프리팹
+    public GameObject normalCubePrefab;             // 일반 큐브 프리팹
+    public GameObject iceCubePrefab;                // 얼음 큐브 프리팹
+    public GameObject followCam;                    // 카메라
+    public en_Direction m_playerDirection;          // 플레이어 방향
+    public bool canPlayerControl;                   // 플레이어 조작 플래그
+    
 
     //--------------------------------
     // private 변수
     //--------------------------------
 
-    private int undoArraySize;                  // 배열 크기
-    private PlayerMovement playerMovement;      // 플레이어 무브먼트
+    private int undoArraySize;                      // 배열 크기
+    private int m_mapSizeY;                         // 맵 크기 Y축
+    private int m_mapSizeZ;                         // 맵 크기 Z축
+    private int m_mapSizeX;                         // 맵 크기 X축
+    private int m_iPlayerJumpPower;                 // 플레이어 점프력
+    private st_IndexPos destPosition;                // 맵에 생성된 목적지 오브젝트 위치
+    //private PlayerMovement playerMovement;          // 플레이어 무브먼트
+    private GameObject m_playerObject;              // 플레이어 오브젝트
     private GameObject GameOverUI;
+    private Camera m_mainCamera;                    // 메인 카메라
+    private PlayerAction m_playerAction;            // 플레이어 액션 스크립트
+    private st_GameObjectData[,,] m_arrMapData;     // 게임 맵 오브젝트 정보 배열
+    private st_GameObjectData[,,] m_arrTempMapData; // 게임 오브젝트 정보 임시 저장소
+    private Action[] arrMsgProc;                    // 메시지 함수 배열
+    private KeyCode[] arrKeyDownCode;               // 키 다운 코드 배열
+    private Action[] arrKeyDownProc;                // 키 다운 함수 배열
+    private KeyCode[] arrKeyAutoCode;               // 키 오토 코드 배열
+    private Action[] arrKeyAutoProc;                // 키 오토 함수 배열
+    private KeyCode[] arrKeyUpCode;                 // 키 업 코드 배열
+    private Action[] arrKeyUpProc;                  // 키 업 함수 배열
     private bool restartFlag;
+    private bool isPlayerActive;                    // 플레이어 생성 확인
+    private bool isDestActive;                      // 목적지 생성 확인
+    private bool isGripKeyPressed;                  // 붙잡기 누름
+    private bool isPlayerClimbing;                  // 플레이어 등반 확인
 
 
     //--------------------------------
-    // delegate
+    // public 함수
     //--------------------------------
 
-    private delegate void MsgProc();    // 메시지 함수
+    //------------------------------------------------------------
+    // 해당 인덱스 위치의 맵 데이터를 잘라냅니다.
+    // 잘라낸 데이터는 임시 배열의 같은 인덱스 위치에 저장됩니다.
+    //------------------------------------------------------------
+    public void CutData(int iY, int iZ, int iX)
+    {
+        if (CheckMapIndexOverflow(iY, iZ, iX))
+        {
+            return;
+        }
 
-    private MsgProc[] arrMsgProc;       // 메시지 함수 배열
+        m_arrTempMapData[iY, iZ, iX] = m_arrMapData[iY, iZ, iX];
 
+        // 원본 배열의 큐브 정보 삭제
+        m_arrMapData[iY, iZ, iX].objectTag = en_GameObjectTag.EMPTY;
+        m_arrMapData[iY, iZ, iX].objectLayer = en_GameObjectLayer.EMPTY;
+        m_arrMapData[iY, iZ, iX].meshData = en_MeshType.EMPTY;
+        m_arrMapData[iY, iZ, iX].gameObject = null;
+        m_arrMapData[iY, iZ, iX].actionScript = null;
+    }
+
+    //------------------------------------------------------------
+    // 해당 인덱스 위치의 맵 데이터를 붙여넣습니다.
+    // 임시 배열의 맵 데이터를 원본 배열로 옮깁니다.
+    //------------------------------------------------------------
+    public void PasteData(int iY, int iZ, int iX, int iDestY, int iDestZ, int iDestX)
+    {
+        string objectName;
+
+        if (CheckMapIndexOverflow(iY, iZ, iX))
+        {
+            return;
+        }
+
+        if (CheckMapIndexOverflow(iDestY, iDestZ, iDestX))
+        {
+            return;
+        }
+
+        m_arrMapData[iDestY, iDestZ, iDestX] = m_arrTempMapData[iY, iZ, iX];
+
+        // 태그 정보로 게임 오브젝트 이름 지정
+        switch (m_arrTempMapData[iY, iZ, iX].objectTag)
+        {
+            case en_GameObjectTag.PLAYER:
+                objectName = "Player";
+                break;
+            case en_GameObjectTag.DEST:
+                objectName = "Dest";
+                break;
+            case en_GameObjectTag.NORMAL_CUBE:
+                objectName = "NormalCube";
+                break;
+            case en_GameObjectTag.ICE_CUBE:
+                objectName = "IceCube";
+                break;
+            default:
+                objectName = "Unknown";
+                break;
+        }
+
+        m_arrMapData[iDestY, iDestZ, iDestX].gameObject.name = objectName + " [" + iDestX + ", " + iDestY + ", " + iDestZ + "]";
+    }
+
+
+    // 아래에 큐브 발판이 있는지 체크합니다
+    public void CheckCeiling(int iY, int iZ, int iX)
+    {
+        int iCeilingY = iY + 1;
+        int iCntZ = iZ - 1;
+        int iCntX = iX - 1;
+        int iMaxZ = iZ + 1;
+        int iMaxX = iX + 1;
+        int iTempX;
+
+        // 범위를 벗어남
+        if (iCeilingY >= m_mapSizeY || iCeilingY < 0)
+        {
+            return;
+        }
+
+        if (iCntZ < 0)
+        {
+            if (iMaxZ < 0)
+            {
+                return;
+            }
+            iCntZ = 0;
+        }
+        else if (iCntZ >= m_mapSizeZ)
+        {
+            return;
+        }
+
+        if (iCntX < 0)
+        {
+            if (iMaxX < 0)
+            {
+                return;
+            }
+            iCntX = 0;
+        }
+        else if (iCntX >= m_mapSizeX)
+        {
+            return;
+        }
+
+        if (iMaxZ >= m_mapSizeZ)
+        {
+            iMaxZ = m_mapSizeZ - 1;
+        }
+
+        if (iMaxX >= m_mapSizeX)
+        {
+            iMaxX = m_mapSizeX - 1;
+        }
+
+        while (iCntZ <= iMaxZ)
+        {
+            iTempX = iCntX;
+            while (iTempX <= iMaxX)
+            {
+                if (iCntZ != iZ && iTempX != iX)
+                {
+                    ++iTempX;
+                    continue;
+                }
+
+                if (m_arrMapData[iCeilingY, iCntZ, iTempX].objectLayer != en_GameObjectLayer.CUBE)
+                {
+                    ++iTempX;
+                    continue;
+                }
+
+                // 아래에 큐브가 있는지
+                if (CheckFloor(iCeilingY, iCntZ, iTempX))
+                {
+                    // 아래에 큐브가 없다 떨어짐
+                    m_arrMapData[iCeilingY, iCntZ, iTempX].actionScript.MoveDown();
+
+                    //--------------------------------
+                    // 재귀 호출
+                    // 위에 큐브들 떨어지는지
+                    //--------------------------------
+                    CheckCeiling(iCeilingY, iCntZ, iTempX);
+                }
+                ++iTempX;
+            }
+            ++iCntZ;
+        }
+    }
+
+    // 아래에 큐브가 있으면 false 없으면 true
+    public bool CheckFloor(int iY, int iZ, int iX)
+    {
+        int iFloorY = iY - 1;
+        int iCntZ = iZ - 1;
+        int iCntX = iX - 1;
+        int iMaxZ = iZ + 1;
+        int iMaxX = iX + 1;
+        int iTempX;
+
+        // 범위를 벗어남
+        if (iFloorY < 0 || iFloorY >= m_mapSizeY)
+        {
+            return false;
+        }
+
+        if (iCntZ < 0)
+        {
+            if (iMaxZ < 0)
+            {
+                return false;
+            }
+            iCntZ = 0;
+        }
+        else if (iCntZ >= m_mapSizeZ)
+        {
+            return false;
+        }
+
+        if (iCntX < 0)
+        {
+            if (iMaxX < 0)
+            {
+                return false;
+            }
+            iCntX = 0;
+        }
+        else if (iCntX >= m_mapSizeX)
+        {
+            return false;
+        }
+
+        if (iMaxZ >= m_mapSizeZ)
+        {
+            iMaxZ = m_mapSizeZ - 1;
+        }
+
+        if (iMaxX >= m_mapSizeX)
+        {
+            iMaxX = m_mapSizeX - 1;
+        }
+
+        while (iCntZ <= iMaxZ)
+        {
+            iTempX = iCntX;
+            while (iTempX <= iMaxX)
+            {
+                if (iCntZ != iZ && iTempX != iX)
+                {
+                    ++iTempX;
+                    continue;
+                }
+
+                if (m_arrMapData[iFloorY, iCntZ, iTempX].objectLayer == en_GameObjectLayer.CUBE)
+                {
+                    // 떨어지지 않음
+                    return false;
+                }
+                ++iTempX;
+            }
+            ++iCntZ;
+        }
+        // 떨어짐
+        return true;
+    }
+
+    public void MoveDownGameObject(int iY, int iZ, int iX)
+    {
+        if (CheckMapIndexOverflow(iY, iZ, iX))
+        {
+            return;
+        }
+
+        // 화면상의 큐브 이동
+        m_arrMapData[iY, iZ, iX].actionScript.MoveDown();
+    }
+
+    // 아래에 얼음 큐브가 있는지 확인합니다.
+    public bool CheckSlideForward(int iY, int iZ, int iX)
+    {
+        if (CheckMapIndexOverflow(iY - 1, iZ, iX))
+        {
+            return false;
+        }
+        if (CheckMapIndexOverflow(iY, iZ + 1, iX))
+        {
+            return false;
+        }
+
+        // 뒤쪽 검사
+        if (m_arrMapData[iY, iZ + 1, iX].objectLayer == en_GameObjectLayer.CUBE)
+        {
+            // 막힘
+            return false;
+        }
+
+        // 바닥 검사
+        if (m_arrMapData[iY - 1, iZ, iX].objectTag == en_GameObjectTag.ICE_CUBE)
+        {
+            // 미끄러짐
+            return true;
+        }
+
+        // 안 미끄러짐
+        return false;
+    }
+
+    public bool CheckSlideBack(int iY, int iZ, int iX)
+    {
+        if (CheckMapIndexOverflow(iY - 1, iZ, iX))
+        {
+            return false;
+        }
+        if (CheckMapIndexOverflow(iY, iZ - 1, iX))
+        {
+            return false;
+        }
+
+        // 뒤쪽 검사
+        if (m_arrMapData[iY, iZ - 1, iX].objectLayer == en_GameObjectLayer.CUBE)
+        {
+            // 막힘
+            return false;
+        }
+
+        // 바닥 검사
+        if (m_arrMapData[iY - 1, iZ, iX].objectTag == en_GameObjectTag.ICE_CUBE)
+        {
+            // 미끄러짐
+            return true;
+        }
+
+        // 안 미끄러짐
+        return false;
+    }
+
+    public bool CheckSlideLeft(int iY, int iZ, int iX)
+    {
+        if (CheckMapIndexOverflow(iY - 1, iZ, iX))
+        {
+            return false;
+        }
+        if (CheckMapIndexOverflow(iY, iZ, iX - 1))
+        {
+            return false;
+        }
+
+        // 왼쪽 검사
+        if (m_arrMapData[iY, iZ, iX - 1].objectLayer == en_GameObjectLayer.CUBE)
+        {
+            // 막힘
+            return false;
+        }
+
+        // 바닥 검사
+        if (m_arrMapData[iY - 1, iZ, iX].objectTag == en_GameObjectTag.ICE_CUBE)
+        {
+            // 미끄러짐
+            return true;
+        }
+
+        // 안 미끄러짐
+        return false;
+    }
+
+    public bool CheckSlideRight(int iY, int iZ, int iX)
+    {
+        if (CheckMapIndexOverflow(iY - 1, iZ, iX))
+        {
+            return false;
+        }
+        if (CheckMapIndexOverflow(iY, iZ, iX + 1))
+        {
+            return false;
+        }
+
+        // 오른쪽 검사
+        if (m_arrMapData[iY, iZ, iX + 1].objectLayer == en_GameObjectLayer.CUBE)
+        {
+            // 막힘
+            return false;
+        }
+
+        // 바닥 검사
+        if (m_arrMapData[iY - 1, iZ, iX].objectTag == en_GameObjectTag.ICE_CUBE)
+        {
+            // 미끄러짐
+            return true;
+        }
+
+        // 안 미끄러짐
+        return false;
+    }
 
 
     //--------------------------------
@@ -43,29 +434,84 @@ public class GameManager : MonoBehaviour
 
     private void Awake()
     {
-        arrMsgProc = new MsgProc[] { new MsgProc(CreateUndoPoint), new MsgProc(UpdateUndoCube) };
+        arrMsgProc = new Action[] 
+        {
+            CreateUndoPoint,
+            UpdateUndoCube
+        };
+        arrKeyDownCode = new KeyCode[]
+        {
+            KeyCode.Mouse0          // 마우스 왼쪽 클릭
+        };
+        arrKeyDownProc = new Action[]
+        {
+            GripStart               // 붙잡기 시작
+        };
+        arrKeyAutoCode = new KeyCode[] 
+        {
+            KeyCode.W,              // 위
+            KeyCode.UpArrow,
+            KeyCode.S,              // 아래
+            KeyCode.DownArrow,
+            KeyCode.A,              // 왼쪽
+            KeyCode.LeftArrow,
+            KeyCode.D,              // 오른쪽
+            KeyCode.RightArrow
+        };
+        arrKeyAutoProc = new Action[] 
+        {
+            Up,
+            Up,
+            Down,
+            Down,
+            Left,
+            Left,
+            Right,
+            Right
+        };
+        arrKeyUpCode = new KeyCode[]
+        {
+            KeyCode.Mouse0          // 마우스 왼쪽 클릭
+        };
+        arrKeyUpProc = new Action[]
+        {
+            GripEnd                 // 붙잡기 끝
+        };
+
+        // 게임 초기화
+        InitGame();
+        m_iPlayerJumpPower = 1;
     }
 
 
     private void Start()
     {
         // 플레이어 무브먼트
-        playerMovement = GameObject.Find("Player").GetComponent<PlayerMovement>();
+        //playerMovement = GameObject.Find("Player").GetComponent<PlayerMovement>();
         // UI
         GameOverUI = GameObject.Find("Canvas").transform.Find("gameOverUI").gameObject;
+        // 메인 카메라
+        m_mainCamera = Camera.main;
         // 다시시작 플래그
         restartFlag = false;
         // 초기화
         undoToken = 0;
         messageQueue = new Queue<GameMessage>();
         undoDeque = new UnityDeque<UndoData>();
+        // 시네머신 카메라 설정
+        var cinemachine = followCam.GetComponent<CinemachineFreeLook>();
+        cinemachine.Follow = m_playerObject.transform;
+        cinemachine.LookAt = m_playerObject.transform;
     }
 
-    private void FixedUpdate()
+    private void Update()
     {
         GameMessage gameMsg;
         UndoData undoData;          // 되돌리기 정보
         CubeMovement cubeMovement;
+
+        // 키처리
+        KeyProc();
 
         if (restartFlag)
         {
@@ -76,51 +522,51 @@ public class GameManager : MonoBehaviour
             }
         }
 
-        if (playerMovement.isDeath)
-        {
-            // 게임오버
-            GameOverUI.SetActive(true);
-            // 다시 시작
-            restartFlag = true;
-        }
+        //if (playerMovement.isDeath)
+        //{
+        //    // 게임오버
+        //    GameOverUI.SetActive(true);
+        //    // 다시 시작
+        //    restartFlag = true;
+        //}
 
-        // 되돌리기 테스트
-        if (Input.GetKeyDown(KeyCode.Tab))
-        {
-            // Deque가 비어있지 않으면 되돌리기
-            if (undoDeque.Count > 0)
-            {
-                // 뒤에서부터 데이터 하나 꺼내기
-                undoData = undoDeque.Pop_Back();
+        //// 되돌리기 테스트
+        //if (Input.GetKeyDown(KeyCode.Tab))
+        //{
+        //    // Deque가 비어있지 않으면 되돌리기
+        //    if (undoDeque.Count > 0)
+        //    {
+        //        // 뒤에서부터 데이터 하나 꺼내기
+        //        undoData = undoDeque.Pop_Back();
 
-                //-----------------------------------------------
-                // 1. 플레이어 애니메이션도 대기상태로 복구해야됨
-                //-----------------------------------------------
+        //        //-----------------------------------------------
+        //        // 1. 플레이어 애니메이션도 대기상태로 복구해야됨
+        //        //-----------------------------------------------
 
-                // 플레이어 위치 되돌리기
-                playerMovement.setPlayerPostion(undoData.playerPos);
-                // 플레이어 상태 되돌리기
-                playerMovement.UndoProcess();
+        //        // 플레이어 위치 되돌리기
+        //        playerMovement.setPlayerPostion(undoData.playerPos);
+        //        // 플레이어 상태 되돌리기
+        //        playerMovement.UndoProcess();
 
-                // 큐브 되돌리기
-                for (int i = 0; i < undoArraySize; ++i)
-                {
-                    if (!undoData.cubePosArray[i].flag)
-                    {
-                        break;
-                    }
+        //        // 큐브 되돌리기
+        //        for (int i = 0; i < undoArraySize; ++i)
+        //        {
+        //            if (!undoData.cubePosArray[i].flag)
+        //            {
+        //                break;
+        //            }
 
-                    cubeMovement = undoData.cubePosArray[i].cubeObject.GetComponent<CubeMovement>();
+        //            cubeMovement = undoData.cubePosArray[i].cubeObject.GetComponent<CubeMovement>();
 
-                    // 큐브 위치 되돌리기
-                    cubeMovement.transform.position = undoData.cubePosArray[i].CubePos;
-                    // 큐브 대기 상태로
-                    cubeMovement.UpdateStateToIdle();
-                }
-            }
+        //            // 큐브 위치 되돌리기
+        //            cubeMovement.transform.position = undoData.cubePosArray[i].CubePos;
+        //            // 큐브 대기 상태로
+        //            cubeMovement.UpdateStateToIdle();
+        //        }
+        //    }
 
-            //Debug.Log("undoDeque Count : " + undoDeque.Count);
-        }
+        //    //Debug.Log("undoDeque Count : " + undoDeque.Count);
+        //}
 
 
         // 처리할 메시지
@@ -132,6 +578,197 @@ public class GameManager : MonoBehaviour
 
             // 메시지 처리
             arrMsgProc[(int)gameMsg.messageType]();
+        }
+    }
+
+
+    // 키 처리
+    private void KeyProc()
+    {
+        int iCnt;
+        int iSize;
+
+
+        // 키 다운
+        iSize = arrKeyDownCode.Length;
+        iCnt = 0;
+        while (iCnt < iSize)
+        {
+            if (Input.GetKeyDown(arrKeyDownCode[iCnt]))
+            {
+                arrKeyDownProc[iCnt]();
+            }
+            ++iCnt;
+        }
+
+        // 키 오토
+        iSize = arrKeyAutoCode.Length;
+        iCnt = 0;
+        while (iCnt < iSize)
+        {
+            if (Input.GetKey(arrKeyAutoCode[iCnt]))
+            {
+                arrKeyAutoProc[iCnt]();
+            }
+            ++iCnt;
+        }
+
+        // 키 업
+        iSize = arrKeyUpCode.Length;
+        iCnt = 0;
+        while (iCnt < iSize)
+        {
+            if (Input.GetKeyUp(arrKeyUpCode[iCnt]))
+            {
+                arrKeyUpProc[iCnt]();
+            }
+            ++iCnt;
+        }
+    }
+
+
+    // 게임 초기화
+    private void InitGame()
+    {
+        int iX;
+        int iZ;
+        int iY;
+        st_MapToolData mapData;
+        CubeAction cubeScript;                          // 큐브 스크립트
+        Stream rs;
+        BinaryFormatter deserializer;
+        st_MapToolObjectData[,,] arrMapToolObject;      // 맵 오브젝트 배열
+
+        // 파일 불러오기
+        rs = new FileStream("a.dat", FileMode.Open);
+        deserializer = new BinaryFormatter();
+
+        // 맵 정보 불러오기
+        mapData = (st_MapToolData)deserializer.Deserialize(rs);
+        // 맵 정보 저장
+        m_mapSizeY = mapData.iMapSizeY;
+        m_mapSizeZ = mapData.iMapSizeZ;
+        m_mapSizeX = mapData.iMapSizeX;
+        destPosition = mapData.destPosition;
+        isPlayerActive = mapData.isPlayerActive;
+        isDestActive = mapData.isDestActive;
+
+        // 맵툴에서 불러온 오브젝트 정보를 저장할 배열 생성
+        // Y, Z, X
+        arrMapToolObject = new st_MapToolObjectData[mapData.iMapSizeY, mapData.iMapSizeZ, mapData.iMapSizeX];
+        // 맵툴에서 불러온 오브젝트 정보 배열에 저장
+        arrMapToolObject = (st_MapToolObjectData[,,])deserializer.Deserialize(rs);
+        // 파일 닫기
+        rs.Close();
+        // 게임에서 쓸 오브젝트 배열 생성
+        m_arrMapData = new st_GameObjectData[mapData.iMapSizeY, mapData.iMapSizeZ, mapData.iMapSizeX];
+        // 임시 저장소 배열
+        m_arrTempMapData = new st_GameObjectData[mapData.iMapSizeY, mapData.iMapSizeZ, mapData.iMapSizeX];
+
+        // 불러오기 오브젝트 생성
+        iY = 0;
+        while (iY < 100)
+        {
+            iZ = 0;
+            while (iZ < 10)
+            {
+                iX = 0;
+                while (iX < 10)
+                {
+                    switch (arrMapToolObject[iY, iZ, iX].objectType)
+                    {
+                        case en_MenuElementType.PLAYER:
+                            // 플레이어
+                            // 플레이어 게임 오브젝트 추가
+                            m_playerObject = Instantiate<GameObject>(playerPrefab);
+                            // 배열에 게임 오브젝트 저장
+                            m_arrMapData[iY, iZ, iX].gameObject = m_playerObject;
+                            // 게임 오브젝트 이름 변경
+                            m_arrMapData[iY, iZ, iX].gameObject.name = "Player [" + iX + ", " + iY + ", " + iZ + "]";
+                            // 오브젝트 위치 저장
+                            m_arrMapData[iY, iZ, iX].gameObject.transform.position = new Vector3(iX, iY, iZ) + playerPrefab.transform.position;
+                            // 배열에 태그, 레이어 메쉬 정보 저장
+                            m_arrMapData[iY, iZ, iX].objectTag = en_GameObjectTag.PLAYER;
+                            m_arrMapData[iY, iZ, iX].objectLayer = en_GameObjectLayer.PLAYER;
+                            m_arrMapData[iY, iZ, iX].meshData = en_MeshType.EMPTY;
+                            // 플레이어 액션 스크립트 추가
+                            m_arrMapData[iY, iZ, iX].gameObject.AddComponent<PlayerAction>();
+                            // 플레이어 액션 스크립트 멤버 변수로 저장
+                            m_playerAction = m_playerObject.GetComponent<PlayerAction>();
+                            // 배열에 액션 스크립트 저장
+                            m_arrMapData[iY, iZ, iX].actionScript = m_playerAction;
+                            // 스크립트 초기화
+                            m_playerAction.Init(this, playerSpeed, iX, iY, iZ);
+                            // 플레이어 조작 플래그
+                            canPlayerControl = true;
+                            break;
+                        case en_MenuElementType.DEST:
+                            // 목적지
+                            // 목적지 게임 오브젝트 추가 및 배열에 저장
+                            m_arrMapData[iY, iZ, iX].gameObject = Instantiate<GameObject>(playerPrefab);
+                            // 게임 오브젝트 이름 변경
+                            m_arrMapData[iY, iZ, iX].gameObject.name = "Dest [" + iX + ", " + iY + ", " + iZ + "]";
+                            // 오브젝트 위치 저장
+                            m_arrMapData[iY, iZ, iX].gameObject.transform.position = new Vector3(iX, iY, iZ) + playerPrefab.transform.position;
+                            // 이 게임 오브젝트를 게임 스테이지 하위 항목의 위치로 변경
+                            m_arrMapData[iY, iZ, iX].gameObject.transform.parent = gameStage.transform;
+                            // 배열에 태그, 레이어, 메쉬 정보 저장
+                            m_arrMapData[iY, iZ, iX].objectTag = en_GameObjectTag.DEST;
+                            m_arrMapData[iY, iZ, iX].objectLayer = en_GameObjectLayer.DEST;
+                            m_arrMapData[iY, iZ, iX].meshData = en_MeshType.EMPTY;
+                            break;
+                        case en_MenuElementType.NORMAL_CUBE:
+                            // 일반 큐브
+                            // 일반 큐브 게임 오브젝트 추가 및 배열에 저장
+                            m_arrMapData[iY, iZ, iX].gameObject = Instantiate<GameObject>(normalCubePrefab);
+                            // 게임 오브젝트 이름 변경
+                            m_arrMapData[iY, iZ, iX].gameObject.name = "NormalCube [" + iX + ", " + iY + ", " + iZ + "]";
+                            // 오브젝트 위치 저장
+                            m_arrMapData[iY, iZ, iX].gameObject.transform.position = new Vector3(iX, iY, iZ) + normalCubePrefab.transform.position;
+                            // 이 게임 오브젝트를 게임 스테이지 하위 항목의 위치로 변경
+                            m_arrMapData[iY, iZ, iX].gameObject.transform.parent = gameStage.transform;
+                            // 배열에 태그, 레이어, 메쉬 정보 저장
+                            m_arrMapData[iY, iZ, iX].objectTag = en_GameObjectTag.NORMAL_CUBE;
+                            m_arrMapData[iY, iZ, iX].objectLayer = en_GameObjectLayer.CUBE;
+                            m_arrMapData[iY, iZ, iX].meshData = en_MeshType.BLOCK;
+                            // 큐브 액션 스크립트 추가
+                            m_arrMapData[iY, iZ, iX].gameObject.AddComponent<CubeAction>();
+                            // 배열에 액션 스크립트 저장
+                            cubeScript = m_arrMapData[iY, iZ, iX].gameObject.GetComponent<CubeAction>();
+                            m_arrMapData[iY, iZ, iX].actionScript = cubeScript;
+                            // 스크립트 초기화
+                            cubeScript.Init(this, cubeSpeed, iX, iY, iZ, cubeShakeAmout, cubeShakeTime, en_GameObjectTag.NORMAL_CUBE);
+                            break;
+                        case en_MenuElementType.ICE_CUBE:
+                            // 얼음 큐브
+                            m_arrMapData[iY, iZ, iX].gameObject = Instantiate<GameObject>(iceCubePrefab);
+                            m_arrMapData[iY, iZ, iX].gameObject.name = "IceCube [" + iX + ", " + iY + ", " + iZ + "]";
+                            m_arrMapData[iY, iZ, iX].gameObject.transform.position = new Vector3(iX, iY, iZ) + iceCubePrefab.transform.position;
+                            m_arrMapData[iY, iZ, iX].gameObject.transform.parent = gameStage.transform;
+                            m_arrMapData[iY, iZ, iX].objectTag = en_GameObjectTag.ICE_CUBE;
+                            m_arrMapData[iY, iZ, iX].objectLayer = en_GameObjectLayer.CUBE;
+                            m_arrMapData[iY, iZ, iX].meshData = en_MeshType.BLOCK;
+                            // 큐브 액션 스크립트 추가
+                            m_arrMapData[iY, iZ, iX].gameObject.AddComponent<CubeAction>();
+                            // 배열에 액션 스크립트 저장
+                            cubeScript = m_arrMapData[iY, iZ, iX].gameObject.GetComponent<CubeAction>();
+                            m_arrMapData[iY, iZ, iX].actionScript = cubeScript;
+                            // 스크립트 초기화
+                            cubeScript.Init(this, cubeSpeed, iX, iY, iZ, cubeShakeAmout, cubeShakeTime, en_GameObjectTag.ICE_CUBE);
+                            break;
+                        default:
+                            // 비어 있음
+                            m_arrMapData[iY, iZ, iX].objectTag = en_GameObjectTag.EMPTY;
+                            m_arrMapData[iY, iZ, iX].objectLayer = en_GameObjectLayer.EMPTY;
+                            m_arrMapData[iY, iZ, iX].meshData = en_MeshType.EMPTY;
+                            break;
+                    }
+
+                    ++iX;
+                }
+                ++iZ;
+            }
+            ++iY;
         }
     }
 
@@ -206,5 +843,2692 @@ public class GameManager : MonoBehaviour
         }
 
         Debug.Log("복원 지점에 추가하지 못함");
+    }
+
+
+
+    // 붙잡기 시작
+    private void GripStart()
+    {
+        isGripKeyPressed = true;
+    }
+
+
+    // 붙잡기 끝
+    private void GripEnd()
+    {
+        isGripKeyPressed = false;
+    }
+
+
+    // 방향키 위
+    private void Up()
+    {
+        float CameraAngleY;      // 카메라 방향
+
+        // 플레이어 조작 불가
+        if (!canPlayerControl)
+        {
+            return;
+        }
+
+        //------------------------------------------------
+        // 카메라 방향에 따른 키 입력 값 변화
+        //------------------------------------------------
+        CameraAngleY = m_mainCamera.transform.eulerAngles.y;
+        // 오른쪽 →
+        if (45 <= CameraAngleY && CameraAngleY < 135)
+        {
+            // 매달림
+            if (isPlayerClimbing)
+            {
+                PlayerClimbingUp();
+                return;
+            }
+
+            // 붙잡기
+            if (isGripKeyPressed)
+            {
+                PlayerGripRight();
+                return;
+            }
+
+            // 이동
+            PlayerMoveRight();
+        }
+        // 뒤쪽 ↓
+        else if (135 <= CameraAngleY && CameraAngleY < 225)
+        {
+            // 매달림
+            if (isPlayerClimbing)
+            {
+                PlayerClimbingUp();
+                return;
+            }
+
+            // 붙잡기
+            if (isGripKeyPressed)
+            {
+                PlayerGripBack();
+                return;
+            }
+
+            // 이동
+            PlayerMoveBack();
+        }
+        // 왼쪽 ←
+        else if (225 <= CameraAngleY && CameraAngleY < 315)
+        {
+            // 매달림
+            if (isPlayerClimbing)
+            {
+                PlayerClimbingUp();
+                return;
+            }
+
+            // 붙잡기
+            if (isGripKeyPressed)
+            {
+                PlayerGripLeft();
+                return;
+            }
+
+            // 이동
+            PlayerMoveLeft();
+        }
+        // 앞쪽 ↑
+        else
+        {
+            // 매달림
+            if (isPlayerClimbing)
+            {
+                PlayerClimbingUp();
+                return;
+            }
+
+            // 붙잡기
+            if (isGripKeyPressed)
+            {
+                PlayerGripForward();
+                return;
+            }
+
+            // 이동
+            PlayerMoveForward();
+        }
+    }
+
+
+    // 방향키 아래
+    private void Down()
+    {
+        float CameraAngleY;      // 카메라 방향
+
+        // 플레이어 조작 불가
+        if (!canPlayerControl)
+        {
+            return;
+        }
+
+        //------------------------------------------------
+        // 카메라 방향에 따른 키 입력 값 변화
+        //------------------------------------------------
+        CameraAngleY = m_mainCamera.transform.eulerAngles.y;
+        // 오른쪽 →
+        if (45 <= CameraAngleY && CameraAngleY < 135)
+        {
+            // 매달림
+            if (isPlayerClimbing)
+            {
+                return;
+            }
+
+            // 붙잡기
+            if (isGripKeyPressed)
+            {
+                PlayerGripLeft();
+                return;
+            }
+
+            // 이동
+            PlayerMoveLeft();
+        }
+        // 뒤쪽 ↓
+        else if (135 <= CameraAngleY && CameraAngleY < 225)
+        {
+            // 매달림
+            if (isPlayerClimbing)
+            {
+                return;
+            }
+
+            // 붙잡기
+            if (isGripKeyPressed)
+            {
+                PlayerGripForward();
+                return;
+            }
+
+            // 이동
+            PlayerMoveForward();
+        }
+        // 왼쪽 ←
+        else if (225 <= CameraAngleY && CameraAngleY < 315)
+        {
+            // 매달림
+            if (isPlayerClimbing)
+            {
+                return;
+            }
+
+            // 붙잡기
+            if (isGripKeyPressed)
+            {
+                PlayerGripRight();
+                return;
+            }
+
+            // 이동
+            PlayerMoveRight();
+        }
+        // 앞쪽 ↑
+        else
+        {
+            // 매달림
+            if (isPlayerClimbing)
+            {
+                return;
+            }
+
+            // 붙잡기
+            if (isGripKeyPressed)
+            {
+                PlayerGripBack();
+                return;
+            }
+
+            // 일반
+            PlayerMoveBack();
+        }
+    }
+
+
+    // 방향키 왼쪽
+    private void Left()
+    {
+        float CameraAngleY;      // 카메라 방향
+
+        // 플레이어 조작 불가
+        if (!canPlayerControl)
+        {
+            return;
+        }
+
+        //------------------------------------------------
+        // 카메라 방향에 따른 키 입력 값 변화
+        //------------------------------------------------
+        CameraAngleY = m_mainCamera.transform.eulerAngles.y;
+        // 오른쪽 →
+        if (45 <= CameraAngleY && CameraAngleY < 135)
+        {
+            // 매달림
+            if (isPlayerClimbing)
+            {
+                PlayerClimbingLeft();
+                return;
+            }
+
+            // 붙잡기
+            if (isGripKeyPressed)
+            {
+                PlayerGripForward();
+                return;
+            }
+
+            // 이동
+            PlayerMoveForward();
+        }
+        // 뒤쪽 ↓
+        else if (135 <= CameraAngleY && CameraAngleY < 225)
+        {
+            // 매달림
+            if (isPlayerClimbing)
+            {
+                PlayerClimbingLeft(true);
+                return;
+            }
+
+            // 붙잡기
+            if (isGripKeyPressed)
+            {
+                PlayerGripRight();
+                return;
+            }
+
+            // 이동
+            PlayerMoveRight();
+        }
+        // 왼쪽 ←
+        else if (225 <= CameraAngleY && CameraAngleY < 315)
+        {
+            // 매달림
+            if (isPlayerClimbing)
+            {
+                PlayerClimbingLeft();
+                return;
+            }
+
+            // 붙잡기
+            if (isGripKeyPressed)
+            {
+                PlayerGripBack();
+                return;
+            }
+            // 이동
+            PlayerMoveBack();
+        }
+        // 앞쪽 ↑
+        else
+        {
+            // 매달림
+            if (isPlayerClimbing)
+            {
+                PlayerClimbingLeft();
+                return;
+            }
+
+            // 붙잡기
+            if (isGripKeyPressed)
+            {
+                PlayerGripLeft();
+                return;
+            }
+            
+            // 이동
+            PlayerMoveLeft();
+        }
+    }
+
+
+    // 방향키 오른쪽
+    private void Right()
+    {
+        float CameraAngleY;      // 카메라 방향
+
+        // 플레이어 조작 불가
+        if (!canPlayerControl)
+        {
+            return;
+        }
+
+        //------------------------------------------------
+        // 카메라 방향에 따른 키 입력 값 변화
+        //------------------------------------------------
+        CameraAngleY = m_mainCamera.transform.eulerAngles.y;
+        // 오른쪽 →
+        if (45 <= CameraAngleY && CameraAngleY < 135)
+        {
+            // 매달림
+            if (isPlayerClimbing)
+            {
+                PlayerClimbingRight();
+                return;
+            }
+
+            // 붙잡기
+            if (isGripKeyPressed)
+            {
+                PlayerGripBack();
+                return;
+            }
+
+            // 이동
+            PlayerMoveBack();
+        }
+        // 뒤쪽 ↓
+        else if (135 <= CameraAngleY && CameraAngleY < 225)
+        {
+            // 매달림
+            if (isPlayerClimbing)
+            {
+                PlayerClimbingRight(true);
+                return;
+            }
+
+            // 붙잡기
+            if (isGripKeyPressed)
+            {
+                PlayerGripLeft();
+                return;
+            }
+
+            // 이동
+            PlayerMoveLeft();
+        }
+        // 왼쪽 ←
+        else if (225 <= CameraAngleY && CameraAngleY < 315)
+        {
+            // 매달림
+            if (isPlayerClimbing)
+            {
+                PlayerClimbingRight();
+                return;
+            }
+
+            // 붙잡기
+            if (isGripKeyPressed)
+            {
+                PlayerGripForward();
+                return;
+            }
+
+            // 이동
+            PlayerMoveForward();
+        }
+        // 앞쪽 ↑
+        else
+        {
+            // 매달림
+            if (isPlayerClimbing)
+            {
+                PlayerClimbingRight();
+                return;
+            }
+
+            // 붙잡기
+            if (isGripKeyPressed)
+            {
+                PlayerGripRight();
+                return;
+            }
+
+            // 이동
+            PlayerMoveRight();
+        }
+    }
+
+
+    // 앞으로 이동
+    private void PlayerMoveForward()
+    {
+        // 플레이어가 앞을 안보고 있음
+        if (m_playerDirection != en_Direction.FORWARD)
+        {
+            // 플레이어의 방향 앞쪽으로 변경
+            m_playerAction.DirectionForward();
+            m_playerDirection = en_Direction.FORWARD;
+            // 플레이어 조작 불가
+            canPlayerControl = false;
+            return;
+        }
+
+        int iY = m_playerAction.m_iY;     // 플레이어 위치 Y
+        int iZ = m_playerAction.m_iZ;     // 플레이어 위치 Z
+        int iX = m_playerAction.m_iX;     // 플레이어 위치 X
+
+        // 맵 바깥으로 나가면 안됨
+        if (iZ + 1 >= m_mapSizeZ)
+        {
+            // 더이상 갈 수 없음
+            Debug.Log("맵의 끝");
+            return;
+        }
+
+        // 이동 지점이 비어있나
+        if (m_arrMapData[iY, iZ + 1, iX].meshData == en_MeshType.BLOCK)
+        {
+            // 블록
+
+            //--------------------------------
+            // 위쪽 검사
+            //   ？
+            // ★■
+            //--------------------------------
+
+            // 맵 바깥으로 나가면 안됨
+            if (iY + 1 >= m_mapSizeY)
+            {
+                // 더이상 갈 수 없음
+                Debug.Log("맵의 끝");
+                return;
+            }
+
+            if (m_arrMapData[iY + 1, iZ + 1, iX].meshData == en_MeshType.BLOCK)
+            {
+                // 블록
+
+                // 못올라감
+                //--------------------------------
+                // 아이템을 통해 올라갈 수 있도록...
+                //--------------------------------
+            }
+            else
+            {
+                // 비어 있음
+
+                //--------------------------------
+                // 플레이어 위쪽 검사
+                // ？
+                // ★■
+                //--------------------------------
+
+                if (m_arrMapData[iY + 1, iZ, iX].meshData == en_MeshType.EMPTY)
+                {
+                    // 비어 있음
+
+                    //--------------------------------
+                    // 점프
+                    // ↗
+                    // ★■
+                    // ■
+                    //--------------------------------
+
+                    // 플레이어 이동
+                    m_playerAction.MoveForwardClimbUp();
+                    // 플레이어 방향
+                    m_playerDirection = en_Direction.FORWARD;
+                    // 플레이어 조작 불가
+                    canPlayerControl = false;
+                }
+            }
+        }
+        else
+        {
+            // 비어 있음
+
+            //--------------------------------
+            // 아래쪽 검사
+            // ★
+            // ■？
+            //--------------------------------
+
+            if (m_arrMapData[iY - 1, iZ + 1, iX].meshData == en_MeshType.BLOCK)
+            {
+                // 블록
+
+                //--------------------------------
+                // 이동
+                // ★→
+                // ■■
+                //--------------------------------
+
+                // 플레이어 좌표 이동
+                m_playerAction.MoveForward();
+                // 플레이어 방향
+                m_playerDirection = en_Direction.FORWARD;
+                // 플레이어 조작 불가
+                canPlayerControl = false;
+            }
+            else
+            {
+                // 비어 있음
+
+                //--------------------------------
+                // 2칸 아래쪽 검사
+                // ★
+                // ■
+                //   ？
+                //--------------------------------
+
+                // 맵 바깥으로 나가면 안됨
+                if (iY - 2 < 0)
+                {
+                    // 더이상 갈 수 없음
+                    Debug.Log("맵의 끝");
+                    return;
+                }
+
+                if (m_arrMapData[iY - 2, iZ + 1, iX].meshData == en_MeshType.BLOCK)
+                {
+                    // 블록
+
+                    //--------------------------------
+                    // 이동
+                    // ★
+                    // ■↘
+                    //   ■
+                    //--------------------------------
+
+                    // 플레이어 좌표 이동
+                    m_playerAction.MoveForwardClimbDown();
+                    // 플레이어 방향
+                    m_playerDirection = en_Direction.FORWARD;
+                    // 플레이어 조작 불가
+                    canPlayerControl = false;
+                }
+                else
+                {
+                    // 비어 있음
+
+                    // 매달림
+
+                    // 플레이어 좌표 이동
+                    m_playerAction.MoveForwardClimbIdle();
+                    // 플레이어 방향
+                    m_playerDirection = en_Direction.BACK;
+                    // 등반 플래그 활성화
+                    isPlayerClimbing = true;
+                    // 플레이어 조작 불가
+                    canPlayerControl = false;
+                }
+            }
+        }
+    }
+
+
+    // 뒤로 이동
+    private void PlayerMoveBack()
+    {
+        // 플레이어가 뒤를 안보고 있음
+        if (m_playerDirection != en_Direction.BACK)
+        {
+            // 플레이어의 방향 뒤쪽으로 변경
+            m_playerAction.DirectionBack();
+            m_playerDirection = en_Direction.BACK;
+            // 플레이어 조작 불가
+            canPlayerControl = false;
+            return;
+        }
+
+        int iY = m_playerAction.m_iY;     // 플레이어 위치 Y
+        int iZ = m_playerAction.m_iZ;     // 플레이어 위치 Z
+        int iX = m_playerAction.m_iX;     // 플레이어 위치 X
+
+        // 맵 바깥으로 나가면 안됨
+        if (iZ - 1 < 0)
+        {
+            // 더이상 갈 수 없음
+            Debug.Log("맵의 끝");
+            return;
+        }
+
+        // 이동 지점이 비어있나
+        if (m_arrMapData[iY, iZ - 1, iX].meshData == en_MeshType.BLOCK)
+        {
+            // 블록
+
+            //--------------------------------
+            // 위쪽 검사
+            //   ？
+            // ★■
+            //--------------------------------
+
+            // 맵 바깥으로 나가면 안됨
+            if (iY + 1 >= m_mapSizeY)
+            {
+                // 더이상 갈 수 없음
+                Debug.Log("맵의 끝");
+                return;
+            }
+
+            if (m_arrMapData[iY + 1, iZ - 1, iX].meshData == en_MeshType.BLOCK)
+            {
+                // 블록
+
+                // 못올라감
+                //--------------------------------
+                // 아이템을 통해 올라갈 수 있도록...
+                //--------------------------------
+            }
+            else
+            {
+                // 비어 있음
+
+                //--------------------------------
+                // 플레이어 위쪽 검사
+                // ？
+                // ★■
+                //--------------------------------
+
+                if (m_arrMapData[iY + 1, iZ, iX].meshData == en_MeshType.EMPTY)
+                {
+                    // 비어 있음
+
+                    //--------------------------------
+                    // 점프
+                    // ↗
+                    // ★■
+                    // ■
+                    //--------------------------------
+
+                    // 플레이어 좌표 이동
+                    m_playerAction.MoveBackClimbUp();
+                    // 플레이어 방향
+                    m_playerDirection = en_Direction.BACK;
+                    // 플레이어 조작 불가
+                    canPlayerControl = false;
+                }
+            }
+        }
+        else
+        {
+            // 비어 있음
+
+            //--------------------------------
+            // 아래쪽 검사
+            // ★
+            // ■？
+            //--------------------------------
+
+            if (m_arrMapData[iY - 1, iZ - 1, iX].meshData == en_MeshType.BLOCK)
+            {
+                // 블록
+
+                //--------------------------------
+                // 이동
+                // ★→
+                // ■■
+                //--------------------------------
+
+                // 플레이어 좌표 이동
+                m_playerAction.MoveBack();
+                // 플레이어 방향
+                m_playerDirection = en_Direction.BACK;
+                // 플레이어 조작 불가
+                canPlayerControl = false;
+            }
+            else
+            {
+                // 비어 있음
+
+                //--------------------------------
+                // 2칸 아래쪽 검사
+                // ★
+                // ■
+                //   ？
+                //--------------------------------
+
+                // 맵 바깥으로 나가면 안됨
+                if (iY - 2 < 0)
+                {
+                    // 더이상 갈 수 없음
+                    Debug.Log("맵의 끝");
+                    return;
+                }
+
+                if (m_arrMapData[iY - 2, iZ - 1, iX].meshData == en_MeshType.BLOCK)
+                {
+                    // 블록
+
+                    //--------------------------------
+                    // 이동
+                    // ★
+                    // ■↘
+                    //   ■
+                    //--------------------------------
+
+                    // 플레이어 좌표 이동
+                    m_playerAction.MoveBackClimbDown();
+                    // 플레이어 방향
+                    m_playerDirection = en_Direction.BACK;
+                    // 플레이어 조작 불가
+                    canPlayerControl = false;
+                }
+                else
+                {
+                    // 비어 있음
+
+                    // 매달림
+
+                    // 플레이어 좌표 이동
+                    m_playerAction.MoveBackClimbIdle();
+                    // 플레이어 방향
+                    m_playerDirection = en_Direction.FORWARD;
+                    // 등반 플래그 활성화
+                    isPlayerClimbing = true;
+                    // 플레이어 조작 불가
+                    canPlayerControl = false;
+                }
+            }
+        }
+    }
+
+
+    // 왼쪽 이동
+    private void PlayerMoveLeft()
+    {
+        // 플레이어가 왼쪽을 안보고 있음
+        if (m_playerDirection != en_Direction.LEFT)
+        {
+            // 플레이어의 방향 왼쪽으로 변경
+            m_playerAction.DirectionLeft();
+            m_playerDirection = en_Direction.LEFT;
+            // 플레이어 조작 불가
+            canPlayerControl = false;
+            return;
+        }
+
+        int iY = m_playerAction.m_iY;     // 플레이어 위치 Y
+        int iZ = m_playerAction.m_iZ;     // 플레이어 위치 Z
+        int iX = m_playerAction.m_iX;     // 플레이어 위치 X
+
+        // 맵 바깥으로 나가면 안됨
+        if (iX - 1 < 0)
+        {
+            // 더이상 갈 수 없음
+            Debug.Log("맵의 끝");
+            return;
+        }
+
+        // 이동 지점이 비어있나
+        if (m_arrMapData[iY, iZ, iX - 1].meshData == en_MeshType.BLOCK)
+        {
+            // 블록
+
+            //--------------------------------
+            // 위쪽 검사
+            //   ？
+            // ★■
+            //--------------------------------
+
+            // 맵 바깥으로 나가면 안됨
+            if (iY + 1 >= m_mapSizeY)
+            {
+                // 더이상 갈 수 없음
+                Debug.Log("맵의 끝");
+                return;
+            }
+
+            if (m_arrMapData[iY + 1, iZ, iX - 1].meshData == en_MeshType.BLOCK)
+            {
+                // 블록
+
+                // 못올라감
+                //--------------------------------
+                // 아이템을 통해 올라갈 수 있도록...
+                //--------------------------------
+            }
+            else
+            {
+                // 비어 있음
+
+                //--------------------------------
+                // 플레이어 위쪽 검사
+                // ？
+                // ★■
+                //--------------------------------
+
+                if (m_arrMapData[iY + 1, iZ, iX].meshData == en_MeshType.EMPTY)
+                {
+                    // 비어 있음
+
+                    //--------------------------------
+                    // 점프
+                    // ↗
+                    // ★■
+                    // ■
+                    //--------------------------------
+
+                    // 플레이어 좌표 이동
+                    m_playerAction.MoveLeftClimbUp();
+                    // 플레이어 방향
+                    m_playerDirection = en_Direction.LEFT;
+                    // 플레이어 조작 불가
+                    canPlayerControl = false;
+                }
+            }
+        }
+        else
+        {
+            // 비어 있음
+
+            //--------------------------------
+            // 아래쪽 검사
+            // ★
+            // ■？
+            //--------------------------------
+
+            if (m_arrMapData[iY - 1, iZ, iX - 1].meshData == en_MeshType.BLOCK)
+            {
+                // 블록
+
+                //--------------------------------
+                // 이동
+                // ★→
+                // ■■
+                //--------------------------------
+
+                // 플레이어 좌표 이동
+                m_playerAction.MoveLeft();
+                // 플레이어 방향
+                m_playerDirection = en_Direction.LEFT;
+                // 플레이어 조작 불가
+                canPlayerControl = false;
+            }
+            else
+            {
+                // 비어 있음
+
+                //--------------------------------
+                // 2칸 아래쪽 검사
+                // ★
+                // ■
+                //   ？
+                //--------------------------------
+
+                // 맵 바깥으로 나가면 안됨
+                if (iY - 2 < 0)
+                {
+                    // 더이상 갈 수 없음
+                    Debug.Log("맵의 끝");
+                    return;
+                }
+
+                if (m_arrMapData[iY - 2, iZ, iX - 1].meshData == en_MeshType.BLOCK)
+                {
+                    // 블록
+
+                    //--------------------------------
+                    // 이동
+                    // ★
+                    // ■↘
+                    //   ■
+                    //--------------------------------
+
+                    // 플레이어 좌표 이동
+                    m_playerAction.MoveLeftClimbDown();
+                    // 플레이어 방향
+                    m_playerDirection = en_Direction.LEFT;
+                    // 플레이어 조작 불가
+                    canPlayerControl = false;
+                }
+                else
+                {
+                    // 비어 있음
+
+                    // 매달림
+
+                    // 플레이어 좌표 이동
+                    m_playerAction.MoveLeftClimbIdle();
+                    // 플레이어 방향
+                    m_playerDirection = en_Direction.RIGHT;
+                    // 등반 플래그 활성화
+                    isPlayerClimbing = true;
+                    // 플레이어 조작 불가
+                    canPlayerControl = false;
+                }
+            }
+        }
+    }
+
+
+    // 오른쪽 이동
+    private void PlayerMoveRight()
+    {
+        // 플레이어가 오른쪽을 안보고 있음
+        if (m_playerDirection != en_Direction.RIGHT)
+        {
+            // 플레이어의 방향 오른쪽으로 변경
+            m_playerAction.DirectionRight();
+            m_playerDirection = en_Direction.RIGHT;
+            // 플레이어 조작 불가
+            canPlayerControl = false;
+            return;
+        }
+
+        int iY = m_playerAction.m_iY;     // 플레이어 위치 Y
+        int iZ = m_playerAction.m_iZ;     // 플레이어 위치 Z
+        int iX = m_playerAction.m_iX;     // 플레이어 위치 X
+
+
+        // 맵 바깥으로 나가면 안됨
+        if (iX + 1 >= m_mapSizeX)
+        {
+            // 더이상 갈 수 없음
+            Debug.Log("맵의 끝");
+            return;
+        }
+
+        // 이동 지점이 비어있나
+        if (m_arrMapData[iY, iZ, iX + 1].meshData == en_MeshType.BLOCK)
+        {
+            // 블록
+
+            //--------------------------------
+            // 위쪽 검사
+            //   ？
+            // ★■
+            //--------------------------------
+
+            // 맵 바깥으로 나가면 안됨
+            if (iY + 1 >= m_mapSizeY)
+            {
+                // 더이상 갈 수 없음
+                Debug.Log("맵의 끝");
+                return;
+            }
+
+            if (m_arrMapData[iY + 1, iZ, iX + 1].meshData == en_MeshType.BLOCK)
+            {
+                // 블록
+
+                // 못올라감
+                //--------------------------------
+                // 아이템을 통해 올라갈 수 있도록...
+                //--------------------------------
+            }
+            else
+            {
+                // 비어 있음
+
+                //--------------------------------
+                // 플레이어 위쪽 검사
+                // ？
+                // ★■
+                //--------------------------------
+
+                if (m_arrMapData[iY + 1, iZ, iX].meshData == en_MeshType.EMPTY)
+                {
+                    // 비어 있음
+
+                    //--------------------------------
+                    // 점프
+                    // ↗
+                    // ★■
+                    // ■
+                    //--------------------------------
+
+                    // 플레이어 좌표 이동
+                    m_playerAction.MoveRightClimbUp();
+                    // 플레이어 방향
+                    m_playerDirection = en_Direction.RIGHT;
+                    // 플레이어 조작 불가
+                    canPlayerControl = false;
+                }
+            }
+        }
+        else
+        {
+            // 비어 있음
+
+            //--------------------------------
+            // 아래쪽 검사
+            // ★
+            // ■？
+            //--------------------------------
+
+            if (m_arrMapData[iY - 1, iZ, iX + 1].meshData == en_MeshType.BLOCK)
+            {
+                // 블록
+
+                //--------------------------------
+                // 이동
+                // ★→
+                // ■■
+                //--------------------------------
+
+                // 플레이어 좌표 이동
+                m_playerAction.MoveRight();
+                // 플레이어 방향
+                m_playerDirection = en_Direction.RIGHT;
+                // 플레이어 조작 불가
+                canPlayerControl = false;
+            }
+            else
+            {
+                // 비어 있음
+
+                //--------------------------------
+                // 2칸 아래쪽 검사
+                // ★
+                // ■
+                //   ？
+                //--------------------------------
+
+                // 맵 바깥으로 나가면 안됨
+                if (iY - 2 < 0)
+                {
+                    // 더이상 갈 수 없음
+                    Debug.Log("맵의 끝");
+                    return;
+                }
+
+                if (m_arrMapData[iY - 2, iZ, iX + 1].meshData == en_MeshType.BLOCK)
+                {
+                    // 블록
+
+                    //--------------------------------
+                    // 이동
+                    // ★
+                    // ■↘
+                    //   ■
+                    //--------------------------------
+
+                    // 플레이어 좌표 이동
+                    m_playerAction.MoveRightClimbDown();
+                    // 플레이어 방향
+                    m_playerDirection = en_Direction.RIGHT;
+                    // 플레이어 조작 불가
+                    canPlayerControl = false;
+                }
+                else
+                {
+                    // 비어 있음
+
+                    // 매달림
+
+                    // 플레이어 좌표 이동
+                    m_playerAction.MoveRightClimbIdle();
+                    // 플레이어 방향
+                    m_playerDirection = en_Direction.LEFT;
+                    // 등반 플래그 활성화
+                    isPlayerClimbing = true;
+                    // 플레이어 조작 불가
+                    canPlayerControl = false;
+                }
+            }
+        }
+    }
+
+
+    // 붙잡기 앞
+    private void PlayerGripForward()
+    {
+        int iY = m_playerAction.m_iY;     // 플레이어 위치 Y
+        int iZ = m_playerAction.m_iZ;     // 플레이어 위치 Z
+        int iX = m_playerAction.m_iX;     // 플레이어 위치 X
+
+        switch (m_playerDirection)
+        {
+            case en_Direction.FORWARD:
+                // 앞쪽
+
+                // 맵 바깥으로 나가면 안됨
+                if (iZ + 1 >= m_mapSizeZ)
+                {
+                    // 더이상 갈 수 없음
+                    Debug.Log("맵의 끝");
+                    return;
+                }
+
+                // 앞쪽에 큐브가 있나
+                if (m_arrMapData[iY, iZ + 1, iX].objectLayer == en_GameObjectLayer.CUBE)
+                {
+                    // 큐브 밀기
+                    PlayerPushForward();
+                }
+                else
+                {
+                    // 앞으로 이동
+                    PlayerMoveForward();
+                }
+                return;
+            case en_Direction.BACK:
+                // 뒤쪽
+
+                // 맵 바깥으로 나가면 안됨
+                if (iZ - 1 < 0)
+                {
+                    // 더이상 갈 수 없음
+                    Debug.Log("맵의 끝");
+                    return;
+                }
+
+                // 앞쪽에 큐브가 있나
+                if (m_arrMapData[iY, iZ - 1, iX].objectLayer == en_GameObjectLayer.CUBE)
+                {
+                    // 큐브 당기기
+                    PlayerPullForward();
+                }
+                else
+                {
+                    // 앞으로 이동
+                    PlayerMoveForward();
+                }
+                return;
+            case en_Direction.LEFT:
+                // 왼쪽
+
+                // 맵 바깥으로 나가면 안됨
+                if (iX - 1 < 0)
+                {
+                    // 더이상 갈 수 없음
+                    Debug.Log("맵의 끝");
+                    return;
+                }
+
+                // 앞쪽에 큐브가 있나
+                if (m_arrMapData[iY, iZ, iX - 1].objectLayer == en_GameObjectLayer.CUBE)
+                {
+                    // 조작 불가
+                    return;
+                }
+                else
+                {
+                    // 앞으로 이동
+                    PlayerMoveForward();
+                }
+                return;
+            case en_Direction.RIGHT:
+                // 오른쪽
+
+                // 맵 바깥으로 나가면 안됨
+                if (iX + 1 >= m_mapSizeX)
+                {
+                    // 더이상 갈 수 없음
+                    Debug.Log("맵의 끝");
+                    return;
+                }
+
+                // 앞쪽에 큐브가 있나
+                if (m_arrMapData[iY, iZ, iX + 1].objectLayer == en_GameObjectLayer.CUBE)
+                {
+                    // 조작 불가
+                    return;
+                }
+                else
+                {
+                    // 앞으로 이동
+                    PlayerMoveForward();
+                }
+                return;
+        }
+    }
+
+
+    // 붙잡기 뒤
+    private void PlayerGripBack()
+    {
+        int iY = m_playerAction.m_iY;     // 플레이어 위치 Y
+        int iZ = m_playerAction.m_iZ;     // 플레이어 위치 Z
+        int iX = m_playerAction.m_iX;     // 플레이어 위치 X
+
+        switch (m_playerDirection)
+        {
+            case en_Direction.FORWARD:
+                // 앞쪽
+
+                // 맵 바깥으로 나가면 안됨
+                if (iZ + 1 >= m_mapSizeZ)
+                {
+                    // 더이상 갈 수 없음
+                    Debug.Log("맵의 끝");
+                    return;
+                }
+
+                // 앞쪽에 큐브가 있나
+                if (m_arrMapData[iY, iZ + 1, iX].objectLayer == en_GameObjectLayer.CUBE)
+                {
+                    // 큐브 당기기
+                    PlayerPullBack();
+                }
+                else
+                {
+                    // 뒤쪽으로 이동
+                    PlayerMoveBack();
+                }
+                return;
+            case en_Direction.BACK:
+                // 뒤쪽
+
+                // 맵 바깥으로 나가면 안됨
+                if (iZ - 1 < 0)
+                {
+                    // 더이상 갈 수 없음
+                    Debug.Log("맵의 끝");
+                    return;
+                }
+
+                // 앞쪽에 큐브가 있나
+                if (m_arrMapData[iY, iZ - 1, iX].objectLayer == en_GameObjectLayer.CUBE)
+                {
+                    // 큐브 밀기
+                    PlayerPushBack();
+                }
+                else
+                {
+                    // 뒤쪽으로 이동
+                    PlayerMoveBack();
+                }
+                return;
+            case en_Direction.LEFT:
+                // 왼쪽
+
+                // 맵 바깥으로 나가면 안됨
+                if (iX - 1 < 0)
+                {
+                    // 더이상 갈 수 없음
+                    Debug.Log("맵의 끝");
+                    return;
+                }
+
+                // 앞쪽에 큐브가 있나
+                if (m_arrMapData[iY, iZ, iX - 1].objectLayer == en_GameObjectLayer.CUBE)
+                {
+                    // 조작 불가
+                    return;
+                }
+                else
+                {
+                    // 뒤쪽으로 이동
+                    PlayerMoveBack();
+                }
+                return;
+            case en_Direction.RIGHT:
+                // 오른쪽
+
+                // 맵 바깥으로 나가면 안됨
+                if (iX + 1 >= m_mapSizeX)
+                {
+                    // 더이상 갈 수 없음
+                    Debug.Log("맵의 끝");
+                    return;
+                }
+
+                // 앞쪽에 큐브가 있나
+                if (m_arrMapData[iY, iZ, iX + 1].objectLayer == en_GameObjectLayer.CUBE)
+                {
+                    // 조작 불가
+                    return;
+                }
+                else
+                {
+                    // 뒤쪽으로 이동
+                    PlayerMoveBack();
+                }
+                return;
+        }
+    }
+
+
+    // 붙잡기 왼쪽
+    private void PlayerGripLeft()
+    {
+        int iY = m_playerAction.m_iY;     // 플레이어 위치 Y
+        int iZ = m_playerAction.m_iZ;     // 플레이어 위치 Z
+        int iX = m_playerAction.m_iX;     // 플레이어 위치 X
+
+        switch (m_playerDirection)
+        {
+            case en_Direction.FORWARD:
+                // 앞쪽
+
+                // 맵 바깥으로 나가면 안됨
+                if (iZ + 1 >= m_mapSizeZ)
+                {
+                    // 더이상 갈 수 없음
+                    Debug.Log("맵의 끝");
+                    return;
+                }
+
+                // 앞쪽에 큐브가 있나
+                if (m_arrMapData[iY, iZ + 1, iX].objectLayer == en_GameObjectLayer.CUBE)
+                {
+                    // 조작 불가
+                    return;
+                }
+                else
+                {
+                    // 왼쪽으로 이동
+                    PlayerMoveLeft();
+                }
+                return;
+            case en_Direction.BACK:
+                // 뒤쪽
+
+                // 맵 바깥으로 나가면 안됨
+                if (iZ - 1 < 0)
+                {
+                    // 더이상 갈 수 없음
+                    Debug.Log("맵의 끝");
+                    return;
+                }
+
+                // 앞쪽에 큐브가 있나
+                if (m_arrMapData[iY, iZ - 1, iX].objectLayer == en_GameObjectLayer.CUBE)
+                {
+                    // 조작 불가
+                    return;
+                }
+                else
+                {
+                    // 왼쪽으로 이동
+                    PlayerMoveLeft();
+                }
+                return;
+            case en_Direction.LEFT:
+                // 왼쪽
+
+                // 맵 바깥으로 나가면 안됨
+                if (iX - 1 < 0)
+                {
+                    // 더이상 갈 수 없음
+                    Debug.Log("맵의 끝");
+                    return;
+                }
+
+                // 앞쪽에 큐브가 있나
+                if (m_arrMapData[iY, iZ, iX - 1].objectLayer == en_GameObjectLayer.CUBE)
+                {
+                    // 큐브 밀기
+                    PlayerPushLeft();
+                }
+                else
+                {
+                    // 왼쪽으로 이동
+                    PlayerMoveLeft();
+                }
+                return;
+            case en_Direction.RIGHT:
+                // 오른쪽
+
+                // 맵 바깥으로 나가면 안됨
+                if (iX + 1 >= m_mapSizeX)
+                {
+                    // 더이상 갈 수 없음
+                    Debug.Log("맵의 끝");
+                    return;
+                }
+
+                // 앞쪽에 큐브가 있나
+                if (m_arrMapData[iY, iZ, iX + 1].objectLayer == en_GameObjectLayer.CUBE)
+                {
+                    // 큐브 당기기
+                    PlayerPullLeft();
+                }
+                else
+                {
+                    // 왼쪽으로 이동
+                    PlayerMoveLeft();
+                }
+                return;
+        }
+    }
+
+
+    // 붙잡기 오른쪽
+    private void PlayerGripRight()
+    {
+        int iY = m_playerAction.m_iY;     // 플레이어 위치 Y
+        int iZ = m_playerAction.m_iZ;     // 플레이어 위치 Z
+        int iX = m_playerAction.m_iX;     // 플레이어 위치 X
+
+        switch (m_playerDirection)
+        {
+            case en_Direction.FORWARD:
+                // 앞쪽
+
+                // 맵 바깥으로 나가면 안됨
+                if (iZ + 1 >= m_mapSizeZ)
+                {
+                    // 더이상 갈 수 없음
+                    Debug.Log("맵의 끝");
+                    return;
+                }
+
+                // 앞쪽에 큐브가 있나
+                if (m_arrMapData[iY, iZ + 1, iX].objectLayer == en_GameObjectLayer.CUBE)
+                {
+                    // 조작 불가
+                    return;
+                }
+                else
+                {
+                    // 오른쪽으로 이동
+                    PlayerMoveRight();
+                }
+                return;
+            case en_Direction.BACK:
+                // 뒤쪽
+
+                // 맵 바깥으로 나가면 안됨
+                if (iZ - 1 < 0)
+                {
+                    // 더이상 갈 수 없음
+                    Debug.Log("맵의 끝");
+                    return;
+                }
+
+                // 앞쪽에 큐브가 있나
+                if (m_arrMapData[iY, iZ - 1, iX].objectLayer == en_GameObjectLayer.CUBE)
+                {
+                    // 조작 불가
+                    return;
+                }
+                else
+                {
+                    // 오른쪽으로 이동
+                    PlayerMoveRight();
+                }
+                return;
+            case en_Direction.LEFT:
+                // 왼쪽
+
+                // 맵 바깥으로 나가면 안됨
+                if (iX - 1 < 0)
+                {
+                    // 더이상 갈 수 없음
+                    Debug.Log("맵의 끝");
+                    return;
+                }
+
+                // 앞쪽에 큐브가 있나
+                if (m_arrMapData[iY, iZ, iX - 1].objectLayer == en_GameObjectLayer.CUBE)
+                {
+                    // 큐브 당기기
+                    PlayerPullRight();
+                }
+                else
+                {
+                    // 오른쪽으로 이동
+                    PlayerMoveRight();
+                }
+                return;
+            case en_Direction.RIGHT:
+                // 오른쪽
+
+                // 맵 바깥으로 나가면 안됨
+                if (iX + 1 >= m_mapSizeX)
+                {
+                    // 더이상 갈 수 없음
+                    Debug.Log("맵의 끝");
+                    return;
+                }
+
+                // 앞쪽에 큐브가 있나
+                if (m_arrMapData[iY, iZ, iX + 1].objectLayer == en_GameObjectLayer.CUBE)
+                {
+                    // 큐브 밀기
+                    PlayerPushRight();
+                }
+                else
+                {
+                    // 오른쪽으로 이동
+                    PlayerMoveRight();
+                }
+                return;
+        }
+    }
+
+
+    // 플레이어 밀기 앞쪽
+    private void PlayerPushForward()
+    {
+        int iY = m_playerAction.m_iY;     // 플레이어 위치 Y
+        int iZ = m_playerAction.m_iZ;     // 플레이어 위치 Z
+        int iX = m_playerAction.m_iX;     // 플레이어 위치 X
+
+        if (CubeMoveForward(iY, iZ + 1, iX))
+        {
+            // 밀지 못함
+            return;
+        }
+    }
+
+    // 플레이어 밀기 뒤쪽
+    private void PlayerPushBack()
+    {
+        int iY = m_playerAction.m_iY;     // 플레이어 위치 Y
+        int iZ = m_playerAction.m_iZ;     // 플레이어 위치 Z
+        int iX = m_playerAction.m_iX;     // 플레이어 위치 X
+
+        if (CubeMoveBack(iY, iZ - 1, iX))
+        {
+            // 밀지 못함
+            return;
+        }
+    }
+
+    // 플레이어 밀기 왼쪽
+    private void PlayerPushLeft()
+    {
+        int iY = m_playerAction.m_iY;     // 플레이어 위치 Y
+        int iZ = m_playerAction.m_iZ;     // 플레이어 위치 Z
+        int iX = m_playerAction.m_iX;     // 플레이어 위치 X
+
+        if (CubeMoveLeft(iY, iZ, iX - 1))
+        {
+            // 밀지 못함
+            return;
+        }
+    }
+
+    // 플레이어 밀기 오른쪽
+    private void PlayerPushRight()
+    {
+        int iY = m_playerAction.m_iY;     // 플레이어 위치 Y
+        int iZ = m_playerAction.m_iZ;     // 플레이어 위치 Z
+        int iX = m_playerAction.m_iX;     // 플레이어 위치 X
+
+        if (CubeMoveRight(iY, iZ, iX + 1))
+        {
+            // 밀지 못함
+            return;
+        }
+    }
+
+    // 플레이어 당기기 앞쪽
+    private void PlayerPullForward()
+    {
+        int iY = m_playerAction.m_iY;     // 플레이어 위치 Y
+        int iZ = m_playerAction.m_iZ;     // 플레이어 위치 Z
+        int iX = m_playerAction.m_iX;     // 플레이어 위치 X
+
+        if (CheckMapIndexOverflow(iY, iZ + 1, iX))
+        {
+            Debug.Log("PlayerPullForward() index overflow");
+            Debug.Log("Y : " + iY + ", Z : " + (iZ + 1) + ", X : " + iX);
+            return;
+        }
+
+        // 당기는 쪽이 블록인가
+        if (m_arrMapData[iY, iZ + 1, iX].meshData == en_MeshType.BLOCK)
+        {
+            // 블록
+            // 이동할 수 없음
+            Debug.Log("PlayerPullForward() move fail");
+            Debug.Log("Y : " + iY + ", Z : " + (iZ + 1) + ", X : " + iX + " object \"BLOCK\"");
+            return;
+        }
+
+        if (CheckMapIndexOverflow(iY - 1, iZ + 1, iX))
+        {
+            Debug.Log("PlayerPullForward() index overflow");
+            Debug.Log("Y : " + (iY - 1) + ", Z : " + (iZ + 1) + ", X : " + iX);
+            return;
+        }
+
+        // 당기는 쪽 바닥이 블록인가
+        if (m_arrMapData[iY - 1, iZ + 1, iX].meshData == en_MeshType.BLOCK)
+        {
+            // 화면상의 플레이어 이동
+            m_playerAction.PullForward();
+            // 화면상의 큐브 이동
+            m_arrMapData[iY, iZ - 1, iX].actionScript.MoveForward();
+            // 플레이어 조작 불가
+            canPlayerControl = false;
+            return;
+        }
+
+        // 화면상의 플레이어 이동
+        m_playerAction.PullForwardDown();
+        // 화면상의 큐브 이동
+        m_arrMapData[iY, iZ - 1, iX].actionScript.MoveForward();
+        // 등반 플래그 활성화
+        isPlayerClimbing = true;
+        // 플레이어 조작 불가
+        canPlayerControl = false;
+    }
+
+    // 플레이어 당기기 뒤쪽
+    private void PlayerPullBack()
+    {
+        int iY = m_playerAction.m_iY;     // 플레이어 위치 Y
+        int iZ = m_playerAction.m_iZ;     // 플레이어 위치 Z
+        int iX = m_playerAction.m_iX;     // 플레이어 위치 X
+
+        if (CheckMapIndexOverflow(iY, iZ - 1, iX))
+        {
+            Debug.Log("PlayerPullBack() index overflow");
+            Debug.Log("Y : " + iY + ", Z : " + (iZ - 1) + ", X : " + iX);
+            return;
+        }
+
+        // 당기는 쪽이 블록인가
+        if (m_arrMapData[iY, iZ - 1, iX].meshData == en_MeshType.BLOCK)
+        {
+            // 블록
+            // 이동할 수 없음
+            Debug.Log(iY + ", " + (iZ - 1) + ", " + iX + " 좌표로 이동할 수 없음");
+            return;
+        }
+
+        if (CheckMapIndexOverflow(iY - 1, iZ - 1, iX))
+        {
+            Debug.Log("PlayerPullForward() index overflow");
+            Debug.Log("Y : " + (iY - 1) + ", Z : " + (iZ - 1) + ", X : " + iX);
+            return;
+        }
+
+        // 당기는 쪽 바닥이 블록인가
+        if (m_arrMapData[iY - 1, iZ - 1, iX].meshData == en_MeshType.BLOCK)
+        {
+            // 화면상의 플레이어 이동
+            m_playerAction.PullBack();
+            // 화면상의 큐브 이동
+            m_arrMapData[iY, iZ + 1, iX].actionScript.MoveBack();
+            // 플레이어 조작 불가
+            canPlayerControl = false;
+            return;
+        }
+
+        // 화면상의 플레이어 이동
+        m_playerAction.PullBackDown();
+        // 화면상의 큐브 이동
+        m_arrMapData[iY, iZ + 1, iX].actionScript.MoveBack();
+        // 등반 플래그 활성화
+        isPlayerClimbing = true;
+        // 플레이어 조작 불가
+        canPlayerControl = false;
+    }
+
+    // 플레이어 당기기 왼쪽
+    private void PlayerPullLeft()
+    {
+        int iY = m_playerAction.m_iY;     // 플레이어 위치 Y
+        int iZ = m_playerAction.m_iZ;     // 플레이어 위치 Z
+        int iX = m_playerAction.m_iX;     // 플레이어 위치 X
+
+        if (CheckMapIndexOverflow(iY, iZ, iX - 1))
+        {
+            Debug.Log("PlayerPullLeft() index overflow");
+            Debug.Log("Y : " + iY + ", Z : " + iZ + ", X : " + (iX - 1));
+            return;
+        }
+
+        // 당기는 쪽이 블록인가
+        if (m_arrMapData[iY, iZ, iX - 1].meshData == en_MeshType.BLOCK)
+        {
+            // 블록
+            // 이동할 수 없음
+            Debug.Log(iY + ", " + iZ + ", " + (iX - 1) + " 좌표로 이동할 수 없음");
+            return;
+        }
+
+        if (CheckMapIndexOverflow(iY - 1, iZ, iX - 1))
+        {
+            Debug.Log("PlayerPullLeft() index overflow");
+            Debug.Log("Y : " + (iY - 1) + ", Z : " + iZ + ", X : " + (iX - 1));
+            return;
+        }
+
+        // 당기는 쪽 바닥이 블록인가
+        if (m_arrMapData[iY - 1, iZ, iX - 1].meshData == en_MeshType.BLOCK)
+        {
+            // 화면상의 플레이어 이동
+            m_playerAction.PullLeft();
+            // 화면상의 큐브 이동
+            m_arrMapData[iY, iZ, iX + 1].actionScript.MoveLeft();
+            // 플레이어 조작 불가
+            canPlayerControl = false;
+            return;
+        }
+
+        // 화면상의 플레이어 이동
+        m_playerAction.PullLeftDown();
+        // 화면상의 큐브 이동
+        m_arrMapData[iY, iZ, iX + 1].actionScript.MoveLeft();
+        // 등반 플래그 활성화
+        isPlayerClimbing = true;
+        // 플레이어 조작 불가
+        canPlayerControl = false;
+    }
+
+    // 플레이어 당기기 오른쪽
+    private void PlayerPullRight()
+    {
+        int iY = m_playerAction.m_iY;     // 플레이어 위치 Y
+        int iZ = m_playerAction.m_iZ;     // 플레이어 위치 Z
+        int iX = m_playerAction.m_iX;     // 플레이어 위치 X
+
+        if (CheckMapIndexOverflow(iY, iZ, iX + 1))
+        {
+            Debug.Log("PlayerPullRight() index overflow");
+            Debug.Log("Y : " + iY + ", Z : " + iZ + ", X : " + (iX + 1));
+            return;
+        }
+
+        // 당기는 쪽이 블록인가
+        if (m_arrMapData[iY, iZ, iX + 1].meshData == en_MeshType.BLOCK)
+        {
+            // 블록
+            // 이동할 수 없음
+            Debug.Log(iY + ", " + iZ + ", " + (iX + 1) + " 좌표로 이동할 수 없음");
+            return;
+        }
+
+        if (CheckMapIndexOverflow(iY - 1, iZ, iX + 1))
+        {
+            Debug.Log("PlayerPullRight() index overflow");
+            Debug.Log("Y : " + (iY - 1) + ", Z : " + iZ + ", X : " + (iX + 1));
+            return;
+        }
+
+        // 당기는 쪽 바닥이 블록인가
+        if (m_arrMapData[iY - 1, iZ, iX + 1].meshData == en_MeshType.BLOCK)
+        {
+            // 화면상의 플레이어 이동
+            m_playerAction.PullRight();
+            // 화면상의 큐브 이동
+            m_arrMapData[iY, iZ, iX - 1].actionScript.MoveRight();
+            // 플레이어 조작 불가
+            canPlayerControl = false;
+            return;
+        }
+
+        // 화면상의 플레이어 이동
+        m_playerAction.PullRightDown();
+        // 화면상의 큐브 이동
+        m_arrMapData[iY, iZ, iX - 1].actionScript.MoveRight();
+        // 등반 플래그 활성화
+        isPlayerClimbing = true;
+        // 플레이어 조작 불가
+        canPlayerControl = false;
+    }
+
+
+    // 플레이어 등반 오르기
+    private void PlayerClimbingUp()
+    {
+        int iY = m_playerAction.m_iY;     // 플레이어 위치 Y
+        int iZ = m_playerAction.m_iZ;     // 플레이어 위치 Z
+        int iX = m_playerAction.m_iX;     // 플레이어 위치 X
+
+        switch (m_playerDirection)
+        {
+            case en_Direction.FORWARD:  // 앞쪽
+
+                // 맵 바깥으로 나가면 안됨
+                if (iZ + 1 >= m_mapSizeZ)
+                {
+                    // 더이상 갈 수 없음
+                    Debug.Log("맵의 끝");
+                    return;
+                }
+
+                if (iY + 1 >= m_mapSizeY)
+                {
+                    // 더이상 갈 수 없음
+                    Debug.Log("맵의 끝");
+                    return;
+                }
+
+                //--------------------------------
+                // 위쪽 검사
+                //   ？
+                // ★■
+                //--------------------------------
+                if (m_arrMapData[iY + 1, iZ + 1, iX].objectLayer == en_GameObjectLayer.CUBE)
+                {
+                    // 이동할 수 없음
+                    Debug.Log((iY + 1) + ", " + (iZ + 1) + ", " + iX + " 좌표로 이동할 수 없음");
+                    return;
+                }
+
+                //--------------------------------
+                // 플레이어 위쪽 검사
+                // ？
+                // ★■
+                //--------------------------------
+                if (m_arrMapData[iY + 1, iZ, iX].objectLayer == en_GameObjectLayer.CUBE)
+                {
+                    // 이동할 수 없음
+                    Debug.Log((iY + 1) + ", " + iZ + ", " + iX + " 좌표로 이동할 수 없음");
+                    return;
+                }
+
+                // 플레이어 좌표 이동
+                m_playerAction.ClimbUpForward();
+                // 등반 플래그 비활성화
+                isPlayerClimbing = false;
+                // 플레이어 조작 불가
+                canPlayerControl = false;
+                return;
+            case en_Direction.BACK:     // 뒤쪽
+
+                // 맵 바깥으로 나가면 안됨
+                if (iZ - 1 < 0)
+                {
+                    // 더이상 갈 수 없음
+                    Debug.Log("맵의 끝");
+                    return;
+                }
+
+                if (iY + 1 >= m_mapSizeY)
+                {
+                    // 더이상 갈 수 없음
+                    Debug.Log("맵의 끝");
+                    return;
+                }
+
+                //--------------------------------
+                // 위쪽 검사
+                //   ？
+                // ★■
+                //--------------------------------
+                if (m_arrMapData[iY + 1, iZ - 1, iX].objectLayer == en_GameObjectLayer.CUBE)
+                {
+                    // 이동할 수 없음
+                    Debug.Log((iY + 1) + ", " + (iZ - 1) + ", " + iX + " 좌표로 이동할 수 없음");
+                    return;
+                }
+
+                //--------------------------------
+                // 플레이어 위쪽 검사
+                // ？
+                // ★■
+                //--------------------------------
+                if (m_arrMapData[iY + 1, iZ, iX].objectLayer == en_GameObjectLayer.CUBE)
+                {
+                    // 이동할 수 없음
+                    Debug.Log((iY + 1) + ", " + iZ + ", " + iX + " 좌표로 이동할 수 없음");
+                    return;
+                }
+
+                // 플레이어 좌표 이동
+                m_playerAction.ClimbUpBack();
+                // 등반 플래그 비활성화
+                isPlayerClimbing = false;
+                // 플레이어 조작 불가
+                canPlayerControl = false;
+                return;
+            case en_Direction.LEFT:     // 왼쪽
+
+                // 맵 바깥으로 나가면 안됨
+                if (iX - 1 < 0)
+                {
+                    // 더이상 갈 수 없음
+                    Debug.Log("맵의 끝");
+                    return;
+                }
+
+                if (iY + 1 >= m_mapSizeY)
+                {
+                    // 더이상 갈 수 없음
+                    Debug.Log("맵의 끝");
+                    return;
+                }
+
+                //--------------------------------
+                // 위쪽 검사
+                //   ？
+                // ★■
+                //--------------------------------
+                if (m_arrMapData[iY + 1, iZ, iX - 1].objectLayer == en_GameObjectLayer.CUBE)
+                {
+                    // 이동할 수 없음
+                    Debug.Log((iY + 1) + ", " + iZ + ", " + (iX - 1) + " 좌표로 이동할 수 없음");
+                    return;
+                }
+
+                //--------------------------------
+                // 플레이어 위쪽 검사
+                // ？
+                // ★■
+                //--------------------------------
+                if (m_arrMapData[iY + 1, iZ, iX].objectLayer == en_GameObjectLayer.CUBE)
+                {
+                    // 이동할 수 없음
+                    Debug.Log((iY + 1) + ", " + iZ + ", " + iX + " 좌표로 이동할 수 없음");
+                    return;
+                }
+
+                // 플레이어 좌표 이동
+                m_playerAction.ClimbUpLeft();
+                // 등반 플래그 비활성화
+                isPlayerClimbing = false;
+                // 플레이어 조작 불가
+                canPlayerControl = false;
+                return;
+            case en_Direction.RIGHT:    // 오른쪽
+
+                // 맵 바깥으로 나가면 안됨
+                if (iX + 1 >= m_mapSizeX)
+                {
+                    // 더이상 갈 수 없음
+                    Debug.Log("맵의 끝");
+                    return;
+                }
+
+                if (iY + 1 >= m_mapSizeY)
+                {
+                    // 더이상 갈 수 없음
+                    Debug.Log("맵의 끝");
+                    return;
+                }
+
+                //--------------------------------
+                // 위쪽 검사
+                //   ？
+                // ★■
+                //--------------------------------
+                if (m_arrMapData[iY + 1, iZ, iX + 1].objectLayer == en_GameObjectLayer.CUBE)
+                {
+                    // 이동할 수 없음
+                    Debug.Log((iY + 1) + ", " + iZ + ", " + (iX + 1) + " 좌표로 이동할 수 없음");
+                    return;
+                }
+
+                //--------------------------------
+                // 플레이어 위쪽 검사
+                // ？
+                // ★■
+                //--------------------------------
+                if (m_arrMapData[iY + 1, iZ, iX].objectLayer == en_GameObjectLayer.CUBE)
+                {
+                    // 이동할 수 없음
+                    Debug.Log((iY + 1) + ", " + iZ + ", " + iX + " 좌표로 이동할 수 없음");
+                    return;
+                }
+
+                // 플레이어 좌표 이동
+                m_playerAction.ClimbUpRight();
+                // 등반 플래그 비활성화
+                isPlayerClimbing = false;
+                // 플레이어 조작 불가
+                canPlayerControl = false;
+                return;
+        }
+    }
+
+
+    // 플레이어 등반 왼쪽
+    private void PlayerClimbingLeft(bool isReverse = false)
+    {
+        int iY = m_playerAction.m_iY;     // 플레이어 위치 Y
+        int iZ = m_playerAction.m_iZ;     // 플레이어 위치 Z
+        int iX = m_playerAction.m_iX;     // 플레이어 위치 X
+
+        switch (m_playerDirection)
+        {
+            case en_Direction.FORWARD:  // 앞쪽
+
+                // 맵 바깥으로 나가면 안됨
+                if (iX - 1 < 0)
+                {
+                    // 더이상 갈 수 없음
+                    Debug.Log("맵의 끝");
+                    return;
+                }
+
+                //--------------------------------
+                // 왼쪽 검사
+                //   ■
+                // ？★
+                //--------------------------------
+                if (m_arrMapData[iY, iZ, iX - 1].objectLayer == en_GameObjectLayer.CUBE)
+                {
+                    // 플레이어의 방향 왼쪽으로 변경
+                    m_playerAction.DirectionLeft();
+                    m_playerDirection = en_Direction.LEFT;
+                }
+                else
+                {
+                    // 맵 바깥으로 나가면 안됨
+                    if (iZ + 1 >= m_mapSizeZ)
+                    {
+                        // 더이상 갈 수 없음
+                        Debug.Log("맵의 끝");
+                        return;
+                    }
+
+                    //--------------------------------
+                    // 큐브 왼쪽 검사
+                    // ？■
+                    //   ★
+                    //--------------------------------
+                    if (m_arrMapData[iY, iZ + 1, iX - 1].objectLayer == en_GameObjectLayer.CUBE)
+                    {
+                        //--------------------------------
+                        // 이동
+                        // ■■
+                        // ←★
+                        //--------------------------------
+
+                        // 플레이어 좌표 이동
+                        m_playerAction.ClimbMoveLeft();
+                        // 플레이어 조작 불가
+                        canPlayerControl = false;
+                    }
+                    else
+                    {
+                        //--------------------------------
+                        // 이동
+                        // ↖■
+                        //   ★
+                        //--------------------------------
+
+                        // 플레이어 좌표 이동
+                        m_playerAction.ClimbMoveLeftForward();
+                        m_playerDirection = en_Direction.RIGHT;
+                        // 플레이어 조작 불가
+                        canPlayerControl = false;
+                    }
+                }
+                return;
+            case en_Direction.BACK:     // 뒤쪽
+
+                // 키조작 반전 플래그
+                if (isReverse)
+                {
+                    PlayerClimbingRight();
+                    return;
+                }
+
+                // 맵 바깥으로 나가면 안됨
+                if (iX - 1 < 0)
+                {
+                    // 더이상 갈 수 없음
+                    Debug.Log("맵의 끝");
+                    return;
+                }
+
+                //--------------------------------
+                // 왼쪽 검사
+                // ？★
+                //   ■
+                //--------------------------------
+                if (m_arrMapData[iY, iZ, iX - 1].objectLayer == en_GameObjectLayer.CUBE)
+                {
+                    // 플레이어의 방향 왼쪽으로 변경
+                    m_playerAction.DirectionLeft();
+                    m_playerDirection = en_Direction.LEFT;
+                }
+                else
+                {
+                    // 맵 바깥으로 나가면 안됨
+                    if (iZ - 1 < 0)
+                    {
+                        // 더이상 갈 수 없음
+                        Debug.Log("맵의 끝");
+                        return;
+                    }
+
+                    //--------------------------------
+                    // 큐브 왼쪽 검사
+                    //   ★
+                    // ？■
+                    //--------------------------------
+                    if (m_arrMapData[iY, iZ - 1, iX - 1].objectLayer == en_GameObjectLayer.CUBE)
+                    {
+                        //--------------------------------
+                        // 이동
+                        // ←★
+                        // ■■
+                        //--------------------------------
+
+                        // 플레이어 좌표 이동
+                        m_playerAction.ClimbMoveLeft();
+                        // 플레이어 조작 불가
+                        canPlayerControl = false;
+                    }
+                    else
+                    {
+                        //--------------------------------
+                        // 이동
+                        //   ★
+                        // ↙■
+                        //--------------------------------
+
+                        // 플레이어 좌표 이동
+                        m_playerAction.ClimbMoveLeftBack();
+                        m_playerDirection = en_Direction.RIGHT;
+                        // 플레이어 조작 불가
+                        canPlayerControl = false;
+                    }
+                }
+                return;
+            case en_Direction.LEFT:     // 왼쪽
+
+                // 맵 바깥으로 나가면 안됨
+                if (iZ - 1 < 0)
+                {
+                    // 더이상 갈 수 없음
+                    Debug.Log("맵의 끝");
+                    return;
+                }
+
+                //--------------------------------
+                // 뒤쪽 검사
+                // ■★
+                //   ？
+                //--------------------------------
+                if (m_arrMapData[iY, iZ - 1, iX].objectLayer == en_GameObjectLayer.CUBE)
+                {
+                    // 플레이어의 방향 왼쪽으로 변경
+                    m_playerAction.DirectionBack();
+                    m_playerDirection = en_Direction.BACK;
+                }
+                else
+                {
+                    // 맵 바깥으로 나가면 안됨
+                    if (iZ - 1 < 0)
+                    {
+                        // 더이상 갈 수 없음
+                        Debug.Log("맵의 끝");
+                        return;
+                    }
+
+                    //--------------------------------
+                    // 큐브 뒤쪽 검사
+                    // ■★
+                    // ？
+                    //--------------------------------
+                    if (m_arrMapData[iY, iZ - 1, iX - 1].objectLayer == en_GameObjectLayer.CUBE)
+                    {
+                        //--------------------------------
+                        // 이동
+                        // ■★
+                        // ■↓
+                        //--------------------------------
+
+                        // 플레이어 좌표 이동
+                        m_playerAction.ClimbMoveBack();
+                        // 플레이어 조작 불가
+                        canPlayerControl = false;
+                    }
+                    else
+                    {
+                        //--------------------------------
+                        // 이동
+                        // ■★
+                        // ↙
+                        //--------------------------------
+
+                        // 플레이어 좌표 이동
+                        m_playerAction.ClimbMoveBackLeft();
+                        m_playerDirection = en_Direction.FORWARD;
+                        // 플레이어 조작 불가
+                        canPlayerControl = false;
+                    }
+                }
+                return;
+            case en_Direction.RIGHT:    // 오른쪽
+
+                // 맵 바깥으로 나가면 안됨
+                if (iZ + 1 >= m_mapSizeZ)
+                {
+                    // 더이상 갈 수 없음
+                    Debug.Log("맵의 끝");
+                    return;
+                }
+
+                //--------------------------------
+                // 앞쪽 검사
+                // ？
+                // ★■
+                //--------------------------------
+                if (m_arrMapData[iY, iZ + 1, iX].objectLayer == en_GameObjectLayer.CUBE)
+                {
+                    // 플레이어의 방향 왼쪽으로 변경
+                    m_playerAction.DirectionForward();
+                    m_playerDirection = en_Direction.FORWARD;
+                    // 플레이어 조작 불가
+                    canPlayerControl = false;
+                }
+                else
+                {
+                    // 맵 바깥으로 나가면 안됨
+                    if (iX + 1 >= m_mapSizeX)
+                    {
+                        // 더이상 갈 수 없음
+                        Debug.Log("맵의 끝");
+                        return;
+                    }
+
+                    //--------------------------------
+                    // 큐브 앞쪽 검사
+                    //   ？
+                    // ★■
+                    //--------------------------------
+                    if (m_arrMapData[iY, iZ + 1, iX + 1].objectLayer == en_GameObjectLayer.CUBE)
+                    {
+                        //--------------------------------
+                        // 이동
+                        // ↑■
+                        // ★■
+                        //--------------------------------
+
+                        // 플레이어 좌표 이동
+                        m_playerAction.ClimbMoveForward();
+                        // 플레이어 조작 불가
+                        canPlayerControl = false;
+                    }
+                    else
+                    {
+                        //--------------------------------
+                        // 이동
+                        //   ↗
+                        // ★■
+                        //--------------------------------
+
+                        // 플레이어 좌표 이동
+                        m_playerAction.ClimbMoveForwardRight();
+                        m_playerDirection = en_Direction.BACK;
+                        // 플레이어 조작 불가
+                        canPlayerControl = false;
+                    }
+                }
+                return;
+        }
+    }
+
+
+    // 플레이어 등반 왼쪽
+    private void PlayerClimbingRight(bool isReverse = false)
+    {
+        int iY = m_playerAction.m_iY;     // 플레이어 위치 Y
+        int iZ = m_playerAction.m_iZ;     // 플레이어 위치 Z
+        int iX = m_playerAction.m_iX;     // 플레이어 위치 X
+
+        switch (m_playerDirection)
+        {
+            case en_Direction.FORWARD:  // 앞쪽
+
+                // 맵 바깥으로 나가면 안됨
+                if (iX + 1 >= m_mapSizeX)
+                {
+                    // 더이상 갈 수 없음
+                    Debug.Log("맵의 끝");
+                    return;
+                }
+
+                //--------------------------------
+                // 오른쪽 검사
+                // ■
+                // ★？
+                //--------------------------------
+                if (m_arrMapData[iY, iZ, iX + 1].objectLayer == en_GameObjectLayer.CUBE)
+                {
+                    // 플레이어의 방향 왼쪽으로 변경
+                    m_playerAction.DirectionRight();
+                    m_playerDirection = en_Direction.RIGHT;
+                }
+                else
+                {
+                    // 맵 바깥으로 나가면 안됨
+                    if (iZ + 1 >= m_mapSizeZ)
+                    {
+                        // 더이상 갈 수 없음
+                        Debug.Log("맵의 끝");
+                        return;
+                    }
+
+                    //--------------------------------
+                    // 큐브 오른쪽 검사
+                    // ■？
+                    // ★
+                    //--------------------------------
+                    if (m_arrMapData[iY, iZ + 1, iX + 1].objectLayer == en_GameObjectLayer.CUBE)
+                    {
+                        //--------------------------------
+                        // 이동
+                        // ■■
+                        // ★→
+                        //--------------------------------
+
+                        // 플레이어 좌표 이동
+                        m_playerAction.ClimbMoveRight();
+                        // 플레이어 조작 불가
+                        canPlayerControl = false;
+                    }
+                    else
+                    {
+                        //--------------------------------
+                        // 이동
+                        // ■↗
+                        // ★
+                        //--------------------------------
+
+                        // 플레이어 좌표 이동
+                        m_playerAction.ClimbMoveRightForward();
+                        m_playerDirection = en_Direction.LEFT;
+                        // 플레이어 조작 불가
+                        canPlayerControl = false;
+                    }
+                }
+                return;
+            case en_Direction.BACK:     // 뒤쪽
+
+                // 키조작 반전 플래그
+                if (isReverse)
+                {
+                    PlayerClimbingLeft();
+                    return;
+                }
+
+                // 맵 바깥으로 나가면 안됨
+                if (iX + 1 >= m_mapSizeX)
+                {
+                    // 더이상 갈 수 없음
+                    Debug.Log("맵의 끝");
+                    return;
+                }
+
+                //--------------------------------
+                // 오른쪽 검사
+                // ★？
+                // ■
+                //--------------------------------
+                if (m_arrMapData[iY, iZ, iX + 1].objectLayer == en_GameObjectLayer.CUBE)
+                {
+                    // 플레이어의 방향 왼쪽으로 변경
+                    m_playerAction.DirectionRight();
+                    m_playerDirection = en_Direction.RIGHT;
+                }
+                else
+                {
+                    // 맵 바깥으로 나가면 안됨
+                    if (iZ - 1 < 0)
+                    {
+                        // 더이상 갈 수 없음
+                        Debug.Log("맵의 끝");
+                        return;
+                    }
+
+                    //--------------------------------
+                    // 큐브 오른쪽 검사
+                    // ★
+                    // ■？
+                    //--------------------------------
+                    if (m_arrMapData[iY, iZ - 1, iX + 1].objectLayer == en_GameObjectLayer.CUBE)
+                    {
+                        //--------------------------------
+                        // 이동
+                        // ★→
+                        // ■■
+                        //--------------------------------
+
+                        // 플레이어 좌표 이동
+                        m_playerAction.ClimbMoveRight();
+                        // 플레이어 조작 불가
+                        canPlayerControl = false;
+                    }
+                    else
+                    {
+                        //--------------------------------
+                        // 이동
+                        // ★
+                        // ■↘
+                        //--------------------------------
+
+                        // 플레이어 좌표 이동
+                        m_playerAction.ClimbMoveRightBack();
+                        m_playerDirection = en_Direction.LEFT;
+                        // 플레이어 조작 불가
+                        canPlayerControl = false;
+                    }
+                }
+                return;
+            case en_Direction.LEFT:     // 왼쪽
+
+                // 맵 바깥으로 나가면 안됨
+                if (iZ + 1 >= m_mapSizeZ)
+                {
+                    // 더이상 갈 수 없음
+                    Debug.Log("맵의 끝");
+                    return;
+                }
+
+                //--------------------------------
+                // 앞쪽 검사
+                //   ？
+                // ■★
+                //--------------------------------
+                if (m_arrMapData[iY, iZ + 1, iX].objectLayer == en_GameObjectLayer.CUBE)
+                {
+                    // 플레이어의 방향 왼쪽으로 변경
+                    m_playerAction.DirectionForward();
+                    m_playerDirection = en_Direction.FORWARD;
+                }
+                else
+                {
+                    // 맵 바깥으로 나가면 안됨
+                    if (iX - 1 < 0)
+                    {
+                        // 더이상 갈 수 없음
+                        Debug.Log("맵의 끝");
+                        return;
+                    }
+
+                    //--------------------------------
+                    // 큐브 앞쪽 검사
+                    // ？
+                    // ■★
+                    //--------------------------------
+                    if (m_arrMapData[iY, iZ + 1, iX - 1].objectLayer == en_GameObjectLayer.CUBE)
+                    {
+                        //--------------------------------
+                        // 이동
+                        // ■↑
+                        // ■★
+                        //--------------------------------
+
+                        // 플레이어 좌표 이동
+                        m_playerAction.ClimbMoveForward();
+                        // 플레이어 조작 불가
+                        canPlayerControl = false;
+                    }
+                    else
+                    {
+                        //--------------------------------
+                        // 이동
+                        // ↖
+                        // ■★
+                        //--------------------------------
+
+                        // 플레이어 좌표 이동
+                        m_playerAction.ClimbMoveForwardLeft();
+                        m_playerDirection = en_Direction.BACK;
+                        // 플레이어 조작 불가
+                        canPlayerControl = false;
+                    }
+                }
+                return;
+            case en_Direction.RIGHT:    // 오른쪽
+
+                // 맵 바깥으로 나가면 안됨
+                if (iZ - 1 >= m_mapSizeZ)
+                {
+                    // 더이상 갈 수 없음
+                    Debug.Log("맵의 끝");
+                    return;
+                }
+
+                //--------------------------------
+                // 뒤쪽 검사
+                // ★■
+                // ？
+                //--------------------------------
+                if (m_arrMapData[iY, iZ - 1, iX].objectLayer == en_GameObjectLayer.CUBE)
+                {
+                    // 플레이어의 방향 왼쪽으로 변경
+                    m_playerAction.DirectionBack();
+                    m_playerDirection = en_Direction.BACK;
+                }
+                else
+                {
+                    // 맵 바깥으로 나가면 안됨
+                    if (iX + 1 >= m_mapSizeX)
+                    {
+                        // 더이상 갈 수 없음
+                        Debug.Log("맵의 끝");
+                        return;
+                    }
+
+                    //--------------------------------
+                    // 큐브 뒤쪽 검사
+                    // ★■
+                    //   ？
+                    //--------------------------------
+                    if (m_arrMapData[iY, iZ - 1, iX + 1].objectLayer == en_GameObjectLayer.CUBE)
+                    {
+                        //--------------------------------
+                        // 이동
+                        // ★■
+                        // ↓■
+                        //--------------------------------
+
+                        // 플레이어 좌표 이동
+                        m_playerAction.ClimbMoveBack();
+                        // 플레이어 조작 불가
+                        canPlayerControl = false;
+                    }
+                    else
+                    {
+                        //--------------------------------
+                        // 이동
+                        // ★■
+                        //   ↘
+                        //--------------------------------
+
+                        // 플레이어 좌표 이동
+                        m_playerAction.ClimbMoveBackRight();
+                        m_playerDirection = en_Direction.FORWARD;
+                        // 플레이어 조작 불가
+                        canPlayerControl = false;
+                    }
+                }
+                return;
+        }
+    }
+
+
+    // 큐브 앞쪽 이동
+    private bool CubeMoveForward(int iY, int iZ, int iX)
+    {
+        // 맵 바깥으로 나가면 안됨
+        if (iZ + 1 >= m_mapSizeZ)
+        {
+            // 더이상 갈 수 없음
+            Debug.Log("큐브가 더이상 이동할 수 없음");
+            return false;
+        }
+
+        // 앞쪽에 큐브가 있나
+        if (m_arrMapData[iY, iZ + 1, iX].objectLayer == en_GameObjectLayer.CUBE)
+        {
+            //--------------------------------
+            // 재귀 호출
+            // 이동 방향의 큐브도 이동처리
+            //--------------------------------
+            if (!CubeMoveForward(iY, iZ + 1, iX))
+            {
+                //--------------------------------
+                // 결과 false (이동할 수 없다면)
+                // 이 큐브도 이동할 수 없다
+                //--------------------------------
+                return false;
+            }
+        }
+
+        // 화면상의 큐브 이동
+        m_arrMapData[iY, iZ, iX].actionScript.MoveForward();
+
+        return true;
+    }
+
+    // 큐브 뒤쪽 이동
+    private bool CubeMoveBack(int iY, int iZ, int iX)
+    {
+        // 맵 바깥으로 나가면 안됨
+        if (iZ - 1 < 0)
+        {
+            // 더이상 갈 수 없음
+            Debug.Log("큐브가 더이상 이동할 수 없음");
+            return false;
+        }
+
+        // 앞쪽에 큐브가 있나
+        if (m_arrMapData[iY, iZ - 1, iX].objectLayer == en_GameObjectLayer.CUBE)
+        {
+            // 이동 방향의 큐브도 이동처리
+            if (!CubeMoveBack(iY, iZ - 1, iX))
+            {
+                //--------------------------------
+                // 결과 false (이동할 수 없다면)
+                // 이 큐브도 이동할 수 없다
+                //--------------------------------
+                return false;
+            }
+        }
+
+        // 화면상의 큐브 이동
+        m_arrMapData[iY, iZ, iX].actionScript.MoveBack();
+
+        return true;
+    }
+
+    // 큐브 왼쪽 이동
+    private bool CubeMoveLeft(int iY, int iZ, int iX)
+    {
+        // 맵 바깥으로 나가면 안됨
+        if (iX - 1 < 0)
+        {
+            // 더이상 갈 수 없음
+            Debug.Log("큐브가 더이상 이동할 수 없음");
+            return false;
+        }
+
+        // 앞쪽에 큐브가 있나
+        if (m_arrMapData[iY, iZ, iX - 1].objectLayer == en_GameObjectLayer.CUBE)
+        {
+            // 이동 방향의 큐브도 이동처리
+            if (!CubeMoveLeft(iY, iZ, iX - 1))
+            {
+                //--------------------------------
+                // 결과 false (이동할 수 없다면)
+                // 이 큐브도 이동할 수 없다
+                //--------------------------------
+                return false;
+            }
+        }
+
+        // 화면상의 큐브 이동
+        m_arrMapData[iY, iZ, iX].actionScript.MoveLeft();
+
+        return true;
+    }
+
+    // 큐브 오른쪽 이동
+    private bool CubeMoveRight(int iY, int iZ, int iX)
+    {
+        // 맵 바깥으로 나가면 안됨
+        if (iX + 1 >= m_mapSizeX)
+        {
+            // 더이상 갈 수 없음
+            Debug.Log("큐브가 더이상 이동할 수 없음");
+            return false;
+        }
+
+        // 앞쪽에 큐브가 있나
+        if (m_arrMapData[iY, iZ, iX + 1].objectLayer == en_GameObjectLayer.CUBE)
+        {
+            // 이동 방향의 큐브도 이동처리
+            if (!CubeMoveRight(iY, iZ, iX + 1))
+            {
+                //--------------------------------
+                // 결과 false (이동할 수 없다면)
+                // 이 큐브도 이동할 수 없다
+                //--------------------------------
+                return false;
+            }
+        }
+
+        // 화면상의 큐브 이동
+        m_arrMapData[iY, iZ, iX].actionScript.MoveRight();
+
+        return true;
+    }
+
+    // 맵 배열 인덱스 범위를 넘어가면 true 아니면 false
+    private bool CheckMapIndexOverflow(int iY, int iZ, int iX)
+    {
+        if (iY < 0)
+        {
+            return true;
+        }
+        if (iZ < 0)
+        {
+            return true;
+        }
+        if (iX < 0)
+        {
+            return true;
+        }
+        if (iY >= m_mapSizeY)
+        {
+            return true;
+        }
+        if (iZ >= m_mapSizeZ)
+        {
+            return true;
+        }
+        if (iX >= m_mapSizeX)
+        {
+            return true;
+        }
+
+        return false;
     }
 }
