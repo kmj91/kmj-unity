@@ -18,6 +18,7 @@ public class PlayerAction : GameScript
     private en_PlayerState m_playerState;           // 플레이어 상태
     private Action[] m_arrPlayerStateProc;          // 플레이어 상태 처리 함수 배열
     private GameManager m_gameManager;              // 게임 매니저
+    private Animator m_animator;                    // 애니메이터
 
     // 초기화
     public void Init(GameManager gameManager, float speed, int iX, int iY, int iZ)
@@ -634,6 +635,9 @@ public class PlayerAction : GameScript
             PullRightProc,
             Turn
         };
+
+        // 애니메이터 멤버 변수 초기화
+        m_animator = GetComponent<Animator>();
     }
 
 
@@ -646,7 +650,7 @@ public class PlayerAction : GameScript
 
     private void Stay()
     {
-
+        m_animator.SetFloat("Run", 0, 0.05f, Time.deltaTime);
     }
 
     private void MoveForwardProc()
@@ -675,7 +679,11 @@ public class PlayerAction : GameScript
             m_gameManager.PasteData(m_iY, m_iZ, m_iX, m_iY, m_iZ + 1, m_iX);
             // 인덱스 이동
             m_iZ = m_iZ + 1;
+            return;
         }
+
+        // 애니메이션 값
+        m_animator.SetFloat("Run", 1f, 0.05f, Time.deltaTime);
     }
 
     private void MoveBackProc()
@@ -704,7 +712,11 @@ public class PlayerAction : GameScript
             m_gameManager.PasteData(m_iY, m_iZ, m_iX, m_iY, m_iZ - 1, m_iX);
             // 인덱스 이동
             m_iZ = m_iZ - 1;
+            return;
         }
+
+        // 애니메이션 값
+        m_animator.SetFloat("Run", 1f, 0.05f, Time.deltaTime);
     }
 
     private void MoveLeftProc()
@@ -733,7 +745,11 @@ public class PlayerAction : GameScript
             m_gameManager.PasteData(m_iY, m_iZ, m_iX, m_iY, m_iZ, m_iX - 1);
             // 인덱스 이동
             m_iX = m_iX - 1;
+            return;
         }
+
+        // 애니메이션 값
+        m_animator.SetFloat("Run", 1f, 0.05f, Time.deltaTime);
     }
 
     private void MoveRightProc()
@@ -762,7 +778,11 @@ public class PlayerAction : GameScript
             m_gameManager.PasteData(m_iY, m_iZ, m_iX, m_iY, m_iZ, m_iX + 1);
             // 인덱스 이동
             m_iX = m_iX + 1;
+            return;
         }
+
+        // 애니메이션 값
+        m_animator.SetFloat("Run", 1f, 0.05f, Time.deltaTime);
     }
 
     private void MoveUpProc()
