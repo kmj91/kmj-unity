@@ -19,6 +19,7 @@ public class PlayerAction : GameScript
     private Action[] m_arrPlayerStateProc;          // 플레이어 상태 처리 함수 배열
     private GameManager m_gameManager;              // 게임 매니저
     private Animator m_animator;                    // 애니메이터
+    private bool m_jump;                            // 점프 플래그
 
     // 초기화
     public void Init(GameManager gameManager, float speed, int iX, int iY, int iZ)
@@ -89,6 +90,8 @@ public class PlayerAction : GameScript
         m_playerState = en_PlayerState.MOVE_FORWARD_CLIMB_UP;
         // 데이터 잘라내기
         m_gameManager.CutData(m_iY, m_iZ, m_iX);
+        // 애니메이션 점프
+        m_animator.SetTrigger("Jump");
     }
 
     public void MoveBackClimbUp(int jumpPower = 1)
@@ -101,6 +104,8 @@ public class PlayerAction : GameScript
         m_playerState = en_PlayerState.MOVE_BACK_CLIMB_UP;
         // 데이터 잘라내기
         m_gameManager.CutData(m_iY, m_iZ, m_iX);
+        // 애니메이션 점프
+        m_animator.SetTrigger("Jump");
     }
 
     public void MoveLeftClimbUp(int jumpPower = 1)
@@ -113,6 +118,8 @@ public class PlayerAction : GameScript
         m_playerState = en_PlayerState.MOVE_LEFT_CLIMB_UP;
         // 데이터 잘라내기
         m_gameManager.CutData(m_iY, m_iZ, m_iX);
+        // 애니메이션 점프
+        m_animator.SetTrigger("Jump");
     }
 
     public void MoveRightClimbUp(int jumpPower = 1)
@@ -125,6 +132,8 @@ public class PlayerAction : GameScript
         m_playerState = en_PlayerState.MOVE_RIGHT_CLIMB_UP;
         // 데이터 잘라내기
         m_gameManager.CutData(m_iY, m_iZ, m_iX);
+        // 애니메이션 점프
+        m_animator.SetTrigger("Jump");
     }
 
     public void MoveForwardClimbDown()
@@ -137,6 +146,8 @@ public class PlayerAction : GameScript
         m_playerState = en_PlayerState.MOVE_FORWARD_CLIMB_DOWN;
         // 데이터 잘라내기
         m_gameManager.CutData(m_iY, m_iZ, m_iX);
+        // 애니메이션 점프
+        m_animator.SetTrigger("Jump");
     }
 
     public void MoveBackClimbDown()
@@ -149,6 +160,8 @@ public class PlayerAction : GameScript
         m_playerState = en_PlayerState.MOVE_BACK_CLIMB_DOWN;
         // 데이터 잘라내기
         m_gameManager.CutData(m_iY, m_iZ, m_iX);
+        // 애니메이션 점프
+        m_animator.SetTrigger("Jump");
     }
 
     public void MoveLeftClimbDown()
@@ -161,6 +174,8 @@ public class PlayerAction : GameScript
         m_playerState = en_PlayerState.MOVE_LEFT_CLIMB_DOWN;
         // 데이터 잘라내기
         m_gameManager.CutData(m_iY, m_iZ, m_iX);
+        // 애니메이션 점프
+        m_animator.SetTrigger("Jump");
     }
 
     public void MoveRightClimbDown()
@@ -173,6 +188,8 @@ public class PlayerAction : GameScript
         m_playerState = en_PlayerState.MOVE_RIGHT_CLIMB_DOWN;
         // 데이터 잘라내기
         m_gameManager.CutData(m_iY, m_iZ, m_iX);
+        // 애니메이션 점프
+        m_animator.SetTrigger("Jump");
     }
 
     // 등반 앞쪽
@@ -191,6 +208,8 @@ public class PlayerAction : GameScript
         m_playerState = en_PlayerState.MOVE_FORWARD_CLIMB_IDLE;
         // 데이터 잘라내기
         m_gameManager.CutData(m_iY, m_iZ, m_iX);
+        // 애니메이션 매달림
+        m_animator.SetTrigger("Climb");
     }
 
     // 등반 뒤쪽
@@ -209,6 +228,8 @@ public class PlayerAction : GameScript
         m_playerState = en_PlayerState.MOVE_BACK_CLIMB_IDLE;
         // 데이터 잘라내기
         m_gameManager.CutData(m_iY, m_iZ, m_iX);
+        // 애니메이션 매달림
+        m_animator.SetTrigger("Climb");
     }
 
     // 등반 왼쪽
@@ -227,6 +248,8 @@ public class PlayerAction : GameScript
         m_playerState = en_PlayerState.MOVE_LEFT_CLIMB_IDLE;
         // 데이터 잘라내기
         m_gameManager.CutData(m_iY, m_iZ, m_iX);
+        // 애니메이션 매달림
+        m_animator.SetTrigger("Climb");
     }
 
     // 등반 오른쪽
@@ -245,6 +268,8 @@ public class PlayerAction : GameScript
         m_playerState = en_PlayerState.MOVE_RIGHT_CLIMB_IDLE;
         // 데이터 잘라내기
         m_gameManager.CutData(m_iY, m_iZ, m_iX);
+        // 애니메이션 매달림
+        m_animator.SetTrigger("Climb");
     }
 
 
@@ -257,6 +282,8 @@ public class PlayerAction : GameScript
         m_playerState = en_PlayerState.CLIMB_UP_FORWARD;
         // 데이터 잘라내기
         m_gameManager.CutData(m_iY, m_iZ, m_iX);
+        // 애니메이션 점프
+        m_animator.SetTrigger("Climb End");
     }
 
     // 등반 오르기 뒤쪽
@@ -268,6 +295,8 @@ public class PlayerAction : GameScript
         m_playerState = en_PlayerState.CLIMB_UP_BACK;
         // 데이터 잘라내기
         m_gameManager.CutData(m_iY, m_iZ, m_iX);
+        // 애니메이션 점프
+        m_animator.SetTrigger("Climb End");
     }
 
     // 등반 오르기 왼쪽
@@ -279,6 +308,8 @@ public class PlayerAction : GameScript
         m_playerState = en_PlayerState.CLIMB_UP_LEFT;
         // 데이터 잘라내기
         m_gameManager.CutData(m_iY, m_iZ, m_iX);
+        // 애니메이션 점프
+        m_animator.SetTrigger("Climb End");
     }
 
     // 등반 오르기 오른쪽
@@ -290,6 +321,8 @@ public class PlayerAction : GameScript
         m_playerState = en_PlayerState.CLIMB_UP_RIGHT;
         // 데이터 잘라내기
         m_gameManager.CutData(m_iY, m_iZ, m_iX);
+        // 애니메이션 점프
+        m_animator.SetTrigger("Climb End");
     }
 
 
@@ -582,6 +615,10 @@ public class PlayerAction : GameScript
         m_playerState = en_PlayerState.TURN;
     }
 
+    public void Jump()
+    {
+        m_jump = true;
+    }
 
     private void Awake()
     {
@@ -638,6 +675,8 @@ public class PlayerAction : GameScript
 
         // 애니메이터 멤버 변수 초기화
         m_animator = GetComponent<Animator>();
+        // 점프 플래그
+        m_jump = false;
     }
 
 
@@ -795,8 +834,14 @@ public class PlayerAction : GameScript
 
     }
 
+    // MOVE_FORWARD_CLIMB_UP
     private void MoveForwardClimbUpProc()
     {
+        if (!m_jump)
+        {
+            return;
+        }
+
         // 앞쪽 이동
         transform.position = transform.position + (Vector3.forward * m_speed) * Time.deltaTime;
 
@@ -821,11 +866,19 @@ public class PlayerAction : GameScript
             // 인덱스 이동
             m_iY = m_iY + 1;
             m_iZ = m_iZ + 1;
+            // 점프 끝
+            m_jump = false;
         }
     }
 
+    // MOVE_BACK_CLIMB_UP
     private void MoveBackClimbUpProc() 
     {
+        if (!m_jump)
+        {
+            return;
+        }
+
         // 뒤쪽 이동
         transform.position = transform.position + (Vector3.back * m_speed) * Time.deltaTime;
 
@@ -850,11 +903,19 @@ public class PlayerAction : GameScript
             // 인덱스 이동
             m_iY = m_iY + 1;
             m_iZ = m_iZ - 1;
+            // 점프 끝
+            m_jump = false;
         }
     }
 
+    // MOVE_LEFT_CLIMB_UP
     private void MoveLeftClimbUpProc()
     {
+        if (!m_jump)
+        {
+            return;
+        }
+
         // 왼쪽 이동
         transform.position = transform.position + (Vector3.left * m_speed) * Time.deltaTime;
 
@@ -879,11 +940,19 @@ public class PlayerAction : GameScript
             // 인덱스 이동
             m_iY = m_iY + 1;
             m_iX = m_iX - 1;
+            // 점프 끝
+            m_jump = false;
         }
     }
 
+    // MOVE_RIGHT_CLIMB_UP
     private void MoveRightClimbUpProc()
     {
+        if (!m_jump)
+        {
+            return;
+        }
+
         // 오른쪽 이동
         transform.position = transform.position + (Vector3.right * m_speed) * Time.deltaTime;
 
@@ -908,12 +977,20 @@ public class PlayerAction : GameScript
             // 인덱스 이동
             m_iY = m_iY + 1;
             m_iX = m_iX + 1;
+            // 점프 끝
+            m_jump = false;
         }
     }
 
 
+    // MOVE_FORWARD_CLIMB_DOWN
     private void MoveForwardClimbDownProc()
     {
+        if (!m_jump)
+        {
+            return;
+        }
+
         // 앞쪽 이동
         transform.position = transform.position + (Vector3.forward * m_speed) * Time.deltaTime;
 
@@ -938,11 +1015,19 @@ public class PlayerAction : GameScript
             // 인덱스 이동
             m_iY = m_iY - 1;
             m_iZ = m_iZ + 1;
+            // 점프 끝
+            m_jump = false;
         }
     }
 
+    // MOVE_BACK_CLIMB_DOWN
     private void MoveBackClimbDownProc()
     {
+        if (!m_jump)
+        {
+            return;
+        }
+
         // 뒤쪽 이동
         transform.position = transform.position + (Vector3.back * m_speed) * Time.deltaTime;
 
@@ -967,11 +1052,19 @@ public class PlayerAction : GameScript
             // 인덱스 이동
             m_iY = m_iY - 1;
             m_iZ = m_iZ - 1;
+            // 점프 끝
+            m_jump = false;
         }
     }
 
+    // MOVE_LEFT_CLIMB_DOWN
     private void MoveLeftClimbDownProc()
     {
+        if (!m_jump)
+        {
+            return;
+        }
+
         // 왼쪽 이동
         transform.position = transform.position + (Vector3.left * m_speed) * Time.deltaTime;
 
@@ -996,11 +1089,19 @@ public class PlayerAction : GameScript
             // 인덱스 이동
             m_iY = m_iY - 1;
             m_iX = m_iX - 1;
+            // 점프 끝
+            m_jump = false;
         }
     }
 
+    // MOVE_RIGHT_CLIMB_DOWN
     private void MoveRightClimbDownProc()
     {
+        if (!m_jump)
+        {
+            return;
+        }
+
         // 오른쪽 이동
         transform.position = transform.position + (Vector3.right * m_speed) * Time.deltaTime;
 
@@ -1025,6 +1126,8 @@ public class PlayerAction : GameScript
             // 인덱스 이동
             m_iY = m_iY - 1;
             m_iX = m_iX + 1;
+            // 점프 끝
+            m_jump = false;
         }
     }
 
