@@ -19,7 +19,8 @@ public class PlayerAction : GameScript
     private Action[] m_arrPlayerStateProc;          // 플레이어 상태 처리 함수 배열
     private GameManager m_gameManager;              // 게임 매니저
     private Animator m_animator;                    // 애니메이터
-    private bool m_jump;                            // 점프 플래그
+    private bool m_isJump;                          // 점프 플래그
+    private bool m_isSlide;                         // 미끄러짐 플래그
 
     // 초기화
     public void Init(GameManager gameManager, float speed, int iX, int iY, int iZ)
@@ -617,7 +618,7 @@ public class PlayerAction : GameScript
 
     public void Jump()
     {
-        m_jump = true;
+        m_isJump = true;
     }
 
     private void Awake()
@@ -676,7 +677,9 @@ public class PlayerAction : GameScript
         // 애니메이터 멤버 변수 초기화
         m_animator = GetComponent<Animator>();
         // 점프 플래그
-        m_jump = false;
+        m_isJump = false;
+        // 미끄러짐 플래그
+        m_isSlide = false;
     }
 
 
@@ -709,6 +712,9 @@ public class PlayerAction : GameScript
                 SlideForward();
                 return;
             }
+
+            // 미끄러짐 끝
+            SlideOff();
 
             // 플레이어 정지
             m_playerState = en_PlayerState.STAY;
@@ -743,6 +749,9 @@ public class PlayerAction : GameScript
                 return;
             }
 
+            // 미끄러짐 끝
+            SlideOff();
+
             // 플레이어 정지
             m_playerState = en_PlayerState.STAY;
             // 플레이어 조작 가능
@@ -775,6 +784,9 @@ public class PlayerAction : GameScript
                 SlideLeft();
                 return;
             }
+
+            // 미끄러짐 끝
+            SlideOff();
 
             // 플레이어 정지
             m_playerState = en_PlayerState.STAY;
@@ -809,6 +821,9 @@ public class PlayerAction : GameScript
                 return;
             }
 
+            // 미끄러짐 끝
+            SlideOff();
+
             // 플레이어 정지
             m_playerState = en_PlayerState.STAY;
             // 플레이어 조작 가능
@@ -837,7 +852,7 @@ public class PlayerAction : GameScript
     // MOVE_FORWARD_CLIMB_UP
     private void MoveForwardClimbUpProc()
     {
-        if (!m_jump)
+        if (!m_isJump)
         {
             return;
         }
@@ -867,14 +882,14 @@ public class PlayerAction : GameScript
             m_iY = m_iY + 1;
             m_iZ = m_iZ + 1;
             // 점프 끝
-            m_jump = false;
+            m_isJump = false;
         }
     }
 
     // MOVE_BACK_CLIMB_UP
     private void MoveBackClimbUpProc() 
     {
-        if (!m_jump)
+        if (!m_isJump)
         {
             return;
         }
@@ -904,14 +919,14 @@ public class PlayerAction : GameScript
             m_iY = m_iY + 1;
             m_iZ = m_iZ - 1;
             // 점프 끝
-            m_jump = false;
+            m_isJump = false;
         }
     }
 
     // MOVE_LEFT_CLIMB_UP
     private void MoveLeftClimbUpProc()
     {
-        if (!m_jump)
+        if (!m_isJump)
         {
             return;
         }
@@ -941,14 +956,14 @@ public class PlayerAction : GameScript
             m_iY = m_iY + 1;
             m_iX = m_iX - 1;
             // 점프 끝
-            m_jump = false;
+            m_isJump = false;
         }
     }
 
     // MOVE_RIGHT_CLIMB_UP
     private void MoveRightClimbUpProc()
     {
-        if (!m_jump)
+        if (!m_isJump)
         {
             return;
         }
@@ -978,7 +993,7 @@ public class PlayerAction : GameScript
             m_iY = m_iY + 1;
             m_iX = m_iX + 1;
             // 점프 끝
-            m_jump = false;
+            m_isJump = false;
         }
     }
 
@@ -986,7 +1001,7 @@ public class PlayerAction : GameScript
     // MOVE_FORWARD_CLIMB_DOWN
     private void MoveForwardClimbDownProc()
     {
-        if (!m_jump)
+        if (!m_isJump)
         {
             return;
         }
@@ -1016,14 +1031,14 @@ public class PlayerAction : GameScript
             m_iY = m_iY - 1;
             m_iZ = m_iZ + 1;
             // 점프 끝
-            m_jump = false;
+            m_isJump = false;
         }
     }
 
     // MOVE_BACK_CLIMB_DOWN
     private void MoveBackClimbDownProc()
     {
-        if (!m_jump)
+        if (!m_isJump)
         {
             return;
         }
@@ -1053,14 +1068,14 @@ public class PlayerAction : GameScript
             m_iY = m_iY - 1;
             m_iZ = m_iZ - 1;
             // 점프 끝
-            m_jump = false;
+            m_isJump = false;
         }
     }
 
     // MOVE_LEFT_CLIMB_DOWN
     private void MoveLeftClimbDownProc()
     {
-        if (!m_jump)
+        if (!m_isJump)
         {
             return;
         }
@@ -1090,14 +1105,14 @@ public class PlayerAction : GameScript
             m_iY = m_iY - 1;
             m_iX = m_iX - 1;
             // 점프 끝
-            m_jump = false;
+            m_isJump = false;
         }
     }
 
     // MOVE_RIGHT_CLIMB_DOWN
     private void MoveRightClimbDownProc()
     {
-        if (!m_jump)
+        if (!m_isJump)
         {
             return;
         }
@@ -1127,7 +1142,7 @@ public class PlayerAction : GameScript
             m_iY = m_iY - 1;
             m_iX = m_iX + 1;
             // 점프 끝
-            m_jump = false;
+            m_isJump = false;
         }
     }
 
@@ -1547,6 +1562,9 @@ public class PlayerAction : GameScript
         m_playerState = en_PlayerState.MOVE_FORWARD;
         // 데이터 잘라내기
         m_gameManager.CutData(m_iY, m_iZ, m_iX);
+
+        // 미끄러짐
+        SlideOn();
     }
 
     private void SlideBack()
@@ -1561,6 +1579,9 @@ public class PlayerAction : GameScript
         m_playerState = en_PlayerState.MOVE_BACK;
         // 데이터 잘라내기
         m_gameManager.CutData(m_iY, m_iZ, m_iX);
+
+        // 미끄러짐
+        SlideOn();
     }
 
     private void SlideLeft()
@@ -1575,6 +1596,9 @@ public class PlayerAction : GameScript
         m_playerState = en_PlayerState.MOVE_LEFT;
         // 데이터 잘라내기
         m_gameManager.CutData(m_iY, m_iZ, m_iX);
+
+        // 미끄러짐
+        SlideOn();
     }
 
     private void SlideRight()
@@ -1589,5 +1613,32 @@ public class PlayerAction : GameScript
         m_playerState = en_PlayerState.MOVE_RIGHT;
         // 데이터 잘라내기
         m_gameManager.CutData(m_iY, m_iZ, m_iX);
+
+        // 미끄러짐
+        SlideOn();
+    }
+
+    private void SlideOn()
+    {
+        // 미끄러지고 있지 않다면
+        if (!m_isSlide)
+        {
+            // 미끄러짐
+            m_isSlide = true;
+            // 애니메이션 미끄러짐
+            m_animator.SetTrigger("Slide");
+        }
+    }
+
+    private void SlideOff()
+    {
+        // 미끄러지고 있다면
+        if (m_isSlide)
+        {
+            // 더이상 미끄러지지 않음
+            m_isSlide = false;
+            // 애니메이션 미끄러짐 끝
+            m_animator.SetTrigger("Slide End");
+        }
     }
 }
