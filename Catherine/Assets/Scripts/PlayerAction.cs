@@ -15,6 +15,7 @@ public class PlayerAction : GameScript
 
     private Vector3 m_destPosition;                 // 이동 목표 좌표
     private Quaternion m_destRotation;              // 회전 목표 값
+    private en_Direction m_playerDirection;         // 플레이어 방향
     private en_PlayerState m_playerState;           // 플레이어 상태
     private Action[] m_arrPlayerStateProc;          // 플레이어 상태 처리 함수 배열
     private GameManager m_gameManager;              // 게임 매니저
@@ -31,6 +32,7 @@ public class PlayerAction : GameScript
         m_iX = iX;
         m_iY = iY;
         m_iZ = iZ;
+        m_playerDirection = en_Direction.FORWARD;
     }
 
     public override void MoveForward()
@@ -205,6 +207,7 @@ public class PlayerAction : GameScript
         m_destPosition = transform.position + Vector3.forward + Vector3.down;
         // 방향
         transform.eulerAngles = new Vector3(0, 180, 0);
+        m_playerDirection = en_Direction.BACK;
         // 플레이어 상태 앞쪽 등반 상태
         m_playerState = en_PlayerState.MOVE_FORWARD_CLIMB_IDLE;
         // 데이터 잘라내기
@@ -225,6 +228,7 @@ public class PlayerAction : GameScript
         m_destPosition = transform.position + Vector3.back + Vector3.down;
         // 방향
         transform.eulerAngles = new Vector3(0, 0, 0);
+        m_playerDirection = en_Direction.FORWARD;
         // 플레이어 상태 뒤쪽 등반 상태
         m_playerState = en_PlayerState.MOVE_BACK_CLIMB_IDLE;
         // 데이터 잘라내기
@@ -245,6 +249,7 @@ public class PlayerAction : GameScript
         m_destPosition = transform.position + Vector3.left + Vector3.down;
         // 방향
         transform.eulerAngles = new Vector3(0, 90, 0);
+        m_playerDirection = en_Direction.RIGHT;
         // 플레이어 상태 왼쪽 등반 상태
         m_playerState = en_PlayerState.MOVE_LEFT_CLIMB_IDLE;
         // 데이터 잘라내기
@@ -265,6 +270,7 @@ public class PlayerAction : GameScript
         m_destPosition = transform.position + Vector3.right + Vector3.down;
         // 방향
         transform.eulerAngles = new Vector3(0, 270, 0);
+        m_playerDirection = en_Direction.LEFT;
         // 플레이어 상태 오른쪽 등반 상태
         m_playerState = en_PlayerState.MOVE_RIGHT_CLIMB_IDLE;
         // 데이터 잘라내기
@@ -651,10 +657,10 @@ public class PlayerAction : GameScript
             MoveBackClimbUpProc,
             MoveLeftClimbUpProc,
             MoveRightClimbUpProc,
-            MoveForwardProc,            // CLIMB_MOVE_FORWARD
-            MoveBackProc,
-            MoveLeftProc,
-            MoveRightProc,
+            ClimbMoveForwardProc,            // CLIMB_MOVE_FORWARD
+            ClimbMoveBackProc,
+            ClimbMoveLeftProc,
+            ClimbMoveRightProc,
             ClimbMoveForwardLeftProc,
             ClimbMoveForwardRightProc,
             ClimbMoveBackLeftProc,
@@ -693,6 +699,7 @@ public class PlayerAction : GameScript
     private void Stay()
     {
         m_animator.SetFloat("Run", 0, 0.05f, Time.deltaTime);
+        m_animator.SetFloat("Horizontal Move", 0, 0.05f, Time.deltaTime);
     }
 
     private void MoveForwardProc()
@@ -1260,6 +1267,186 @@ public class PlayerAction : GameScript
             // 인덱스 이동
             m_iY = m_iY - 1;
             m_iX = m_iX + 1;
+        }
+    }
+
+    // CLIMB_MOVE_FORWARD
+    private void ClimbMoveForwardProc()
+    {
+        // 앞쪽 이동
+        transform.position = transform.position + (Vector3.forward * m_speed) * Time.deltaTime;
+
+        // 수평 이동 거리만큼 이동 했는가
+        if (m_destPosition.z <= transform.position.z)
+        {
+            // 위치 맞추기
+            transform.position = m_destPosition;
+
+            // 미끄러짐 체크
+            if (m_gameManager.CheckSlideForward(m_iY, m_iZ + 1, m_iX))
+            {
+                SlideForward();
+                return;
+            }
+
+            // 미끄러짐 끝
+            SlideOff();
+
+            // 플레이어 정지
+            m_playerState = en_PlayerState.STAY;
+            // 플레이어 조작 가능
+            m_gameManager.canPlayerControl = true;
+            // 데이터 붙여넣기
+            m_gameManager.PasteData(m_iY, m_iZ, m_iX, m_iY, m_iZ + 1, m_iX);
+            // 인덱스 이동
+            m_iZ = m_iZ + 1;
+            return;
+        }
+
+        if (m_playerDirection == en_Direction.LEFT)
+        {
+            // 애니메이션 값
+            m_animator.SetFloat("Horizontal Move", 1f, 0.05f, Time.deltaTime);
+        }
+        else if (m_playerDirection == en_Direction.RIGHT)
+        {
+            // 애니메이션 값
+            m_animator.SetFloat("Horizontal Move", -1f, 0.05f, Time.deltaTime);
+        }
+    }
+
+    // CLIMB_MOVE_BACK
+    private void ClimbMoveBackProc()
+    {
+        // 뒤쪽 이동
+        transform.position = transform.position + (Vector3.back * m_speed) * Time.deltaTime;
+
+        // 수평 이동 거리만큼 이동 했는가
+        if (m_destPosition.z >= transform.position.z)
+        {
+            // 위치 맞추기
+            transform.position = m_destPosition;
+
+            // 미끄러짐 체크
+            if (m_gameManager.CheckSlideBack(m_iY, m_iZ - 1, m_iX))
+            {
+                SlideBack();
+                return;
+            }
+
+            // 미끄러짐 끝
+            SlideOff();
+
+            // 플레이어 정지
+            m_playerState = en_PlayerState.STAY;
+            // 플레이어 조작 가능
+            m_gameManager.canPlayerControl = true;
+            // 데이터 붙여넣기
+            m_gameManager.PasteData(m_iY, m_iZ, m_iX, m_iY, m_iZ - 1, m_iX);
+            // 인덱스 이동
+            m_iZ = m_iZ - 1;
+            return;
+        }
+
+        if (m_playerDirection == en_Direction.LEFT)
+        {
+            // 애니메이션 값
+            m_animator.SetFloat("Horizontal Move", -1f, 0.05f, Time.deltaTime);
+        }
+        else if (m_playerDirection == en_Direction.RIGHT)
+        {
+            // 애니메이션 값
+            m_animator.SetFloat("Horizontal Move", 1f, 0.05f, Time.deltaTime);
+        }
+    }
+
+    // CLIMB_MOVE_LEFT
+    private void ClimbMoveLeftProc()
+    {
+        // 왼쪽 이동
+        transform.position = transform.position + (Vector3.left * m_speed) * Time.deltaTime;
+
+        // 수평 이동 거리만큼 이동 했는가
+        if (m_destPosition.x >= transform.position.x)
+        {
+            // 위치 맞추기
+            transform.position = m_destPosition;
+
+            // 미끄러짐 체크
+            if (m_gameManager.CheckSlideLeft(m_iY, m_iZ, m_iX - 1))
+            {
+                SlideLeft();
+                return;
+            }
+
+            // 미끄러짐 끝
+            SlideOff();
+
+            // 플레이어 정지
+            m_playerState = en_PlayerState.STAY;
+            // 플레이어 조작 가능
+            m_gameManager.canPlayerControl = true;
+            // 데이터 붙여넣기
+            m_gameManager.PasteData(m_iY, m_iZ, m_iX, m_iY, m_iZ, m_iX - 1);
+            // 인덱스 이동
+            m_iX = m_iX - 1;
+            return;
+        }
+
+        if (m_playerDirection == en_Direction.FORWARD)
+        {
+            // 애니메이션 값
+            m_animator.SetFloat("Horizontal Move", -1f, 0.05f, Time.deltaTime);
+        }
+        else if (m_playerDirection == en_Direction.BACK)
+        {
+            // 애니메이션 값
+            m_animator.SetFloat("Horizontal Move", 1f, 0.05f, Time.deltaTime);
+        }
+    }
+
+    // CLIMB_MOVE_RIGHT
+    private void ClimbMoveRightProc()
+    {
+        // 오른쪽 이동
+        transform.position = transform.position + (Vector3.right * m_speed) * Time.deltaTime;
+
+        // 수평 이동 거리만큼 이동 했는가
+        if (m_destPosition.x <= transform.position.x)
+        {
+            // 위치 맞추기
+            transform.position = m_destPosition;
+
+            // 미끄러짐 체크
+            if (m_gameManager.CheckSlideRight(m_iY, m_iZ, m_iX + 1))
+            {
+                SlideRight();
+                return;
+            }
+
+            // 미끄러짐 끝
+            SlideOff();
+
+            // 플레이어 정지
+            m_playerState = en_PlayerState.STAY;
+            // 플레이어 조작 가능
+            m_gameManager.canPlayerControl = true;
+            // 데이터 붙여넣기
+            m_gameManager.PasteData(m_iY, m_iZ, m_iX, m_iY, m_iZ, m_iX + 1);
+            // 인덱스 이동
+            m_iX = m_iX + 1;
+            return;
+        }
+
+        if (m_playerDirection == en_Direction.FORWARD)
+        {
+            // 애니메이션 값
+            m_animator.SetFloat("Horizontal Move", 1f, 0.05f, Time.deltaTime);
+        }
+        else if (m_playerDirection == en_Direction.BACK)
+        {
+            // 애니메이션 값
+            m_animator.SetFloat("Horizontal Move", -1f, 0.05f, Time.deltaTime);
         }
     }
 
